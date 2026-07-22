@@ -68,7 +68,10 @@ const WhatsAppIcon = ({ size = 18, color = '#25D366' }) => (
 );
 
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin);
+const API_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !navigator.userAgent.includes('Android') && !navigator.userAgent.includes('iPhone')
+    ? 'http://localhost:3001' 
+    : 'https://lateron.indiecode.in');
 const socket = io(API_URL);
 const GOOGLE_MEET_PENDING_TEXT = 'Google Meet link will be generated after saving';
 
