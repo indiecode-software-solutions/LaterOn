@@ -1,0 +1,32 @@
+# Dependency directories
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build outputs
+dist/
+client/dist/
+
+# Environment variables
+.env
+.env.local
+client/.env.local
+server/.env
+
+# Local storage (now moved to DB)
+server/auth_sessions/
+server/groups/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

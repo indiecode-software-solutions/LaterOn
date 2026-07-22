@@ -1,0 +1,5881 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { io } from 'socket.io-client';
+import axios from 'axios';
+import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import {
+  Send,
+  Calendar,
+  Clock,
+  Phone,
+  MessageSquare,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  QrCode,
+  Wifi,
+  WifiOff,
+  Plus,
+  MoreVertical,
+  ListFilter,
+  Search,
+  Check,
+  CheckCheck,
+  Paperclip,
+  Image as ImageIcon,
+  File as FileIcon,
+  Video as VideoIcon,
+  Mic,
+  X,
+  Users,
+  User,
+  UserPlus,
+  Repeat,
+  Bot,
+  Zap,
+  Sparkles,
+  RefreshCcw,
+  Edit2,
+  Download,
+  LogOut,
+  LayoutList,
+  Mail,
+  Video,
+  ExternalLink,
+  Link as LinkIcon,
+  ArrowLeft,
+  ArrowRight,
+  Home
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import CalendarView from './CalendarView';
+import { formatPhone, getContactDisplayName, isPlaceholderContactName } from './contactUtils';
+import { supabase } from './supabaseClient';
+
+const WABusinessIcon = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.477 2 2 6.477 2 12C2 13.825 2.484 15.537 3.332 17.011L2 22L7.126 20.668C8.514 21.517 10.182 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2Z" fill={color === 'var(--primary-dark)' ? '#25D366' : '#54656f'} />
+    <path d="M9 8H12C13.105 8 14 8.895 14 10V11C14 11.552 13.552 12 13 12C13.552 12 14 12.448 14 13V14C14 15.105 13.105 16 12 16H9V8ZM10.5 9.5V11.5H12C12.276 11.5 12.5 11.276 12.5 11V10C12.5 9.724 12.276 9.5 12 9.5H10.5ZM10.5 12.5V14.5H12C12.276 14.5 12.5 14.276 12.5 14V13C12.5 12.724 12.276 12.5 12 12.5H10.5V12.5Z" fill="white" />
+  </svg>
+);
+
+const WhatsAppIcon = ({ size = 18, color = '#25D366' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c-.001 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : window.location.origin);
+const socket = io(API_URL);
+const GOOGLE_MEET_PENDING_TEXT = 'Google Meet link will be generated after saving';
+
+function generateMeetingLink(platform, userPhone, customLink, personalGoogleLink, personalZoomLink) {
+  if (platform === 'google_meet') {
+    if (personalGoogleLink && personalGoogleLink.trim().startsWith('http')) {
+      return personalGoogleLink.trim();
+    }
+    return GOOGLE_MEET_PENDING_TEXT;
+  }
+  if (platform === 'zoom') {
+    if (personalZoomLink && personalZoomLink.trim().startsWith('http')) {
+      return personalZoomLink.trim();
+    }
+    if (customLink && customLink.includes('zoom.us')) return customLink;
+    const randNum = Math.floor(100000000 + Math.random() * 900000000);
+    return `https://zoom.us/j/${randNum}?pwd=${Math.random().toString(36).slice(-8)}`;
+  }
+  if (platform === 'whatsapp_call') {
+    const cleanPhone = (userPhone || '').replace(/\D/g, '');
+    return cleanPhone ? `https://wa.me/${cleanPhone}?text=Hi,%20joining%20our%20scheduled%20call!` : 'WhatsApp Call';
+  }
+  if (platform === 'phone') {
+    return userPhone ? `tel:+${userPhone.replace(/\D/g, '')}` : 'Phone Call';
+  }
+  return customLink || 'Online Meeting';
+}
+
+const CONNECTION_STATUS_RANK = {
+  disconnected: 0,
+  connecting: 1,
+  qr: 2,
+  'qr-scanned': 3,
+  syncing: 4,
+  connected: 5
+};
+
+const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
+  if (nextStatus === 'disconnected') return false;
+  const currentRank = CONNECTION_STATUS_RANK[currentStatus] ?? 0;
+  const nextRank = CONNECTION_STATUS_RANK[nextStatus] ?? 0;
+  return currentRank >= CONNECTION_STATUS_RANK['qr-scanned'] && nextRank < currentRank;
+};
+
+function Dashboard() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  // Set global axios auth header
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+  const [status, setStatus] = useState('connecting');
+  const statusRef = useRef('connecting');
+  const pairingCodeTimeoutRef = useRef(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
+  const [schedules, setSchedules] = useState([]);
+  const [contacts, setContacts] = useState({});
+  const [groups, setGroups] = useState({});
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sidebarStep, setSidebarStep] = useState(1);
+  const [stepChangedAt, setStepChangedAt] = useState(0);
+  const [selectedRecipients, setSelectedRecipients] = useState([]);
+  const [formData, setFormData] = useState({
+    phone: '',
+    message: '',
+    recurrence: 'none',
+    customDays: [],
+    customLink: ''
+  });
+  const [scheduledDate, setScheduledDate] = useState(new Date());
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [isVoiceNote, setIsVoiceNote] = useState(false);
+  const [activeView, setActiveView] = useState('scheduler'); // 'scheduler' or 'business'
+  const [currentBusinessTool, setCurrentBusinessTool] = useState(null); // null, 'auto-reply', 'drip'
+
+  const [autoReplies, setAutoReplies] = useState([]);
+  const [replyFormData, setReplyFormData] = useState({ keyword: '', reply: '' });
+  const [editingId, setEditingId] = useState(null);
+  const [queueTab, setQueueTab] = useState('upcoming'); // 'upcoming' or 'history'
+  const [historyFilter, setHistoryFilter] = useState('all'); // 'all', 'sent', 'delivered', 'read'
+  const [showMenu, setShowMenu] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
+  const [usePairingCode, setUsePairingCode] = useState(() => window.innerWidth <= 768);
+  const [pairingCountryCode, setPairingCountryCode] = useState('91');
+  const [pairingPhone, setPairingPhone] = useState('');
+  const [pairingCode, setPairingCode] = useState(null);
+  const [pairingCodePhone, setPairingCodePhone] = useState('');
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [isContactSyncing, setIsContactSyncing] = useState(false);
+  const [contactSyncMessage, setContactSyncMessage] = useState('');
+  const [showMobileForm, setShowMobileForm] = useState(false);
+  const [formStep, setFormStep] = useState(1);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [is24Hour, setIs24Hour] = useState(false);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [showAiPrompt, setShowAiPrompt] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [hoveredSchedule, setHoveredSchedule] = useState(null);
+  const [editingSequenceId, setEditingSequenceId] = useState(null);
+  const [aiContext, setAiContext] = useState('');
+
+  const fetchIntegrations = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/integrations`);
+      setIntegrations(res.data || []);
+      const hasResend = (res.data || []).find(i => i.provider === 'resend');
+      if (hasResend) {
+        setEmailApiKey(hasResend.api_key || '');
+        setEmailFromAddress(hasResend.email_address || '');
+      }
+      // Keep showServiceSelector true by default so it shows the three cards on first glance
+      // setShowServiceSelector(!res.data || res.data.length === 0);
+    } catch (err) {
+      console.error('Failed to fetch integrations:', err.message);
+    }
+  };
+  const [selectedBroadcastContacts, setSelectedBroadcastContacts] = useState([]);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactSearch, setContactSearch] = useState('');
+
+  const applyConnectionStatus = (nextStatus) => {
+    if (shouldIgnoreOlderConnectionStatus(statusRef.current, nextStatus)) {
+      return statusRef.current;
+    }
+    statusRef.current = nextStatus;
+    setStatus(nextStatus);
+    return nextStatus;
+  };
+
+  const clearPairingCodeTimeout = () => {
+    if (!pairingCodeTimeoutRef.current) return;
+    clearTimeout(pairingCodeTimeoutRef.current);
+    pairingCodeTimeoutRef.current = null;
+  };
+
+  const getNormalizedPairingPhone = () => {
+    const rawPhone = pairingPhone.trim();
+    const countryCode = pairingCountryCode.replace(/\D/g, '') || '91';
+    const userIncludedCountryCode = rawPhone.startsWith('+') || rawPhone.startsWith('00');
+    let digits = rawPhone.replace(/\D/g, '');
+
+    if (rawPhone.startsWith('00')) digits = digits.replace(/^00/, '');
+
+    if (!userIncludedCountryCode) {
+      digits = digits.replace(/^0+/, '');
+      if (!digits.startsWith(countryCode)) {
+        digits = `${countryCode}${digits}`;
+      }
+    }
+
+    return digits;
+  };
+
+  // Drip Campaign States
+  const [channel, setChannel] = useState('whatsapp');
+  const [emailTo, setEmailTo] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [integrations, setIntegrations] = useState([]);
+  const [showServiceSelector, setShowServiceSelector] = useState(true);
+  const [showEmailConfig, setShowEmailConfig] = useState(false);
+  const [emailApiKey, setEmailApiKey] = useState('');
+  const [emailFromAddress, setEmailFromAddress] = useState('');
+  const [configSaving, setConfigSaving] = useState(false);
+
+  const [meetingTitle, setMeetingTitle] = useState('');
+  const [meetingPlatform, setMeetingPlatform] = useState('google_meet');
+  const [meetingDuration, setMeetingDuration] = useState(30);
+  const [meetingNotifyWhatsApp, setMeetingNotifyWhatsApp] = useState(true);
+  const [meetingNotifyEmail, setMeetingNotifyEmail] = useState(true);
+  const [meetingReminderTiming, setMeetingReminderTiming] = useState('24h');
+  const [personalMeetLink, setPersonalMeetLink] = useState(localStorage.getItem('personal_google_meet_link') || '');
+  const [personalZoomLink, setPersonalZoomLink] = useState(localStorage.getItem('personal_zoom_link') || '');
+
+  const [dripSequences, setDripSequences] = useState([]);
+  const [isCreatingSequence, setIsCreatingSequence] = useState(false);
+  const [newSequence, setNewSequence] = useState({
+    name: '',
+    trigger: 'manual',
+    triggerValue: '',
+    steps: [{ message: '', delay: 0, condition: 'none' }]
+  });
+
+  useEffect(() => {
+    // Reset editor states when switching tools or views to avoid getting stuck
+    setIsCreatingSequence(false);
+    setEditingSequenceId(null);
+    setNewSequence({
+      name: '',
+      trigger: 'manual',
+      triggerValue: '',
+      steps: [{ message: '', delay: 0, condition: 'none' }]
+    });
+  }, [currentBusinessTool, activeView]);
+
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (user.id) {
+      socket.emit('join', user.id);
+    }
+  }, [user.id]);
+
+  useEffect(() => {
+    fetchStatus();
+    fetchSchedules();
+    fetchContacts();
+    fetchGroups();
+    fetchReplies();
+    fetchIntegrations();
+
+    socket.on('status', (newStatus) => {
+      const appliedStatus = applyConnectionStatus(newStatus);
+      if (appliedStatus !== newStatus) return;
+      if (appliedStatus === 'connected') {
+        setQrCode(null);
+        setPairingCode(null);
+        setPairingLoading(false);
+        clearPairingCodeTimeout();
+        fetchContacts();
+      }
+      if (appliedStatus === 'qr-scanned' || appliedStatus === 'syncing') {
+        setQrCode(null); // Hide QR immediately
+        setPairingLoading(false);
+        clearPairingCodeTimeout();
+      }
+      if (appliedStatus === 'disconnected') setUserInfo(null);
+    });
+
+    socket.on('qr', (qr) => {
+      if (shouldIgnoreOlderConnectionStatus(statusRef.current, 'qr')) return;
+      setQrCode(qr);
+      applyConnectionStatus('qr');
+    });
+
+    socket.on('user-info', (info) => {
+      setUserInfo(info);
+      fetchContacts();
+    });
+
+    socket.on('schedules-updated', () => {
+      fetchSchedules();
+    });
+
+    socket.on('contacts-updated', () => {
+      fetchContacts();
+    });
+
+    socket.on('contacts-sync-ready', () => {
+      setContactSyncMessage('New WhatsApp contacts are ready to sync.');
+    });
+
+    socket.on('groups-updated', (newGroups) => {
+      setGroups(newGroups);
+    });
+
+    socket.on('pairing-code', (payload) => {
+      const code = typeof payload === 'string' ? payload : payload?.code;
+      const phone = typeof payload === 'string' ? getNormalizedPairingPhone() : payload?.phone;
+      setPairingCode(code);
+      setPairingCodePhone(phone || '');
+      setPairingLoading(false);
+      setUsePairingCode(true);
+      clearPairingCodeTimeout();
+    });
+
+    socket.on('error', (msg) => {
+      alert(msg);
+      setPairingLoading(false);
+      clearPairingCodeTimeout();
+    });
+
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.phone-input-container')) {
+        setShowSuggestions(false);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      socket.off('status');
+      socket.off('qr');
+      socket.off('user-info');
+      socket.off('schedules-updated');
+      socket.off('contacts-updated');
+      socket.off('contacts-sync-ready');
+      socket.off('groups-updated');
+      socket.off('pairing-code');
+      socket.off('error');
+      window.removeEventListener('mousedown', handleClickOutside);
+      clearPairingCodeTimeout();
+    };
+  }, [user.id]);
+
+  useEffect(() => {
+    const aiReply = autoReplies.find(r => r.keyword === '*' || r.keyword === '*DISABLED');
+    if (aiReply && !aiContext) {
+      setAiContext(aiReply.reply);
+    }
+  }, [autoReplies]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isRealPhoneNumber = (waId) => {
+    const value = String(waId || '');
+    const clean = value.replace(/\D/g, '');
+    return clean.length >= 7 && clean.length <= 15 && clean === value;
+  };
+
+  const getContactName = (waId) => {
+    return getContactDisplayName(contacts, waId);
+  };
+
+
+  const fetchContacts = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/contacts`);
+      setContacts(res.data || {});
+    } catch (err) {
+      console.error('Failed to fetch contacts:', err.message);
+    }
+  };
+
+  const handleSyncContacts = async () => {
+    if (status !== 'connected') {
+      alert('Connect WhatsApp before syncing contacts.');
+      return;
+    }
+
+    setIsContactSyncing(true);
+    setContactSyncMessage('Syncing saved WhatsApp contacts and photos...');
+
+    try {
+      const res = await axios.post(`${API_URL}/api/contacts/sync`);
+      await fetchContacts();
+      const synced = res.data?.contactsSynced || 0;
+      const photos = res.data?.photosSynced || 0;
+      const removed = res.data?.removedInvalid || 0;
+      const parts = [];
+      if (synced) parts.push(`${synced} contacts`);
+      if (photos) parts.push(`${photos} photos`);
+      if (removed) parts.push(`${removed} invalid entries cleaned`);
+      setContactSyncMessage(parts.length ? `Synced ${parts.join(', ')}.` : 'Contacts are already up to date.');
+    } catch (err) {
+      setContactSyncMessage('');
+      alert(err.response?.data?.error || 'Failed to sync contacts');
+    } finally {
+      setIsContactSyncing(false);
+    }
+  };
+
+
+
+
+
+  const fetchGroups = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/groups`);
+      setGroups(res.data);
+    } catch (err) {
+      console.error('Failed to fetch groups');
+    }
+  };
+
+  const fetchStatus = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/status`);
+      const nextStatus = res.data.status || 'disconnected';
+      const currentStatus = statusRef.current;
+      if (shouldIgnoreOlderConnectionStatus(currentStatus, nextStatus)) return;
+
+      applyConnectionStatus(nextStatus);
+      setQrCode(res.data.qr || null);
+      setUserInfo(res.data.userInfo || null);
+    } catch (err) {
+      applyConnectionStatus('disconnected');
+    }
+  };
+
+  const handleRequestPairingCode = () => {
+    const normalizedPhone = getNormalizedPairingPhone();
+    if (normalizedPhone.length < 7 || normalizedPhone.length > 15) {
+      alert('Please enter a valid phone number with country code');
+      return;
+    }
+    clearPairingCodeTimeout();
+    setUsePairingCode(true);
+    setPairingLoading(true);
+    setPairingCode(null);
+    setPairingCodePhone(normalizedPhone);
+    socket.emit('request-pairing-code', { userId: user.id, phone: pairingPhone, countryCode: pairingCountryCode });
+    pairingCodeTimeoutRef.current = setTimeout(() => {
+      setPairingLoading(false);
+      pairingCodeTimeoutRef.current = null;
+      alert('Pairing code took too long to generate. Please check the number and try again.');
+    }, 45000);
+  };
+
+  const handleCopyCode = () => {
+    if (pairingCode) {
+      navigator.clipboard.writeText(pairingCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    }
+  };
+
+  const handleAddRecipient = () => {
+    if (!formData.phone.trim()) return;
+
+    let clean = formData.phone.replace(/\D/g, '');
+    if (!formData.phone.includes('@g.us')) {
+      if (clean.length === 10) clean = `91${clean}`;
+    } else {
+      clean = formData.phone; // Group ID
+    }
+
+    if (clean && !selectedRecipients.includes(clean)) {
+      setSelectedRecipients([...selectedRecipients, clean]);
+      setFormData({ ...formData, phone: '' });
+      setShowSuggestions(false);
+    }
+  };
+
+  // Custom Input for DatePicker
+  const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
+    <button type="button" className="datepicker-custom-input" onClick={onClick} ref={ref}>
+      <Calendar size={18} />
+      {value}
+    </button>
+  ));
+
+  const fetchSchedules = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/schedules`);
+      const data = res.data || [];
+
+      // Functional update with equality check to prevent flickering
+      setSchedules(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+        return data;
+      });
+    } catch (err) {
+      console.error('Failed to fetch schedules:', err.message);
+    }
+  };
+
+  const handleGenerateAiMessage = async (customPrompt) => {
+    const promptToUse = customPrompt || aiPrompt;
+    if (!promptToUse.trim() && !formData.message.trim()) return;
+
+    setIsAiGenerating(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/ai/generate`, {
+        prompt: promptToUse,
+        context: formData.message
+      });
+      setFormData({ ...formData, message: res.data.text });
+      setShowAiPrompt(false);
+      setAiPrompt('');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to generate AI message');
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  const fetchReplies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('auto_replies')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setAutoReplies(data);
+    } catch (err) {
+      console.error('Failed to fetch auto-replies:', err.message);
+    }
+  };
+
+  const getFileCategory = (file) => {
+    if (file.type.startsWith('image/')) return 'images';
+    if (file.type.startsWith('video/')) return 'videos';
+    if (file.type.startsWith('audio/')) return 'audio';
+    return 'documents';
+  };
+
+  const fetchAutoReplies = async () => {
+    const { data, error } = await supabase.from('auto_replies').select('*');
+    if (!error) setAutoReplies(data);
+  };
+
+  const fetchSequences = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/drip/sequences`, {
+        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session.access_token}` }
+      });
+      const data = await response.json();
+      if (Array.isArray(data)) setDripSequences(data);
+    } catch (err) {
+      console.error('Failed to fetch sequences:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === 'business') {
+      fetchAutoReplies();
+      fetchSequences();
+    }
+  }, [activeView]);
+
+  const uploadFileToSupabase = async (file) => {
+    const category = getFileCategory(file);
+    const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const filePath = `${user.id}/${category}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('media')
+      .upload(filePath, file);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let mediaUrl = null;
+      let mediaType = null;
+
+      if (selectedFile) {
+        mediaUrl = await uploadFileToSupabase(selectedFile);
+        mediaType = selectedFile.type;
+      } else if (filePreview && filePreview.url && filePreview.url.startsWith('http')) {
+        mediaUrl = filePreview.url;
+        mediaType = filePreview.rawType;
+      }
+
+      const scheduledAt = scheduledDate.toISOString();
+      let finalRecurrence = formData.recurrence === 'custom'
+        ? `custom:${formData.customDays.sort().join(',')}`
+        : formData.recurrence;
+
+      if (channel === 'calendar') {
+        if (!meetingTitle.trim()) {
+          alert('Please fill in meeting title');
+          setLoading(false);
+          return;
+        }
+        const startTime = scheduledDate;
+        const endTime = new Date(startTime.getTime() + meetingDuration * 60000);
+        const userPhone = userInfo?.id || user?.phone || formData.phone || '';
+        const customLinkVal = meetingPlatform === 'custom' ? (formData.customLink || '') : '';
+        const meetingLink = generateMeetingLink(meetingPlatform, userPhone, customLinkVal, personalMeetLink, personalZoomLink);
+        const metadata = {
+          title: meetingTitle,
+          platform: meetingPlatform,
+          custom_link: customLinkVal,
+          meetingUrl: meetingLink,
+          duration: meetingDuration,
+          notify_whatsapp: meetingNotifyWhatsApp,
+          notify_email: meetingNotifyEmail,
+          reminder_timing: meetingReminderTiming,
+          end_time: endTime.toISOString()
+        };
+        const platformLabel = { google_meet: 'Google Meet', zoom: 'Zoom Call', whatsapp_call: 'WhatsApp Call', phone: 'Phone Call', custom: 'Online Call' }[meetingPlatform] || 'Online Call';
+        const defaultMessage = formData.message || `You're invited to: ${meetingTitle}
+Date & Time: ${format(startTime, 'MMMM d, yyyy h:mm aa')}
+Platform: ${platformLabel}
+Join Link: ${meetingLink}
+
+Looking forward to connecting!`;
+        const recipientPhone = formData.phone?.trim() || (formData.emailTo?.trim() ? formData.emailTo.trim() : 'Client Meeting');
+        const scheduleData = {
+          phone: recipientPhone,
+          emailTo: formData.emailTo?.trim() || null,
+          message: defaultMessage,
+          scheduledAt: startTime.toISOString(),
+          recurrence: 'none',
+          channel: 'calendar',
+          metadata
+        };
+        if (editingId) {
+          await axios.put(`${API_URL}/api/schedules/${editingId}`, scheduleData);
+          setEditingId(null);
+        } else {
+          await axios.post(`${API_URL}/api/schedules`, scheduleData);
+        }
+        setMeetingTitle('');
+        setMeetingPlatform('google_meet');
+        setMeetingDuration(30);
+        setMeetingNotifyWhatsApp(true);
+        setMeetingNotifyEmail(true);
+        setMeetingReminderTiming('24h');
+        setFormData({ phone: '', message: '', recurrence: 'none', customDays: [], customLink: '' });
+        setScheduledDate(new Date());
+        setSelectedFile(null);
+        setFilePreview(null);
+        setSidebarStep(1);
+        fetchSchedules();
+        setLoading(false);
+        return;
+      }
+
+      if (channel === 'email') {
+        const targetEmail = (formData.emailTo || emailTo || '').trim();
+        const targetSubject = (formData.emailSubject || emailSubject || '').trim();
+        if (!targetEmail || !targetSubject) {
+          alert('Please fill in email recipient and subject');
+          setLoading(false);
+          return;
+        }
+        const scheduleData = {
+          phones: [targetEmail],
+          message: formData.message,
+          scheduledAt,
+          recurrence: finalRecurrence,
+          channel: 'email',
+          emailTo: targetEmail,
+          emailSubject: targetSubject
+        };
+
+        if (editingId) {
+          await axios.put(`${API_URL}/api/schedules/${editingId}`, {
+            phone: targetEmail,
+            message: formData.message,
+            scheduledAt,
+            recurrence: finalRecurrence,
+            channel: 'email',
+            emailTo: targetEmail,
+            emailSubject: targetSubject
+          });
+          setEditingId(null);
+        } else {
+          await axios.post(`${API_URL}/api/schedules`, scheduleData);
+        }
+
+        setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
+        setSelectedRecipients([]);
+        setEmailTo('');
+        setEmailSubject('');
+        setScheduledDate(new Date());
+        setSelectedFile(null);
+        setFilePreview(null);
+        setSidebarStep(1);
+        fetchSchedules();
+        setLoading(false);
+        return;
+      }
+
+      let cleanPhone = formData.phone.replace(/\D/g, '');
+      let finalPhone = cleanPhone;
+
+      if (!formData.phone.includes('@g.us')) {
+        if (cleanPhone.length === 10) finalPhone = `91${cleanPhone}`;
+        else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) finalPhone = cleanPhone;
+      } else {
+        finalPhone = formData.phone;
+      }
+
+      // Handle multiple recipients
+      const recipientsToProcess = [...selectedRecipients];
+      // Add current typing phone if it's valid and not already in list
+      if (formData.phone.trim()) {
+        let clean = formData.phone.replace(/\D/g, '');
+        if (!formData.phone.includes('@g.us')) {
+          if (clean.length === 10) clean = `91${clean}`;
+        }
+        if (!recipientsToProcess.includes(clean)) recipientsToProcess.push(clean);
+      }
+
+      if (recipientsToProcess.length === 0) {
+        alert('Please add at least one recipient');
+        setLoading(false);
+        return;
+      }
+
+      const scheduleData = {
+        phones: recipientsToProcess,
+        message: formData.message,
+        scheduledAt: scheduledAt,
+        recurrence: finalRecurrence,
+        mediaUrl: mediaUrl,
+        mediaType: mediaType || (selectedFile ? selectedFile.type : null),
+        isVoiceNote: isVoiceNote,
+        channel: 'whatsapp'
+      };
+
+      if (editingId) {
+        // Editing still handles single record for now
+        await axios.put(`${API_URL}/api/schedules/${editingId}`, {
+          phone: recipientsToProcess[0],
+          message: formData.message,
+          scheduledAt,
+          recurrence: finalRecurrence,
+          mediaUrl: mediaUrl || null,
+          mediaType: mediaType || null,
+          status: 'pending',
+          channel: 'whatsapp'
+        });
+        setEditingId(null);
+      } else {
+        await axios.post(`${API_URL}/api/schedules`, scheduleData);
+      }
+
+      setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
+      setSelectedRecipients([]);
+      setScheduledDate(new Date());
+      setSelectedFile(null);
+      setFilePreview(null);
+      setIsVoiceNote(false);
+      setSidebarStep(1);
+      fetchSchedules();
+    } catch (err) {
+      alert('Failed to save message: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileChange = (e, asVoiceNote = false) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 16 * 1024 * 1024) {
+      alert('File size exceeds 16MB limit');
+      return;
+    }
+
+    setSelectedFile(file);
+    setIsVoiceNote(asVoiceNote);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => setFilePreview({ type: 'image', url: reader.result });
+      reader.readAsDataURL(file);
+    } else if (file.type.startsWith('video/')) {
+      setFilePreview({ type: 'video', url: URL.createObjectURL(file) });
+    } else if (file.type.startsWith('audio/')) {
+      setFilePreview({ type: 'audio', name: file.name });
+    } else {
+      setFilePreview({ type: 'file', name: file.name });
+    }
+  };
+
+  const handleDisconnectWhatsApp = () => {
+    setShowDisconnectModal(true);
+  };
+
+  const confirmDisconnect = async () => {
+    setShowDisconnectModal(false);
+    try {
+      await axios.post(`${API_URL}/api/logout`);
+      setUserInfo(null);
+      setQrCode(null);
+      setPairingCode(null);
+      setPairingCodePhone('');
+      setPairingLoading(false);
+      applyConnectionStatus('disconnected');
+      setUsePairingCode(isMobile);
+      socket.emit('join', user.id);
+    } catch (err) {
+      console.error('Disconnect failed:', err);
+    }
+  };
+
+  const handleSignOut = () => {
+    setShowSignOutModal(true);
+  };
+
+  const confirmSignOut = async () => {
+    setShowSignOutModal(false);
+    try {
+      // Just sign out of Supabase and clear local session
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/');
+    }
+  };
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [newContactName, setNewContactName] = useState('');
+
+  const handleSaveContact = async () => {
+    if (!formData.phone || formData.phone.length < 10) {
+      alert('Please enter a valid 10-digit number first');
+      return;
+    }
+    setShowSaveModal(true);
+  };
+
+  const submitSaveContact = async () => {
+    if (!newContactName) return;
+
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .upsert({
+          user_id: user.id,
+          wa_id: formData.phone,
+          name: newContactName
+        }, { onConflict: 'user_id,wa_id' });
+
+      if (error) throw error;
+
+      fetchContacts();
+      setShowSaveModal(false);
+      setNewContactName('');
+    } catch (err) {
+      alert('Failed to save contact');
+    }
+  };
+
+  const deleteSchedule = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/schedules/${id}`);
+      fetchSchedules();
+    } catch (err) {
+      alert('Failed to delete schedule');
+    }
+  };
+
+  const handleClearHistory = () => {
+    setShowClearHistoryModal(true);
+  };
+
+  const confirmClearHistory = async () => {
+    setShowClearHistoryModal(false);
+    try {
+      await axios.delete(`${API_URL}/api/schedules/history`);
+      fetchSchedules();
+    } catch (err) {
+      alert('Failed to clear history');
+    }
+  };
+
+  const handleEdit = (schedule) => {
+    const isCustom = schedule.recurrence && schedule.recurrence.startsWith('custom:');
+    setFormData({
+      phone: schedule.phone.startsWith('91') ? schedule.phone.slice(2) : schedule.phone,
+      message: schedule.message,
+      recurrence: schedule.recurrence || 'none',
+      customDays: isCustom ? schedule.recurrence.split(':')[1].split(',').map(Number) : []
+    });
+    setScheduledDate(new Date(schedule.scheduled_at));
+    setEditingId(schedule.id);
+
+    // Populate media preview if exists
+    const mUrl = schedule.media_url || schedule.mediaUrl;
+    if (mUrl) {
+      const mType = schedule.media_type || schedule.mediaType || '';
+      let type = 'file';
+      if (mType.startsWith('image/')) type = 'image';
+      else if (mType.startsWith('video/')) type = 'video';
+      else if (mType.startsWith('audio/')) type = 'audio';
+
+      setFilePreview({
+        url: mUrl,
+        type: type,
+        name: 'Existing Attachment',
+        rawType: mType
+      });
+      setIsVoiceNote(schedule.is_voice_note || schedule.isVoiceNote || false);
+      setSelectedFile(null); // It's an existing file, not a new upload yet
+    } else {
+      setFilePreview(null);
+      setSelectedFile(null);
+      setIsVoiceNote(false);
+    }
+
+    document.querySelector('.sidebar').scrollTop = 0;
+    setSidebarStep(1);
+    if (isMobile) setShowMobileForm(true);
+  };
+
+  const handleCalendarEventDrop = async (id, newDate) => {
+    try {
+      await axios.patch(`${API_URL}/api/schedules/${id}`, { scheduledAt: newDate, status: 'pending' });
+      fetchSchedules();
+    } catch (err) {
+      alert('Failed to reschedule: ' + err.message);
+    }
+  };
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase
+        .from('auto_replies')
+        .insert({
+          user_id: user.id,
+          keyword: replyFormData.keyword,
+          reply: replyFormData.reply
+        });
+
+      if (error) throw error;
+
+      setReplyFormData({ keyword: '', reply: '' });
+      fetchReplies();
+    } catch (err) {
+      alert('Failed to save auto-reply');
+    }
+  };
+
+
+  const handleRetryFailed = async () => {
+    try {
+      await axios.post(`${API_URL}/api/bulk/retry-failed`);
+      fetchSchedules();
+      setShowMenu(false);
+    } catch (err) {
+      alert('Failed to retry messages');
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'To', 'Message', 'Scheduled At', 'Status', 'Recurrence'];
+    const rows = schedules.map(s => [
+      s.id,
+      s.phone,
+      s.message.replace(/,/g, ' '),
+      s.scheduled_at || s.scheduledAt,
+      s.status,
+      s.recurrence || 'none'
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + headers.join(",") + "\n"
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `lateron_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    setShowMenu(false);
+  };
+
+  const deleteReply = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/replies/${id}`);
+      fetchReplies();
+    } catch (err) {
+      alert('Failed to delete auto-reply');
+    }
+  };
+
+  return (
+    <div className={`dashboard-container channel-${channel}`}>
+      <div className="right-channel-dock">
+        <button
+          className={`channel-strip ${channel === 'whatsapp' ? 'active' : ''}`}
+          style={{ '--strip-accent': '#25d366' }}
+          onClick={() => { setChannel('whatsapp'); }}
+        >
+          <span className="strip-label">WhatsApp</span>
+          <span className="strip-icon"><WhatsAppIcon size={18} color="#25D366" /></span>
+        </button>
+        <button
+          className={`channel-strip ${channel === 'email' ? 'active' : ''}`}
+          style={{ '--strip-accent': '#ea4335' }}
+          onClick={() => { setChannel('email'); setActiveView('scheduler'); }}
+        >
+          <span className="strip-label">Email</span>
+          <span className="strip-icon"><Mail size={18} /></span>
+        </button>
+        <button
+          className={`channel-strip ${channel === 'calendar' ? 'active' : ''}`}
+          style={{ '--strip-accent': '#4285f4' }}
+          onClick={() => { setChannel('calendar'); setActiveView('scheduler'); }}
+        >
+          <span className="strip-label">Meetings</span>
+          <span className="strip-icon"><Calendar size={18} /></span>
+        </button>
+      </div>
+      <div className="brand-tagline">Messages, Scheduled.</div>
+      <div className="app-wrapper">
+        {/* Left Sidebar */}
+        <aside className="sidebar">
+          <header className="header">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h1 style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: '1.5rem',
+                fontWeight: 800,
+                color: 'var(--text)',
+                letterSpacing: '1px',
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'baseline'
+              }}>
+                <span style={{ color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), transition: 'color 0.3s' }}>Later</span>
+                <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>On</span>
+              </h1>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {!showServiceSelector && (
+                <button
+                  className="btn-icon"
+                  onClick={() => {
+                    setShowServiceSelector(true);
+                    setSidebarStep(1);
+                  }}
+                  title="Switch Service / Channel"
+                >
+                  <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
+                </button>
+              )}
+              {!showServiceSelector && channel === 'whatsapp' && (
+                <button
+                  className={`btn-icon ${activeView === 'business' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler');
+                    setCurrentBusinessTool(null);
+                    setSidebarStep(1);
+                  }}
+                  title={activeView === 'scheduler' ? "Switch to Business Tools" : "Switch to LaterOn"}
+                >
+                  {activeView === 'scheduler' ? <WABusinessIcon size={22} /> : <Calendar size={20} color="var(--primary-dark)" />}
+                </button>
+              )}
+
+              {!showServiceSelector && channel === 'whatsapp' && (
+                <button className="btn-icon" onClick={fetchStatus} title="Refresh Connection Status">
+                  <RefreshCcw size={18} color={status === 'connected' ? '#25d366' : '#667781'} />
+                </button>
+              )}
+            </div>
+          </header>
+
+          {/* Connection & Form Area */}
+          <div className="sidebar-form-container" style={{
+            flex: 1,
+            display: (isMobile && !showServiceSelector && (channel !== 'whatsapp' || status === 'connected')) ? 'none' : 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto'
+          }}>
+            {hoveredSchedule ? (
+              <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  style={{
+                    background: 'white',
+                    padding: '24px',
+                    borderRadius: '0px',
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a73e8' }}>
+                      <MessageSquare size={20} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 2px 0' }}>Message Details</h3>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Quick Preview</p>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '16px',
+                    border: '1px solid var(--border)',
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}>
+                    {hoveredSchedule.message}
+                  </div>
+
+                  {(hoveredSchedule.media_url || hoveredSchedule.mediaUrl) && (
+                    <div style={{ border: '1px solid var(--border)', overflow: 'hidden', maxHeight: '150px' }}>
+                      {(hoveredSchedule.media_type || hoveredSchedule.mediaType)?.startsWith('image/') ? (
+                        <img src={hoveredSchedule.media_url || hoveredSchedule.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block' }} />
+                      ) : (hoveredSchedule.media_type || hoveredSchedule.mediaType)?.startsWith('video/') ? (
+                        <video src={hoveredSchedule.media_url || hoveredSchedule.mediaUrl} style={{ width: '100%', display: 'block' }} />
+                      ) : (
+                        <div style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          <Paperclip size={14} />
+                          <span>Attachment</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-main)', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <User size={14} color="var(--text-muted)" />
+                      <span style={{ fontWeight: 700 }}>{getContactName(hoveredSchedule.phone)}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Calendar size={14} color="var(--text-muted)" />
+                      <span>{format(new Date(hoveredSchedule.scheduled_at || hoveredSchedule.scheduledAt), 'PPp')}</span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: 700,
+                      color: hoveredSchedule.status === 'pending' ? 'var(--primary-dark)' : 'var(--text-muted)'
+                    }}>
+                      <Zap size={14} />
+                      <span>Status: {hoveredSchedule.status}</span>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '4px 0 0 0', textAlign: 'center' }}>
+                    Click to edit this message
+                  </p>
+                </motion.div>
+              </div>
+            ) : showServiceSelector ? (
+              <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', color: 'var(--text)', margin: '0 0 6px 0' }}>
+                    Welcome
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Choose the channels you want to automate:
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                  {/* WhatsApp Card */}
+                  <div style={{
+                    padding: '20px',
+                    border: channel === 'whatsapp' ? '2px solid #25d366' : '1px solid var(--border)',
+                    background: channel === 'whatsapp' ? '#f0fff4' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => { setChannel('whatsapp'); }}
+                    onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', background: '#25d366', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <WhatsAppIcon size={22} color="white" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#1a5c3e' }}>WhatsApp</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#4a7c62', margin: 0 }}>
+                          {userInfo ? 'Connected' : 'Connect QR / Pairing Code'}
+                        </p>
+                      </div>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {userInfo ? (
+                          <Check size={20} color="#25d366" />
+                        ) : (
+                          <Plus size={20} color="#94a3b8" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Email Card */}
+                  <div style={{
+                    padding: '20px',
+                    border: channel === 'email' ? '2px solid #ea4335' : '1px solid var(--border)',
+                    background: channel === 'email' ? '#fdf2f2' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => { setChannel('email'); }}
+                    onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', background: '#ea4335', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Mail size={22} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#b91c1c' }}>Email</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#dc2626', margin: 0 }}>
+                          Connected
+                        </p>
+                      </div>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Check size={20} color="#ea4335" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Google Calendar Card */}
+                  <div style={{
+                    padding: '20px',
+                    border: channel === 'calendar' ? '2px solid #1a73e8' : '1px solid var(--border)',
+                    background: channel === 'calendar' ? '#e8f0fe' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => { setChannel('calendar'); }}
+                    onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', background: '#1a73e8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Calendar size={22} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#174ea6' }}>Meetings</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#1a73e8', margin: 0 }}>
+                          {integrations.some(i => i.provider === 'gmail_oauth') ? 'Connected' : 'Configure Google Meet'}
+                        </p>
+                      </div>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {integrations.some(i => i.provider === 'gmail_oauth') ? (
+                          <Check size={20} color="#1a73e8" />
+                        ) : (
+                          <Plus size={20} color="#94a3b8" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowServiceSelector(false)}
+                  className="btn-primary"
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    marginTop: '16px',
+                    borderRadius: '0px',
+                    fontWeight: 800,
+                    border: 'none',
+                    color: 'white',
+                    cursor: 'pointer',
+                    background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366'),
+                    boxShadow: channel === 'email' ? '0 4px 12px rgba(234,67,53,0.2)' : (channel === 'calendar' ? '0 4px 12px rgba(26,115,230,0.2)' : '0 4px 12px rgba(37,211,102,0.2)'),
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Continue with {channel === 'email' ? 'Email' : (channel === 'calendar' ? 'Meetings' : 'WhatsApp')} &rarr;
+                </button>
+              </div>
+            ) : (channel === 'whatsapp' && !userInfo && status !== 'connected') ? (
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px 20px',
+                textAlign: 'center'
+              }}>
+                {((status === 'qr' && qrCode) || (['connecting', 'disconnected', 'qr'].includes(status) && (usePairingCode || pairingLoading || pairingCode))) ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px' }}>Link your WhatsApp</h3>
+
+                    {!usePairingCode ? (
+                      <>
+                        <div style={{
+                          background: 'white',
+                          padding: '24px',
+                          borderRadius: '0px',
+                          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                          marginBottom: '24px',
+                          display: 'inline-block',
+                          border: '1px solid var(--border)'
+                        }}>
+                          <img src={qrCode} alt="QR" style={{ width: '220px', height: '220px', display: 'block' }} />
+                        </div>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '20px' }}>
+                          Open WhatsApp on your phone,<br />
+                          tap Menu or Settings and select<br />
+                          <strong>Linked Devices</strong>.
+                        </p>
+                      </>
+                    ) : (
+                      <div style={{ marginBottom: '24px', width: '100%', maxWidth: '280px', margin: '0 auto 24px' }}>
+                        {!pairingCode ? (
+                          <div style={{ background: 'white', padding: '24px', borderRadius: '0px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', display: 'block', textAlign: 'left', marginBottom: '8px' }}>ENTER PHONE NUMBER</label>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', background: '#f0f2f5', borderRadius: '0px', border: '1px solid var(--border)', padding: '0 8px', minWidth: '76px' }}>
+                                <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: '0.9rem' }}>+</span>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={pairingCountryCode}
+                                  onChange={e => setPairingCountryCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                  style={{ width: '42px', border: 'none', background: 'transparent', outline: 'none', fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)' }}
+                                  aria-label="Country code"
+                                />
+                              </div>
+                              <input
+                                type="text"
+                                inputMode="tel"
+                                placeholder="Phone number"
+                                value={pairingPhone}
+                                onChange={e => setPairingPhone(e.target.value)}
+                                style={{ flex: 1, padding: '10px', borderRadius: '0px', border: '1px solid var(--border)', outline: 'none' }}
+                              />
+                            </div>
+                            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'left', margin: '-8px 0 16px', lineHeight: '1.4' }}>
+                              Use the same country code and phone number as your WhatsApp account.
+                            </p>
+                            <button
+                              onClick={handleRequestPairingCode}
+                              disabled={pairingLoading}
+                              className="btn-primary"
+                              style={{ width: '100%', padding: '12px', borderRadius: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                            >
+                              {pairingLoading ? <RefreshCcw size={16} className="spin" /> : <Zap size={16} />}
+                              {pairingLoading ? 'Generating...' : 'Get Pairing Code'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ background: 'white', padding: '24px', borderRadius: '0px', border: '2px solid var(--primary)', boxShadow: '0 8px 30px rgba(37, 211, 102, 0.15)' }}>
+                            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '12px' }}>YOUR PAIRING CODE</p>
+                            {pairingCodePhone && (
+                              <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                                For WhatsApp number <strong style={{ color: 'var(--text)' }}>+{pairingCodePhone}</strong>
+                              </p>
+                            )}
+                            <div
+                              onClick={handleCopyCode}
+                              style={{
+                                fontSize: '2rem',
+                                fontWeight: 900,
+                                letterSpacing: '4px',
+                                color: 'var(--primary-dark)',
+                                fontFamily: 'monospace',
+                                background: '#f0fff4',
+                                padding: '16px',
+                                borderRadius: '0px',
+                                border: '1px dashed var(--primary)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                position: 'relative'
+                              }}
+                              title="Click to copy"
+                            >
+                              {pairingCode}
+                              {codeCopied && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '-12px',
+                                  right: '-12px',
+                                  background: 'var(--text)',
+                                  color: 'white',
+                                  fontSize: '0.6rem',
+                                  padding: '4px 8px',
+                                  borderRadius: '0px',
+                                  letterSpacing: 'normal',
+                                  fontWeight: 600
+                                }}>
+                                  Copied!
+                                </div>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '16px', lineHeight: '1.4' }}>
+                              Open WhatsApp &rarr; Linked Devices &rarr; <strong>Link with Phone Number</strong> and enter this code.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setUsePairingCode(!usePairingCode)}
+                      style={{ background: 'none', border: 'none', color: 'var(--primary-dark)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 auto' }}
+                    >
+                      {usePairingCode ? <QrCode size={16} /> : <Phone size={16} />}
+                      {usePairingCode ? 'Switch to QR Code' : 'Link with Phone Number'}
+                    </button>
+                  </motion.div>
+
+                ) : (status === 'qr-scanned' || status === 'syncing') ? (
+                  <motion.div
+                    key="qr-scanned"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="wa-linking-panel"
+                  >
+                    <div className="wa-connection-stage" aria-hidden="true">
+                      <div className="wa-device-node">
+                        <Phone size={24} strokeWidth={2.2} />
+                      </div>
+
+                      <div className="wa-signal-track">
+                        <span className="wa-signal-line" />
+                        <span className="wa-signal-packet packet-one" />
+                        <span className="wa-signal-packet packet-two" />
+                      </div>
+
+                      <div className="wa-whatsapp-node">
+                        <div className="wa-node-glow" />
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 2C6.477 2 2 6.477 2 12c0 1.825.484 3.537 1.332 5.011L2 22l5.126-1.332A9.956 9.956 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="white" opacity="0.3" />
+                          <path d="M17 14.5c-.3-.15-1.76-.87-2.03-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.07a8.18 8.18 0 01-2.4-1.48 9.02 9.02 0 01-1.66-2.07c-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.64-.93-2.25-.24-.59-.49-.51-.68-.52l-.57-.01c-.2 0-.52.07-.79.37-.28.3-1.05 1.02-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.54.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.34z" fill="white" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="wa-linking-copy">
+                      <h3>
+                        {status === 'syncing' ? 'Syncing WhatsApp...' : 'Connecting to WhatsApp...'}
+                      </h3>
+                      <p>
+                        {status === 'syncing'
+                          ? 'Finalising secure WhatsApp session.'
+                          : 'QR scanned. Securing the session.'}
+                      </p>
+                    </div>
+
+                    <div className="wa-linking-steps">
+                      <div className="wa-linking-step is-complete">
+                        <Check size={12} strokeWidth={3} />
+                        <span>Scanned</span>
+                      </div>
+                      <div className={`wa-linking-step ${status === 'syncing' ? 'is-complete' : 'is-active'}`}>
+                        {status === 'syncing' ? <Check size={12} strokeWidth={3} /> : <span className="wa-step-spinner" />}
+                        <span>Authorising</span>
+                      </div>
+                      <div className={`wa-linking-step ${status === 'syncing' ? 'is-active' : ''}`}>
+                        <span className={status === 'syncing' ? 'wa-step-spinner' : 'wa-step-dot'} />
+                        <span>Syncing</span>
+                      </div>
+                    </div>
+
+                    <div className="wa-secure-chip">
+                      <span className="wa-secure-orbit" aria-hidden="true" />
+                      <span>{status === 'syncing' ? 'Syncing encrypted data' : 'Establishing secure link'}</span>
+                      <span className="wa-secure-bars" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    </div>
+                  </motion.div>
+
+                ) : (status === 'connecting' || (status === 'qr' && !qrCode)) ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                    <div className="loader"></div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Starting encrypted session...</p>
+                  </div>
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    <WifiOff size={40} color="#ef4444" style={{ marginBottom: '12px' }} />
+                    <h4 style={{ fontWeight: 700 }}>Connection Lost</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Reconnecting to WhatsApp server...</p>
+                    <button onClick={fetchStatus} className="btn-primary" style={{ padding: '8px 20px', borderRadius: '0px' }}>Retry Now</button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* User Connected Profile Strip */}
+                <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : '#f8fafc'), display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '0px',
+                    background: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : (status === 'connected' ? 'var(--primary)' : '#e2e8f0')),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    overflow: 'hidden'
+                  }}>
+                    {channel === 'email' ? (
+                      <Mail size={18} />
+                    ) : channel === 'calendar' ? (
+                      <Calendar size={18} />
+                    ) : status === 'connected' ? (
+                      userInfo?.photo ? (
+                        <img src={userInfo.photo} alt={userInfo.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Check size={18} strokeWidth={3} />
+                      )
+                    ) : (
+                      <RefreshCcw size={16} className="spin" />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {channel === 'email' ? (user?.name || 'Email Service') : channel === 'calendar' ? 'Meetings' : (userInfo?.name || 'Active Account')}
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {channel === 'email'
+                        ? (user?.email || 'notifications@lateron.in')
+                        : channel === 'calendar'
+                          ? 'Event Sync Active'
+                          : (status === 'connected' ? `+${userInfo?.id}` : 'Reconnecting...')}
+                    </p>
+                  </div>
+                  {channel === 'email' ? (
+                    <button
+                      onClick={() => setShowEmailConfig(true)}
+                      style={{
+                        height: '32px',
+                        padding: '0 10px',
+                        border: '1px solid #f8d7da',
+                        background: 'white',
+                        color: '#a52a2a',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        borderRadius: '0px'
+                      }}
+                    >
+                      <Mail size={14} />
+                      Settings
+                    </button>
+                  ) : status === 'connected' && channel === 'whatsapp' && (
+                    <button
+                      onClick={handleSyncContacts}
+                      disabled={isContactSyncing}
+                      title="Sync WhatsApp contacts"
+                      style={{
+                        height: '32px',
+                        padding: '0 10px',
+                        border: '1px solid var(--border)',
+                        background: 'white',
+                        color: isContactSyncing ? 'var(--primary)' : 'var(--text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: isContactSyncing ? 'wait' : 'pointer',
+                        flexShrink: 0,
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        borderRadius: '0px'
+                      }}
+                    >
+                      <RefreshCcw size={15} className={isContactSyncing ? 'spin' : ''} />
+                      Sync
+                    </button>
+                  )}
+                  {channel === 'whatsapp' && status !== 'connected' && (
+                    <div className="pulse" style={{ width: '8px', height: '8px', background: '#eab308', borderRadius: '50%', position: 'absolute', top: '12px', right: '12px' }} />
+                  )}
+                </div>
+
+                <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+                  {status === 'connected' && contactSyncMessage && (
+                    <div style={{ marginBottom: '16px', padding: '10px 12px', border: '1px solid #dbe7e2', background: '#f6fbf8', color: '#42645a', fontSize: '0.75rem', lineHeight: 1.4, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {isContactSyncing ? <RefreshCcw size={14} className="spin" /> : <CheckCircle2 size={14} color="var(--primary-dark)" />}
+                      <span>{contactSyncMessage}</span>
+                    </div>
+                  )}
+                  {activeView === 'scheduler' ? (
+                    <>
+                      {hoveredSchedule ? (
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          style={{
+                            background: 'white',
+                            padding: '24px',
+                            borderRadius: '0px',
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                            marginBottom: '20px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '0px',
+                              background: '#e7f3ff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#0057b7'
+                            }}>
+                              <MessageSquare size={20} />
+                            </div>
+                            <div>
+                              <h4 style={{ fontWeight: 700, fontSize: '1rem' }}>Message Details</h4>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Quick Preview</p>
+                            </div>
+                          </div>
+
+                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '0px', marginBottom: '16px' }}>
+                            <p style={{ fontSize: '0.85rem', color: '#111b21', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                              {hoveredSchedule.message}
+                            </p>
+
+                            {(hoveredSchedule.media_url || hoveredSchedule.mediaUrl) && (
+                              <div style={{ marginTop: '12px', borderRadius: '0px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                {(hoveredSchedule.media_type || hoveredSchedule.mediaType)?.startsWith('image/') ? (
+                                  <img src={hoveredSchedule.media_url || hoveredSchedule.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block' }} />
+                                ) : (hoveredSchedule.media_type || hoveredSchedule.mediaType)?.startsWith('video/') ? (
+                                  <video src={hoveredSchedule.media_url || hoveredSchedule.mediaUrl} style={{ width: '100%', display: 'block' }} />
+                                ) : (
+                                  <div style={{ padding: '10px', background: 'white', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
+                                    <FileIcon size={16} /> Document Attachment
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Phone size={14} color="var(--text-muted)" />
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {getContactName(hoveredSchedule.phone)}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Clock size={14} color="var(--text-muted)" />
+                              <span style={{ fontSize: '0.85rem' }}>
+                                {format(new Date(hoveredSchedule.scheduled_at || hoveredSchedule.scheduledAt), 'PPp')}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Zap size={14} color="var(--text-muted)" />
+                              <span style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                color: hoveredSchedule.status === 'pending' ? 'var(--primary-dark)' : 'var(--text-muted)'
+                              }}>
+                                Status: {hoveredSchedule.status}
+                              </span>
+                            </div>
+                          </div>
+
+                          <p style={{ marginTop: '20px', fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            Click to edit this message
+                          </p>
+                        </motion.div>
+                      ) : null}
+
+                      <form onSubmit={handleSubmit} style={{ display: hoveredSchedule ? 'none' : 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
+                        {/* Desktop Step Indicator */}
+                        {!isMobile && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '20px',
+                            background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : '#f8fafc'),
+                            padding: '10px 16px',
+                            borderRadius: '0px',
+                            border: '1px solid var(--border)'
+                          }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), textTransform: 'uppercase' }}>
+                              {channel === 'calendar'
+                                ? (sidebarStep === 1 ? '1. Recipient Details' : sidebarStep === 2 ? '2. Meeting Settings' : '3. Preview & Confirm')
+                                : (sidebarStep === 1 ? '1. Scheduling' : '2. Message')}
+                            </span>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 1 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
+                              <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 2 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
+                              {channel === 'calendar' && (
+                                <div style={{ width: '16px', height: '4px', borderRadius: '0px', background: sidebarStep >= 3 ? '#1a73e8' : 'var(--border)' }} />
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <AnimatePresence mode="wait">
+                          {sidebarStep === 1 ? (
+                            <motion.div
+                              key="sidebar-step-1"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 10 }}
+                            >
+                              {channel === 'calendar' ? (
+                                <>
+                                  <div className="input-group phone-input-container">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT CONTACT (WHATSAPP)</label>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <div style={{
+                                        padding: '12px 16px',
+                                        background: '#f0f2f5',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0px',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600,
+                                        color: '#54656f',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                      }}>
+                                        +91
+                                      </div>
+                                      <div style={{
+                                        position: 'relative',
+                                        flex: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        background: 'white',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0px',
+                                        padding: '0 12px',
+                                        gap: '8px',
+                                        transition: 'border-color 0.2s',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                      }}
+                                        onFocusCapture={(e) => e.currentTarget.style.borderColor = '#1a73e8'}
+                                        onBlurCapture={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                                      >
+                                        <Phone size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+
+                                        {(getContactName(formData.phone) !== formatPhone(formData.phone) || groups[formData.phone]) && (
+                                          <div style={{
+                                            background: groups[formData.phone] ? '#e8f0fe' : '#e8f0fe',
+                                            color: '#1a73e8',
+                                            padding: '2px 8px',
+                                            borderRadius: '0px',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 700,
+                                            whiteSpace: 'nowrap',
+                                            flexShrink: 0
+                                          }}>
+                                            {groups[formData.phone] || getContactName(formData.phone)}
+                                          </div>
+                                        )}
+
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. 9122500000"
+                                          style={{
+                                            border: 'none',
+                                            padding: '12px 0',
+                                            background: 'transparent',
+                                            width: '100%',
+                                            outline: 'none',
+                                            boxShadow: 'none',
+                                            fontSize: '1rem',
+                                            WebkitAppearance: 'none'
+                                          }}
+                                          value={formData.phone}
+                                          onFocus={() => setShowSuggestions(true)}
+                                          onChange={e => {
+                                            const val = e.target.value;
+                                            setFormData({ ...formData, phone: val });
+                                            setShowSuggestions(true);
+                                          }}
+                                        />
+
+                                        {showSuggestions && (
+                                          <div style={{
+                                            position: 'absolute',
+                                            top: '105%',
+                                            left: 0,
+                                            right: 0,
+                                            background: 'white',
+                                            borderRadius: '0px',
+                                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                            zIndex: 100,
+                                            maxHeight: '250px',
+                                            overflowY: 'auto',
+                                            border: '1px solid var(--border)'
+                                          }}>
+                                            {schedules.length > 0 && (
+                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>RECENT</div>
+                                            )}
+                                            {[...new Set(schedules.map(s => s.phone))].slice(0, 3).map(num => (
+                                              <div
+                                                key={num}
+                                                onClick={() => {
+                                                  setFormData({ ...formData, phone: num.startsWith('91') ? num.slice(2) : num });
+                                                  setShowSuggestions(false);
+                                                }}
+                                                style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f0f2f5', fontSize: '0.9rem' }}
+                                                onMouseDown={e => e.preventDefault()}
+                                              >
+                                                <p style={{ fontWeight: 600 }}>{getContactName(num.startsWith('91') ? num.slice(2) : num)}</p>
+                                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatPhone(num)}</p>
+                                              </div>
+                                            ))}
+
+                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
+                                            {Object.entries(contacts)
+                                              .filter(([id, contact]) => {
+                                                if (!isRealPhoneNumber(id)) return false;
+                                                const name = typeof contact === 'object' ? contact.name : contact;
+                                                const displayName = isPlaceholderContactName(name, id) ? '' : String(name || '');
+                                                return displayName.toLowerCase().includes(formData.phone.toLowerCase()) || id.includes(formData.phone);
+                                              })
+                                              .slice(0, 20)
+                                              .map(([id]) => (
+                                                <div
+                                                  key={id}
+                                                  onClick={() => {
+                                                    setFormData({ ...formData, phone: id.startsWith('91') ? id.slice(2) : id });
+                                                    setShowSuggestions(false);
+                                                  }}
+                                                  style={{
+                                                    padding: '10px 12px',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid #f0f2f5',
+                                                    fontSize: '0.9rem'
+                                                  }}
+                                                  onMouseDown={e => e.preventDefault()}
+                                                >
+                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                      {contacts[id]?.photo ? (
+                                                        <img src={contacts[id].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                      ) : (
+                                                        <User size={16} color="var(--text-muted)" />
+                                                      )}
+                                                    </div>
+                                                    <div>
+                                                      <p style={{ fontWeight: 600, margin: 0 }}>{getContactName(id)}</p>
+                                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{formatPhone(id)}</p>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              ))
+                                            }
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT EMAIL (OPTIONAL)</label>
+                                    <input
+                                      type="email"
+                                      placeholder="client@example.com"
+                                      value={formData.emailTo || ''}
+                                      onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
+                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                    />
+                                  </div>
+                                </>
+                              ) : channel === 'email' ? (
+                                <>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>TO (EMAIL)</label>
+                                    <input
+                                      type="email"
+                                      placeholder="user@example.com"
+                                      value={formData.emailTo || ''}
+                                      onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
+                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                    />
+                                  </div>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>SUBJECT</label>
+                                    <input
+                                      type="text"
+                                      placeholder="Subject line"
+                                      value={formData.emailSubject || ''}
+                                      onChange={e => setFormData({ ...formData, emailSubject: e.target.value })}
+                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                    />
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="input-group phone-input-container">
+                                  <label>Phone Number</label>
+                                  <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div style={{
+                                      padding: '12px 16px',
+                                      background: '#f0f2f5',
+                                      border: '1px solid var(--border)',
+                                      borderRadius: '0px',
+                                      fontSize: '0.9rem',
+                                      fontWeight: 600,
+                                      color: '#54656f',
+                                      display: 'flex',
+                                      alignItems: 'center'
+                                    }}>
+                                      +91
+                                    </div>
+                                    <div style={{
+                                      position: 'relative',
+                                      flex: 1,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      background: 'white',
+                                      border: '1px solid var(--border)',
+                                      borderRadius: '0px',
+                                      padding: '0 12px',
+                                      gap: '8px',
+                                      transition: 'border-color 0.2s',
+                                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                    }}
+                                      onFocusCapture={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                                      onBlurCapture={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                                    >
+                                      <Phone size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+
+                                      {(getContactName(formData.phone) !== formatPhone(formData.phone) || groups[formData.phone]) && (
+                                        <div style={{
+                                          background: groups[formData.phone] ? '#e7f3ff' : '#dcf8c6',
+                                          color: groups[formData.phone] ? '#0057b7' : '#075e54',
+                                          padding: '2px 8px',
+                                          borderRadius: '0px',
+                                          fontSize: '0.8rem',
+                                          fontWeight: 700,
+                                          whiteSpace: 'nowrap',
+                                          flexShrink: 0
+                                        }}>
+                                          {groups[formData.phone] || getContactName(formData.phone)}
+                                        </div>
+                                      )}
+
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. 9122500000"
+                                        style={{
+                                          border: 'none',
+                                          padding: '12px 0',
+                                          background: 'transparent',
+                                          width: '100%',
+                                          outline: 'none',
+                                          boxShadow: 'none',
+                                          fontSize: '1rem',
+                                          WebkitAppearance: 'none'
+                                        }}
+                                        value={formData.phone}
+                                        onFocus={() => setShowSuggestions(true)}
+                                        onKeyDown={e => {
+                                          if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddRecipient();
+                                          }
+                                        }}
+                                        onChange={e => {
+                                          const val = e.target.value;
+                                          setFormData({ ...formData, phone: val });
+                                          setShowSuggestions(true);
+                                        }}
+                                      />
+                                      {formData.phone.trim() && (
+                                        <button
+                                          type="button"
+                                          onClick={handleAddRecipient}
+                                          style={{
+                                            background: 'var(--primary)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '0px',
+                                            width: '32px',
+                                            height: '32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            flexShrink: 0,
+                                            marginLeft: '8px'
+                                          }}
+                                        >
+                                          <Plus size={18} />
+                                        </button>
+                                      )}
+
+                                      {showSuggestions && (
+                                        <div style={{
+                                          position: 'absolute',
+                                          top: '105%',
+                                          left: 0,
+                                          right: 0,
+                                          background: 'white',
+                                          borderRadius: '0px',
+                                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                          zIndex: 100,
+                                          maxHeight: '250px',
+                                          overflowY: 'auto',
+                                          border: '1px solid var(--border)'
+                                        }}>
+                                          {schedules.length > 0 && (
+                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>RECENT</div>
+                                          )}
+                                          {[...new Set(schedules.map(s => s.phone))].slice(0, 3).map(num => (
+                                            <div
+                                              key={num}
+                                              onClick={() => {
+                                                setFormData({ ...formData, phone: num.startsWith('91') ? num.slice(2) : num });
+                                                setShowSuggestions(false);
+                                              }}
+                                              style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f0f2f5', fontSize: '0.9rem' }}
+                                              onMouseDown={e => e.preventDefault()}
+                                            >
+                                              <p style={{ fontWeight: 600 }}>{getContactName(num.startsWith('91') ? num.slice(2) : num)}</p>
+                                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatPhone(num)}</p>
+                                            </div>
+                                          ))}
+
+
+                                          {/* All Contacts — filter out LID/garbage IDs */}
+                                          <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
+                                          {Object.entries(contacts)
+                                            .filter(([id, contact]) => {
+                                              // Skip LID-style long numeric IDs and group numbers
+                                              if (!isRealPhoneNumber(id)) return false;
+                                              const name = typeof contact === 'object' ? contact.name : contact;
+                                              const displayName = isPlaceholderContactName(name, id) ? '' : String(name || '');
+                                              return displayName.toLowerCase().includes(formData.phone.toLowerCase()) || id.includes(formData.phone);
+                                            })
+                                            .slice(0, 20)
+                                            .map(([id]) => (
+                                              <div
+                                                key={id}
+                                                onClick={() => {
+                                                  if (!selectedRecipients.includes(id)) {
+                                                    setSelectedRecipients([...selectedRecipients, id]);
+                                                  }
+                                                  setFormData({ ...formData, phone: '' });
+                                                  setShowSuggestions(false);
+                                                }}
+                                                style={{
+                                                  padding: '10px 12px',
+                                                  cursor: 'pointer',
+                                                  borderBottom: '1px solid #f0f2f5',
+                                                  fontSize: '0.9rem',
+                                                  background: selectedRecipients.includes(id) ? '#f0f9ff' : 'transparent'
+                                                }}
+                                                onMouseDown={e => e.preventDefault()}
+                                              >
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                      {contacts[id]?.photo ? (
+                                                        <img src={contacts[id].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                      ) : (
+                                                        <User size={16} color="var(--text-muted)" />
+                                                      )}
+                                                    </div>
+                                                    <div>
+                                                      <p style={{ fontWeight: 600, margin: 0 }}>{getContactName(id)}</p>
+                                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{formatPhone(id)}</p>
+                                                    </div>
+                                                  </div>
+                                                  {selectedRecipients.includes(id) && <Check size={14} color="var(--primary)" />}
+                                                </div>
+                                              </div>
+                                            ))
+                                          }
+
+                                          {/* Groups */}
+                                          {Object.keys(groups).length > 0 && (
+                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>GROUPS</div>
+                                          )}
+                                          {Object.entries(groups)
+                                            .filter(([, name]) =>
+                                              name.toLowerCase().includes(formData.phone.toLowerCase())
+                                            )
+                                            .slice(0, 10)
+                                            .map(([id, name]) => (
+                                              <div
+                                                key={id}
+                                                onClick={() => {
+                                                  if (!selectedRecipients.includes(id)) {
+                                                    setSelectedRecipients([...selectedRecipients, id]);
+                                                  }
+                                                  setFormData({ ...formData, phone: '' });
+                                                  setShowSuggestions(false);
+                                                }}
+                                                style={{
+                                                  padding: '10px 12px',
+                                                  cursor: 'pointer',
+                                                  borderBottom: '1px solid #f0f2f5',
+                                                  fontSize: '0.9rem',
+                                                  background: selectedRecipients.includes(id) ? '#f0f9ff' : 'transparent',
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  gap: '8px'
+                                                }}
+                                                onMouseDown={e => e.preventDefault()}
+                                              >
+                                                <Users size={16} color="var(--primary-dark)" />
+                                                <div style={{ flex: 1 }}>
+                                                  <p style={{ fontWeight: 600 }}>{name}</p>
+                                                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Group Chat</p>
+                                                </div>
+                                                {selectedRecipients.includes(id) && <Check size={14} color="var(--primary)" />}
+                                              </div>
+                                            ))
+                                          }
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Recipient Chips Area */}
+                                  {selectedRecipients.length > 0 && (
+                                    <div style={{
+                                      display: 'flex',
+                                      flexWrap: 'wrap',
+                                      gap: '6px',
+                                      marginTop: '10px',
+                                      padding: '8px',
+                                      background: '#f8fafc',
+                                      border: '1px dashed var(--border)'
+                                    }}>
+                                      {selectedRecipients.map(phone => (
+                                        <div
+                                          key={phone}
+                                          style={{
+                                            background: 'white',
+                                            border: '1px solid var(--border)',
+                                            padding: '4px 8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700
+                                          }}
+                                        >
+                                          <span>{groups[phone] || getContactName(phone)}</span>
+                                          <X
+                                            size={12}
+                                            style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
+                                            onClick={() => setSelectedRecipients(selectedRecipients.filter(p => p !== phone))}
+                                          />
+                                        </div>
+                                      ))}
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedRecipients([])}
+                                        style={{
+                                          fontSize: '0.7rem',
+                                          color: '#ef4444',
+                                          background: 'none',
+                                          border: 'none',
+                                          textDecoration: 'underline',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Clear All
+                                      </button>
+                                    </div>
+                                  )}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                      Sending to India (+91) by default
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {channel !== 'calendar' && (
+                                <>
+                                  <div className="input-group">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : 'var(--primary-dark)', margin: 0, display: 'block' }}>SCHEDULE FOR</label>
+                                      <button
+                                        type="button"
+                                        onClick={() => setIs24Hour(!is24Hour)}
+                                        style={{
+                                          fontSize: '0.65rem',
+                                          padding: '2px 8px',
+                                          borderRadius: '0px',
+                                          background: '#f0f2f5',
+                                          border: '1px solid var(--border)',
+                                          fontWeight: 700,
+                                          color: 'var(--text-muted)',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        {is24Hour ? '24H' : '12H'}
+                                      </button>
+                                    </div>
+                                    <DatePicker
+                                      selected={scheduledDate}
+                                      onChange={(date) => setScheduledDate(date)}
+                                      showTimeSelect
+                                      timeFormat={is24Hour ? "HH:mm" : "h:mm aa"}
+                                      timeIntervals={5}
+                                      timeCaption="Time"
+                                      dateFormat={is24Hour ? "MMMM d, yyyy HH:mm" : "MMMM d, yyyy h:mm aa"}
+                                      customInput={<CustomDateInput />}
+                                    />
+                                  </div>
+
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <Repeat size={14} /> REPEAT CYCLE
+                                    </label>
+                                    <select
+                                      value={formData.recurrence}
+                                      onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
+                                      style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        borderRadius: '0px',
+                                        border: '1px solid var(--border)',
+                                        background: 'white',
+                                        fontSize: '0.9rem',
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      <option value="none">Does not repeat</option>
+                                      <option value="daily">Every day</option>
+                                      <option value="weekly">Every week</option>
+                                      <option value="monthly">Every month</option>
+                                      <option value="yearly">Every year / Birthday</option>
+                                      <option value="custom">Custom (Select Days)</option>
+                                    </select>
+                                  </div>
+
+                                  {formData.recurrence === 'custom' && (
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SELECT DAYS</label>
+                                      <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                                        {[
+                                          { l: 'M', v: 1 }, { l: 'T', v: 2 }, { l: 'W', v: 3 },
+                                          { l: 'T', v: 4 }, { l: 'F', v: 5 }, { l: 'S', v: 6 }, { l: 'S', v: 0 }
+                                        ].map(day => (
+                                          <button
+                                            key={day.v}
+                                            type="button"
+                                            onClick={() => {
+                                              const newDays = formData.customDays.includes(day.v)
+                                                ? formData.customDays.filter(d => d !== day.v)
+                                                : [...formData.customDays, day.v];
+                                              setFormData({ ...formData, customDays: newDays });
+                                            }}
+                                            style={{
+                                              width: '32px',
+                                              height: '32px',
+                                              borderRadius: '0px',
+                                              border: '1px solid var(--border)',
+                                              fontSize: '0.75rem',
+                                              fontWeight: 700,
+                                              cursor: 'pointer',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              transition: 'all 0.2s ease',
+                                              background: formData.customDays.includes(day.v) ? 'var(--primary)' : 'white',
+                                              color: formData.customDays.includes(day.v) ? 'white' : 'var(--text-main)',
+                                              borderColor: formData.customDays.includes(day.v) ? 'var(--primary)' : 'var(--border)'
+                                            }}
+                                          >
+                                            {day.l}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+
+                              <button
+                                type="button"
+                                className="btn"
+                                onClick={() => {
+                                  if (channel === 'calendar') {
+                                    if (!formData.phone?.trim() && !formData.emailTo?.trim()) {
+                                      alert('Please enter a recipient phone number or email address');
+                                      return;
+                                    }
+                                    setSidebarStep(2);
+                                    return;
+                                  } else if (channel === 'email') {
+                                    const targetEmail = formData.emailTo || emailTo;
+                                    if (!targetEmail || !targetEmail.trim() || !targetEmail.includes('@')) {
+                                      alert('Please enter a valid recipient email address');
+                                      return;
+                                    }
+                                    const targetSubject = formData.emailSubject || emailSubject;
+                                    if (!targetSubject || !targetSubject.trim()) {
+                                      alert('Please enter an email subject');
+                                      return;
+                                    }
+                                  } else {
+                                    if (selectedRecipients.length === 0 && (!formData.phone || formData.phone.length < 10)) {
+                                      alert('Please enter a valid phone number');
+                                      return;
+                                    }
+                                  }
+                                  setSidebarStep(2);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  marginTop: '12px',
+                                  marginBottom: '12px',
+                                  borderRadius: '0px',
+                                  background: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
+                                  color: 'white',
+                                  fontWeight: 800,
+                                  border: 'none',
+                                  padding: '12px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                {channel === 'calendar' ? (
+                                  <>
+                                    <span>Next: Meeting Settings</span>
+                                    <ArrowRight size={16} />
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Next: Message Content</span>
+                                    <Send size={16} />
+                                  </>
+                                )}
+                              </button>
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="sidebar-step-2"
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
+                            >
+                              {channel === 'calendar' && sidebarStep === 2 ? (
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. 30-Min Strategy Call"
+                                      value={meetingTitle}
+                                      onChange={e => setMeetingTitle(e.target.value)}
+                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                    />
+                                  </div>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' }}>PLATFORM</label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                      {meetingPlatform !== 'custom' ? (
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setMeetingPlatform('google_meet')}
+                                            style={{
+                                              padding: '10px 12px',
+                                              border: meetingPlatform === 'google_meet' ? '1px solid #1a73e8' : '1px solid var(--border)',
+                                              borderRadius: '0px',
+                                              background: meetingPlatform === 'google_meet' ? '#e8f0fe' : 'white',
+                                              color: meetingPlatform === 'google_meet' ? '#1a73e8' : 'var(--text-main)',
+                                              fontWeight: 700,
+                                              fontSize: '0.78rem',
+                                              cursor: 'pointer',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '8px',
+                                              justifyContent: 'center'
+                                            }}
+                                          >
+                                            <Video size={16} color="#1a73e8" />
+                                            <span>Google Meet</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setMeetingPlatform('custom')}
+                                            style={{
+                                              padding: '10px 12px',
+                                              border: '1px solid var(--border)',
+                                              borderRadius: '0px',
+                                              background: 'white',
+                                              color: 'var(--text-main)',
+                                              fontWeight: 700,
+                                              fontSize: '0.78rem',
+                                              cursor: 'pointer',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '8px',
+                                              justifyContent: 'center'
+                                            }}
+                                          >
+                                            <LinkIcon size={16} color="#667781" />
+                                            <span>Custom Link</span>
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+                                          <input
+                                            type="url"
+                                            placeholder="i have a meeting link"
+                                            value={formData.customLink || ''}
+                                            onChange={e => setFormData({ ...formData, customLink: e.target.value })}
+                                            style={{
+                                              width: '100%',
+                                              padding: '12px 40px 12px 12px',
+                                              border: '1px solid #1a73e8',
+                                              borderRadius: '0px',
+                                              outline: 'none',
+                                              fontSize: '0.85rem'
+                                            }}
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setMeetingPlatform('google_meet');
+                                              setFormData({ ...formData, customLink: '' });
+                                            }}
+                                            style={{
+                                              position: 'absolute',
+                                              right: '12px',
+                                              background: 'none',
+                                              border: 'none',
+                                              cursor: 'pointer',
+                                              padding: '4px',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              borderRadius: '50%'
+                                            }}
+                                            onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                            onMouseOut={e => e.currentTarget.style.background = 'none'}
+                                          >
+                                            <X size={16} color="#667781" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8' }}>SCHEDULE FOR</label>
+                                    <DatePicker
+                                      selected={scheduledDate}
+                                      onChange={date => setScheduledDate(date)}
+                                      showTimeSelect
+                                      dateFormat="MMMM d, yyyy h:mm aa"
+                                      minDate={new Date()}
+                                      customInput={<CustomDateInput color="#1a73e8" />}
+                                    />
+                                  </div>
+
+                                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '20px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSidebarStep(1)}
+                                      style={{
+                                        padding: '12px 16px',
+                                        background: '#f0f2f5',
+                                        color: '#54656f',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                      }}
+                                    >
+                                      <ArrowLeft size={16} />
+                                      <span>Back</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn"
+                                      onClick={() => {
+                                        if (!meetingTitle.trim()) {
+                                          alert('Please enter a meeting title');
+                                          return;
+                                        }
+                                        if (meetingPlatform === 'custom' && !formData.customLink?.trim()) {
+                                          alert('Please enter a meeting link');
+                                          return;
+                                        }
+                                        if (!formData.message?.trim()) {
+                                          const userPhone = userInfo?.id || user?.phone || formData.phone || '';
+                                          const customLinkVal = meetingPlatform === 'custom' ? (formData.customLink || '') : '';
+                                          const meetingLink = generateMeetingLink(meetingPlatform, userPhone, customLinkVal, personalMeetLink, personalZoomLink);
+                                          const platformLabel = { google_meet: 'Google Meet', zoom: 'Zoom Call', whatsapp_call: 'WhatsApp Call', phone: 'Phone Call', custom: 'Online Call' }[meetingPlatform] || 'Online Call';
+                                          const invitation = `You're invited to: ${meetingTitle}
+Date & Time: ${format(scheduledDate, 'MMMM d, yyyy h:mm aa')}
+Platform: ${platformLabel}
+Join Link: ${meetingLink}
+
+Looking forward to connecting!`;
+                                          setFormData({ ...formData, message: invitation });
+                                        }
+                                        setStepChangedAt(Date.now());
+                                        setSidebarStep(3);
+                                      }}
+                                      style={{
+                                        flex: 1,
+                                        borderRadius: '0px',
+                                        background: '#1a73e8',
+                                        color: 'white',
+                                        fontWeight: 800,
+                                        border: 'none',
+                                        padding: '12px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                      }}
+                                    >
+                                      <span>Next: Preview</span>
+                                      <ArrowRight size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : channel === 'calendar' && sidebarStep === 3 ? (
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>NOTIFICATIONS</label>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setMeetingNotifyWhatsApp(!meetingNotifyWhatsApp)}
+                                        style={{
+                                          flex: 1,
+                                          padding: '10px 12px',
+                                          borderRadius: '0px',
+                                          border: meetingNotifyWhatsApp ? '1px solid #25d366' : '1px solid var(--border)',
+                                          background: meetingNotifyWhatsApp ? '#f0fdf4' : 'white',
+                                          color: meetingNotifyWhatsApp ? '#128c7e' : 'var(--text-muted)',
+                                          fontWeight: 700,
+                                          fontSize: '0.78rem',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <WhatsAppIcon size={16} color={meetingNotifyWhatsApp ? '#25d366' : '#94a3b8'} />
+                                        WhatsApp
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setMeetingNotifyEmail(!meetingNotifyEmail)}
+                                        style={{
+                                          flex: 1,
+                                          padding: '10px 12px',
+                                          borderRadius: '0px',
+                                          border: meetingNotifyEmail ? '1px solid #ea4335' : '1px solid var(--border)',
+                                          background: meetingNotifyEmail ? '#fdf2f2' : 'white',
+                                          color: meetingNotifyEmail ? '#d93025' : 'var(--text-muted)',
+                                          fontWeight: 700,
+                                          fontSize: '0.78rem',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <Mail size={16} color={meetingNotifyEmail ? '#ea4335' : '#94a3b8'} />
+                                        Email
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>REMINDERS</label>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      {[
+                                        { value: '24h', label: '24h Before' },
+                                        { value: '1h', label: '1h Before' },
+                                        { value: '15m', label: '15m Before' }
+                                      ].map(r => (
+                                        <button
+                                          key={r.value}
+                                          type="button"
+                                          onClick={() => setMeetingReminderTiming(r.value)}
+                                          style={{
+                                            flex: 1,
+                                            padding: '10px 4px',
+                                            borderRadius: '0px',
+                                            border: meetingReminderTiming === r.value ? '1px solid #1a73e8' : '1px solid var(--border)',
+                                            background: meetingReminderTiming === r.value ? '#e8f0fe' : 'white',
+                                            color: meetingReminderTiming === r.value ? '#1a73e8' : 'var(--text-muted)',
+                                            fontWeight: 700,
+                                            fontSize: '0.75rem',
+                                            cursor: 'pointer',
+                                            textAlign: 'center'
+                                          }}
+                                        >
+                                          {r.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: '#1a73e8', letterSpacing: '0.5px', marginBottom: '8px' }}>INVITATION PREVIEW</label>
+                                    <textarea
+                                      value={formData.message}
+                                      onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                      rows={5}
+                                      style={{
+                                        width: '100%',
+                                        flex: 1,
+                                        padding: '12px',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0px',
+                                        outline: 'none',
+                                        fontSize: '0.88rem',
+                                        lineHeight: '1.5',
+                                        resize: 'none'
+                                      }}
+                                    />
+                                  </div>
+
+                                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSidebarStep(2)}
+                                      style={{
+                                        padding: '12px 16px',
+                                        background: '#f0f2f5',
+                                        color: '#54656f',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '0px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                      }}
+                                    >
+                                      <ArrowLeft size={16} />
+                                      <span>Back</span>
+                                    </button>
+                                    <button
+                                      type="submit"
+                                      disabled={loading || (Date.now() - stepChangedAt < 400)}
+                                      style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        background: '#1a73e8',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '0px',
+                                        fontWeight: 800,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                      }}
+                                    >
+                                      <Calendar size={16} />
+                                      <span>{loading ? 'Scheduling...' : 'Create Meeting'}</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px', position: 'relative' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                                      <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: 'var(--primary-dark)', letterSpacing: '0.5px' }}>MESSAGE CONTENT</label>
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowAiPrompt(!showAiPrompt)}
+                                        className="gemini-ai-btn"
+                                        style={{ padding: '6px 12px !important' }}
+                                      >
+                                        <Sparkles size={14} /> AI MAGIC
+                                      </button>
+                                    </div>
+
+                                    <div style={{ flex: 1, position: 'relative', border: '1px solid var(--border)', background: 'white', display: 'flex', flexDirection: 'column' }}>
+                                      <AnimatePresence>
+                                        {showAiPrompt && (
+                                          <motion.div
+                                            initial={{ y: -10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            exit={{ y: -10, opacity: 0 }}
+                                            style={{
+                                              position: 'absolute',
+                                              top: 0,
+                                              left: 0,
+                                              right: 0,
+                                              zIndex: 10,
+                                              background: 'rgba(255, 255, 255, 0.95)',
+                                              backdropFilter: 'blur(10px)',
+                                              borderBottom: '1px solid var(--primary-light)',
+                                              padding: '12px'
+                                            }}
+                                          >
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                                              {[
+                                                { l: '✨ Improve', p: 'Improve this message and make it sound better' },
+                                                { l: '👔 Professional', p: 'Make this message sound more professional and corporate' },
+                                                { l: '🏃 Shorter', p: 'Make this message concise and short' },
+                                                { l: '😊 Add Emojis', p: 'Add relevant emojis to this message' }
+                                              ].map(chip => (
+                                                <button
+                                                  key={chip.l}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setAiPrompt(chip.p);
+                                                    handleGenerateAiMessage(chip.p);
+                                                  }}
+                                                  style={{
+                                                    fontSize: '0.65rem',
+                                                    padding: '4px 10px',
+                                                    background: 'white',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '0px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: 600,
+                                                    color: 'var(--text-muted)'
+                                                  }}
+                                                >
+                                                  {chip.l}
+                                                </button>
+                                              ))}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                              <input
+                                                type="text"
+                                                placeholder="Or type custom instruction..."
+                                                value={aiPrompt}
+                                                onChange={e => setAiPrompt(e.target.value)}
+                                                onKeyPress={e => e.key === 'Enter' && handleGenerateAiMessage()}
+                                                style={{
+                                                  flex: 1,
+                                                  padding: '8px 12px',
+                                                  borderRadius: '0px',
+                                                  border: '1px solid var(--border)',
+                                                  fontSize: '0.85rem',
+                                                  outline: 'none'
+                                                }}
+                                              />
+                                              <button
+                                                type="button"
+                                                disabled={isAiGenerating}
+                                                onClick={() => handleGenerateAiMessage()}
+                                                className="gemini-ai-btn"
+                                                style={{ padding: '4px 12px !important' }}
+                                              >
+                                                {isAiGenerating ? '...' : 'GO'}
+                                              </button>
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+
+                                      <textarea
+                                        placeholder="Type your message here, then use AI Magic to refine it..."
+                                        value={formData.message}
+                                        onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                        required={!selectedFile}
+                                        style={{
+                                          flex: 1,
+                                          width: '100%',
+                                          border: 'none',
+                                          padding: '15px',
+                                          fontSize: '0.95rem',
+                                          outline: 'none',
+                                          resize: 'none',
+                                          background: 'transparent'
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Media Upload Section */}
+                                  <div className="media-upload-area">
+                                    {!selectedFile && !filePreview ? (
+                                      <div className="media-buttons">
+                                        <label className="media-btn" title="Image">
+                                          <ImageIcon size={20} />
+                                          <input type="file" accept="image/*" onChange={handleFileChange} hidden />
+                                        </label>
+                                        <label className="media-btn" title="Video">
+                                          <VideoIcon size={20} />
+                                          <input type="file" accept="video/*" onChange={handleFileChange} hidden />
+                                        </label>
+                                        <label className="media-btn" title="Document">
+                                          <FileIcon size={20} />
+                                          <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileChange} hidden />
+                                        </label>
+                                        <label className="media-btn" title="Voice Note">
+                                          <Mic size={20} />
+                                          <input type="file" accept="audio/*" onChange={e => handleFileChange(e, true)} hidden />
+                                        </label>
+                                      </div>
+                                    ) : (
+                                      <div className="media-preview-container">
+                                        {filePreview?.type === 'image' && <img src={filePreview.url} alt="Preview" />}
+                                        {filePreview?.type === 'video' && <video src={filePreview.url} controls={false} />}
+                                        {(filePreview?.type === 'file' || filePreview?.type === 'audio') && (
+                                          <div className="file-preview-icon">
+                                            {filePreview.type === 'audio' ? <Mic size={24} /> : <FileIcon size={24} />}
+                                            <span>{filePreview.name}</span>
+                                          </div>
+                                        )}
+                                        <button
+                                          type="button"
+                                          className="remove-media"
+                                          onClick={() => { setSelectedFile(null); setFilePreview(null); }}
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                        {isVoiceNote && <div className="vn-badge">Voice Note</div>}
+                                      </div>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+
+                              {channel !== 'calendar' && (
+                                <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', paddingTop: '20px' }}>
+                                  <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => setSidebarStep(1)}
+                                    style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
+                                  >
+                                    Back
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="btn"
+                                    style={{
+                                      flex: 1,
+                                      opacity: ((channel === 'whatsapp' ? status === 'connected' : true) && !loading) ? 1 : 0.5,
+                                      cursor: ((channel === 'whatsapp' ? status === 'connected' : true) && !loading) ? 'pointer' : 'not-allowed',
+                                      background: editingId ? '#0057b7' : (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')),
+                                      color: 'white',
+                                      fontWeight: 800,
+                                      border: 'none',
+                                      height: '42px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '8px',
+                                      borderRadius: '0px'
+                                    }}
+                                    disabled={(channel === 'whatsapp' && status !== 'connected') || loading}
+                                  >
+                                    {loading ? (
+                                      <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                        style={{ display: 'flex', alignItems: 'center' }}
+                                      >
+                                        <RefreshCcw size={18} />
+                                      </motion.div>
+                                    ) : (
+                                      <>
+                                        {editingId ? <Edit2 size={18} /> : <Calendar size={18} />}
+                                        {editingId ? 'Update Meeting' : (channel === 'calendar' ? 'Create Meeting' : 'Schedule Now')}
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              )}
+                              {editingId && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingId(null);
+                                    setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
+                                    setScheduledDate(new Date());
+                                    setSidebarStep(1);
+                                  }}
+                                  style={{ width: '100%', marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}
+                                >
+                                  Cancel Edit
+                                </button>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </form>
+                    </>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      {currentBusinessTool ? (
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                        >
+                          <button
+                            onClick={() => setCurrentBusinessTool(null)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--primary-dark)',
+                              fontWeight: 800,
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              marginBottom: '20px',
+                              padding: 0,
+                              textTransform: 'uppercase'
+                            }}
+                          >
+                            &larr; Back to Tools
+                          </button>
+
+                          {currentBusinessTool === 'auto-reply' ? (
+                            <>
+                              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px' }}>Auto Reply Bot</h3>
+                              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>Configure instant replies based on keywords.</p>
+
+                              <form onSubmit={handleReplySubmit}>
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)' }}>TRIGGER KEYWORD</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. price, hello, help"
+                                    value={replyFormData.keyword}
+                                    onChange={e => setReplyFormData({ ...replyFormData, keyword: e.target.value })}
+                                    required
+                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px' }}
+                                  />
+                                </div>
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)' }}>BOT RESPONSE</label>
+                                  <textarea
+                                    rows="5"
+                                    placeholder="Enter the message to reply with..."
+                                    value={replyFormData.reply}
+                                    onChange={e => setReplyFormData({ ...replyFormData, reply: e.target.value })}
+                                    required
+                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', resize: 'none' }}
+                                  />
+                                </div>
+                                <button
+                                  type="submit"
+                                  className="btn btn-primary"
+                                  style={{ width: '100%', marginTop: '8px', borderRadius: '0px' }}
+                                >
+                                  <Sparkles size={18} /> Create Auto-Reply
+                                </button>
+                              </form>
+                            </>
+                          ) : currentBusinessTool === 'drip' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Content Drip</h3>
+                                {!isCreatingSequence && (
+                                  <button
+                                    onClick={() => setIsCreatingSequence(true)}
+                                    style={{ padding: '4px 8px', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                                  >
+                                    NEW SEQUENCE
+                                  </button>
+                                )}
+                              </div>
+                              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>Build automated message sequences.</p>
+
+                              {isCreatingSequence ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                  <div className="input-group">
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>SEQUENCE NAME</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Onboarding Flow"
+                                      value={newSequence.name}
+                                      onChange={e => setNewSequence({ ...newSequence, name: e.target.value })}
+                                      style={{ width: '100%', padding: '10px', border: '1px solid var(--border)' }}
+                                    />
+                                  </div>
+                                  {/* Trigger Settings (Premium Design) */}
+                                  <div style={{ marginBottom: '24px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-dark)', display: 'block', marginBottom: '12px', letterSpacing: '0.5px' }}>AUTO-ENROLL TRIGGER</label>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                                      {[
+                                        { id: 'manual', label: 'Manual', sub: 'Buttons only', icon: <User size={18} /> },
+                                        { id: 'new_contact', label: 'Welcome', sub: 'New contacts', icon: <UserPlus size={18} /> },
+                                        { id: 'keyword', label: 'Keyword', sub: 'Auto-trigger', icon: <Zap size={18} /> }
+                                      ].map(option => (
+                                        <div
+                                          key={option.id}
+                                          onClick={() => setNewSequence({ ...newSequence, trigger: option.id })}
+                                          style={{
+                                            padding: '12px 8px',
+                                            background: newSequence.trigger === option.id ? '#f0fff4' : 'white',
+                                            border: newSequence.trigger === option.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                            borderRadius: '0px',
+                                            cursor: 'pointer',
+                                            textAlign: 'center',
+                                            transition: 'all 0.2s ease',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            boxShadow: newSequence.trigger === option.id ? '0 4px 12px rgba(37, 211, 102, 0.1)' : 'none'
+                                          }}
+                                        >
+                                          <div style={{ color: newSequence.trigger === option.id ? 'var(--primary)' : 'var(--text-muted)' }}>
+                                            {option.icon}
+                                          </div>
+                                          <div>
+                                            <p style={{ fontSize: '0.75rem', fontWeight: 800, margin: 0, color: newSequence.trigger === option.id ? 'var(--primary-dark)' : 'var(--text)' }}>
+                                              {option.label}
+                                            </p>
+                                            <p style={{ fontSize: '0.6rem', margin: 0, color: 'var(--text-muted)', fontWeight: 500 }}>
+                                              {option.sub}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {newSequence.trigger === 'keyword' && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        style={{ marginTop: '12px', padding: '12px', background: 'white', border: '1px solid var(--primary)', borderLeft: '4px solid var(--primary)' }}
+                                      >
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary-dark)', display: 'block', marginBottom: '8px' }}>TRIGGER WORD</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. START, INFO"
+                                          value={newSequence.triggerValue || ''}
+                                          onChange={e => setNewSequence({ ...newSequence, triggerValue: e.target.value.toUpperCase() })}
+                                          style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', fontSize: '0.9rem', background: 'white', fontWeight: 800, letterSpacing: '1px' }}
+                                        />
+                                        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '6px', fontStyle: 'italic' }}>Tip: Use a simple, uppercase word like "INFO"</p>
+                                      </motion.div>
+                                    )}
+                                  </div>
+
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>SEQUENCE STEPS</label>
+                                    {newSequence.steps.map((step, index) => (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        key={index}
+                                        style={{ padding: '12px', background: '#f8fafc', border: '1px solid var(--border)', position: 'relative' }}
+                                      >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-dark)' }}>STEP {index + 1}</span>
+                                          {newSequence.steps.length > 1 && (
+                                            <button
+                                              onClick={() => {
+                                                const steps = newSequence.steps.filter((_, i) => i !== index);
+                                                setNewSequence({ ...newSequence, steps });
+                                              }}
+                                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                            >
+                                              <Trash2 size={14} />
+                                            </button>
+                                          )}
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                          <div style={{ flex: 1 }}>
+                                            <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>WAIT TIME</label>
+                                            <input
+                                              type="number"
+                                              min="0"
+                                              value={step.delay}
+                                              onChange={e => {
+                                                const steps = [...newSequence.steps];
+                                                steps[index].delay = parseInt(e.target.value) || 0;
+                                                setNewSequence({ ...newSequence, steps });
+                                              }}
+                                              style={{ width: '100%', padding: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'white' }}
+                                            />
+                                            <div style={{ fontSize: '0.6rem', color: 'var(--primary-dark)', marginTop: '2px', fontStyle: 'italic', fontWeight: 600 }}>
+                                              {step.delay === 0 ? 'Sends immediately' :
+                                                step.delay === 1 ? 'Sends tomorrow' :
+                                                  `Sends in ${step.delay} days`}
+                                            </div>
+                                          </div>
+                                          <div style={{ flex: 2 }}>
+                                            <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>SEND CONDITION</label>
+                                            <select
+                                              value={step.condition}
+                                              onChange={e => {
+                                                const steps = [...newSequence.steps];
+                                                steps[index].condition = e.target.value;
+                                                setNewSequence({ ...newSequence, steps });
+                                              }}
+                                              style={{ width: '100%', padding: '6px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'white' }}
+                                            >
+                                              <option value="none">Always send (Ignore replies)</option>
+                                              <option value="no-reply">Only if NO reply received</option>
+                                              <option value="replied">Only IF user replied</option>
+                                              <option value="contains">If reply contains keyword...</option>
+                                            </select>
+                                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>
+                                              {step.condition === 'none' ? 'Will send even if they text you' :
+                                                step.condition === 'no-reply' ? 'Sends only if they stay silent' :
+                                                  step.condition === 'replied' ? 'Sends only if they have replied' :
+                                                    `Sends only if reply contains "${step.conditionValue || '...'}"`}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Keyword Input (Full Width) */}
+                                        {step.condition === 'contains' && (
+                                          <div style={{ marginBottom: '8px' }}>
+                                            <input
+                                              type="text"
+                                              placeholder="e.g. price, cost, help (comma separated)"
+                                              value={step.conditionValue || ''}
+                                              onChange={e => {
+                                                const steps = [...newSequence.steps];
+                                                steps[index].conditionValue = e.target.value;
+                                                setNewSequence({ ...newSequence, steps });
+                                              }}
+                                              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'white' }}
+                                            />
+                                          </div>
+                                        )}
+
+                                        <textarea
+                                          placeholder="Message content..."
+                                          value={step.message}
+                                          onChange={e => {
+                                            const steps = [...newSequence.steps];
+                                            steps[index].message = e.target.value;
+                                            setNewSequence({ ...newSequence, steps });
+                                          }}
+                                          style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', fontSize: '0.85rem', resize: 'none', height: '60px' }}
+                                        />
+                                      </motion.div>
+                                    ))}
+                                  </div>
+
+                                  <button
+                                    onClick={() => {
+                                      setNewSequence({
+                                        ...newSequence,
+                                        steps: [...newSequence.steps, { message: '', delay: 1, condition: 'none' }]
+                                      });
+                                    }}
+                                    style={{ padding: '8px', border: '1px dashed var(--primary)', color: 'var(--primary-dark)', background: 'none', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                  >
+                                    + ADD NEXT STEP
+                                  </button>
+
+                                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                                    <button
+                                      onClick={() => {
+                                        setIsCreatingSequence(false);
+                                        setEditingSequenceId(null);
+                                        setNewSequence({ name: '', trigger: 'manual', triggerValue: '', steps: [{ message: '', delay: 0, condition: 'none' }] });
+                                      }}
+                                      className="btn-secondary"
+                                      style={{ flex: 1, padding: '12px', borderRadius: '0px' }}
+                                    >
+                                      Back
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        if (!newSequence.name) return alert('Please enter a sequence name');
+                                        try {
+                                          const method = editingSequenceId ? 'PUT' : 'POST';
+                                          const url = editingSequenceId
+                                            ? `${API_URL}/api/drip/sequences/${editingSequenceId}`
+                                            : `${API_URL}/api/drip/sequences`;
+
+                                          const response = await fetch(url, {
+                                            method,
+                                            headers: {
+                                              'Content-Type': 'application/json',
+                                              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session.access_token}`
+                                            },
+                                            body: JSON.stringify(newSequence)
+                                          });
+                                          if (response.ok) {
+                                            setIsCreatingSequence(false);
+                                            setEditingSequenceId(null);
+                                            setNewSequence({
+                                              name: '',
+                                              trigger: 'manual',
+                                              triggerValue: '',
+                                              steps: [{ message: '', delay: 0, condition: 'none' }]
+                                            });
+                                            fetchSequences();
+                                          }
+                                        } catch (err) {
+                                          console.error('Failed to save sequence:', err);
+                                        }
+                                      }}
+                                      className="btn-primary"
+                                      style={{ flex: 2, padding: '12px', borderRadius: '0px' }}
+                                    >
+                                      {editingSequenceId ? 'Update Sequence' : 'Save Sequence'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                  {dripSequences.map(seq => (
+                                    <div
+                                      key={seq.id}
+                                      style={{
+                                        padding: '12px',
+                                        background: 'white',
+                                        border: '1px solid var(--border)',
+                                        cursor: 'pointer'
+                                      }}
+                                      onClick={() => {
+                                        // Could show enrollment stats or steps
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                        <div style={{ flex: 1 }}>
+                                          <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary-dark)' }}>{seq.name}</h4>
+                                          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: '#f1f5f9', color: 'var(--text-muted)', fontWeight: 700 }}>
+                                              {seq.steps?.length || 0} STEPS
+                                            </span>
+                                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: seq.trigger_type === 'manual' ? '#f1f5f9' : '#dcfce7', color: seq.trigger_type === 'manual' ? 'var(--text-muted)' : 'var(--primary-dark)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                              {seq.trigger_type === 'new_contact' ? 'WELCOME' : seq.trigger_type === 'keyword' ? `KEYWORD: ${seq.trigger_value}` : 'MANUAL'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setEditingSequenceId(seq.id);
+                                              setNewSequence({
+                                                name: seq.name,
+                                                trigger: seq.trigger_type,
+                                                triggerValue: seq.trigger_value,
+                                                steps: seq.steps.map(s => ({
+                                                  message: s.message,
+                                                  delay: s.delay_days,
+                                                  condition: s.condition,
+                                                  conditionValue: s.condition_value
+                                                }))
+                                              });
+                                              setIsCreatingSequence(true);
+                                            }}
+                                            className="btn-icon"
+                                            style={{ padding: '6px' }}
+                                          >
+                                            <Edit2 size={14} />
+                                          </button>
+                                          <button
+                                            onClick={async (e) => {
+                                              e.stopPropagation();
+                                              if (window.confirm('Are you sure you want to delete this sequence?')) {
+                                                try {
+                                                  await axios.delete(`/api/drip/sequences/${seq.id}`, {
+                                                    headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session.access_token}` }
+                                                  });
+                                                  fetchSequences();
+                                                } catch (err) {
+                                                  console.error('Failed to delete sequence:', err);
+                                                }
+                                              }
+                                            }}
+                                            className="btn-icon"
+                                            style={{ padding: '6px', color: '#ef4444' }}
+                                          >
+                                            <Trash2 size={14} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {dripSequences.length === 0 && (
+                                    <div style={{
+                                      background: '#f8fafc',
+                                      border: '1px dashed var(--border)',
+                                      padding: '24px',
+                                      textAlign: 'center',
+                                      marginBottom: '20px'
+                                    }}>
+                                      <LayoutList size={32} color="var(--border)" style={{ marginBottom: '12px' }} />
+                                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No sequences created yet.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : currentBusinessTool === 'ai-assistant' ? (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                                <div>
+                                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--primary-dark)' }}>AI Assistant</h3>
+                                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                    {autoReplies.find(r => r.keyword === '*') ? 'Active • Responding to queries' : 'Inactive • Manual mode'}
+                                  </p>
+                                </div>
+                                <div
+                                  onClick={async () => {
+                                    const existing = autoReplies.find(r => r.keyword === '*' || r.keyword === '*DISABLED');
+                                    if (!existing) return;
+                                    const newKeyword = existing.keyword === '*' ? '*DISABLED' : '*';
+                                    try {
+                                      await supabase.from('auto_replies').update({ keyword: newKeyword }).eq('id', existing.id);
+                                      fetchReplies();
+                                    } catch (err) {
+                                      console.error('Toggle failed:', err);
+                                    }
+                                  }}
+                                  style={{
+                                    width: '40px',
+                                    height: '20px',
+                                    background: autoReplies.find(r => r.keyword === '*') ? 'var(--primary)' : '#e2e8f0',
+                                    borderRadius: '20px',
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    marginTop: '4px'
+                                  }}
+                                >
+                                  <div style={{
+                                    width: '14px',
+                                    height: '14px',
+                                    background: 'white',
+                                    borderRadius: '50%',
+                                    position: 'absolute',
+                                    top: '3px',
+                                    left: autoReplies.find(r => r.keyword === '*') ? '23px' : '3px',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                                  }}></div>
+                                </div>
+                              </div>
+
+                              <div style={{ marginBottom: '20px' }}>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Business Knowledge Base</label>
+                                <textarea
+                                  placeholder="Describe your business, pricing, and FAQs here. The AI will use this to answer customers..."
+                                  value={aiContext}
+                                  onChange={(e) => setAiContext(e.target.value)}
+                                  onBlur={async () => {
+                                    if (!aiContext.trim()) return;
+                                    const existing = autoReplies.find(r => r.keyword === '*' || r.keyword === '*DISABLED');
+                                    try {
+                                      if (existing) {
+                                        await supabase.from('auto_replies').update({ reply: aiContext }).eq('id', existing.id);
+                                      } else {
+                                        await supabase.from('auto_replies').insert({ user_id: user.id, keyword: '*', reply: aiContext });
+                                      }
+                                      fetchReplies();
+                                    } catch (err) {
+                                      console.error('Failed to save AI context:', err);
+                                    }
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '280px',
+                                    padding: '16px',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '0.9rem',
+                                    lineHeight: 1.6,
+                                    outline: 'none',
+                                    background: '#fcfcfc',
+                                    resize: 'none',
+                                    transition: 'border-color 0.2s',
+                                    fontFamily: 'inherit'
+                                  }}
+                                  onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                                />
+                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '12px', fontStyle: 'italic', lineHeight: 1.4 }}>
+                                  Tip: Include your hours, pricing, and services. Keyword-based replies will still take priority over AI.
+                                </p>
+                              </div>
+                            </>
+                          ) : currentBusinessTool === 'broadcast' ? (
+                            <>
+                              <div style={{ marginBottom: '24px' }}>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--primary-dark)' }}>Broadcast Center</h3>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                  Send a one-time announcement to your entire database.
+                                </p>
+                              </div>
+
+                              <div style={{ marginBottom: '24px' }}>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', display: 'block' }}>
+                                  Recipients
+                                </label>
+
+                                <div
+                                  onClick={() => setShowContactModal(true)}
+                                  style={{
+                                    padding: '16px',
+                                    background: '#f8fafc',
+                                    border: '1px dashed var(--border)',
+                                    borderRadius: '12px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                                  onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                                >
+                                  <Users size={24} color={selectedBroadcastContacts.length > 0 ? 'var(--primary)' : 'var(--text-muted)'} />
+                                  <div style={{ textAlign: 'center' }}>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, color: selectedBroadcastContacts.length > 0 ? 'var(--primary-dark)' : 'var(--text)' }}>
+                                      {selectedBroadcastContacts.length > 0 ? `${selectedBroadcastContacts.length} contacts selected` : 'Select Contacts'}
+                                    </p>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
+                                      {selectedBroadcastContacts.length > 0 ? 'Tap to change selection' : 'Choose who receives this broadcast'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ marginBottom: '20px' }}>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Announcement Message</label>
+                                <textarea
+                                  placeholder="Type your broadcast message here..."
+                                  value={formData.message}
+                                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '180px',
+                                    padding: '16px',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '0.9rem',
+                                    lineHeight: 1.6,
+                                    outline: 'none',
+                                    background: '#fcfcfc',
+                                    resize: 'none',
+                                    transition: 'border-color 0.2s',
+                                    fontFamily: 'inherit'
+                                  }}
+                                  onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                                />
+                              </div>
+
+                              <button
+                                onClick={async () => {
+                                  if (!formData.message.trim()) return alert('Please type a message');
+                                  if (selectedBroadcastContacts.length === 0) return alert('Please select at least one contact.');
+
+                                  const confirm = window.confirm(`Send this announcement to ${selectedBroadcastContacts.length} selected contacts?`);
+                                  if (!confirm) return;
+
+                                  setLoading(true);
+                                  try {
+                                    await axios.post(`${API_URL}/api/schedules`, {
+                                      phones: selectedBroadcastContacts,
+                                      message: formData.message,
+                                      scheduledAt: new Date().toISOString(),
+                                      recurrence: 'none'
+                                    });
+                                    alert('Broadcast successfully queued!');
+                                    setFormData({ ...formData, message: '' });
+                                    setSelectedBroadcastContacts([]);
+                                  } catch (err) {
+                                    alert('Broadcast failed');
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }}
+                                disabled={loading || selectedBroadcastContacts.length === 0}
+                                style={{
+                                  width: '100%',
+                                  padding: '16px',
+                                  background: 'var(--primary-dark)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '12px',
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem',
+                                  cursor: loading ? 'not-allowed' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '10px',
+                                  opacity: (loading || Object.keys(contacts).length === 0) ? 0.7 : 1
+                                }}
+                              >
+                                {loading ? 'Queueing Messages...' : <><Send size={18} /> LAUNCH BROADCAST</>}
+                              </button>
+
+                              <div style={{ marginTop: '24px', padding: '16px', background: '#f0fdf4', border: '1px solid #bcf0da', borderRadius: '12px' }}>
+                                <h4 style={{ fontSize: '0.75rem', fontWeight: 800, margin: '0 0 4px 0', color: '#166534' }}>How it works:</h4>
+                                <p style={{ fontSize: '0.7rem', color: '#166534', margin: 0, lineHeight: 1.5 }}>
+                                  Messages are queued and sent individually with a random 5-15 second delay between each one. This ensures your account remains safe and compliant with WhatsApp's anti-spam policies.
+                                </p>
+                              </div>
+                            </>
+                          ) : null}
+
+                          {/* Contact Selection Modal */}
+                          <AnimatePresence>
+                            {showContactModal && (
+                              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                                <motion.div
+                                  initial={{ scale: 0.9, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  exit={{ scale: 0.9, opacity: 0 }}
+                                  style={{ background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+                                >
+                                  <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Select Recipients</h3>
+                                    <button onClick={() => setShowContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                                      <X size={20} />
+                                    </button>
+                                  </div>
+
+                                  <div style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                                    <div style={{ position: 'relative' }}>
+                                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                                      <input
+                                        type="text"
+                                        placeholder="Search contacts..."
+                                        value={contactSearch}
+                                        onChange={(e) => setContactSearch(e.target.value)}
+                                        style={{ width: '100%', padding: '10px 10px 10px 36px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.9rem', outline: 'none' }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div style={{ maxHeight: '350px', overflowY: 'auto', padding: '8px' }}>
+                                    <div
+                                      onClick={() => {
+                                        const allPhones = Object.keys(contacts);
+                                        if (selectedBroadcastContacts.length === allPhones.length) {
+                                          setSelectedBroadcastContacts([]);
+                                        } else {
+                                          setSelectedBroadcastContacts(allPhones);
+                                        }
+                                      }}
+                                      style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', background: '#f8fafc', marginBottom: '8px' }}
+                                    >
+                                      <div style={{ width: '20px', height: '20px', border: '2px solid var(--primary)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: selectedBroadcastContacts.length === Object.keys(contacts).length ? 'var(--primary)' : 'transparent' }}>
+                                        {selectedBroadcastContacts.length === Object.keys(contacts).length && <Check size={14} color="white" />}
+                                      </div>
+                                      <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>Select All ({Object.keys(contacts).length})</span>
+                                    </div>
+
+                                    {Object.entries(contacts)
+                                      .filter(([phone, contact]) => {
+                                        // Skip garbage IDs — only show real phone numbers
+                                        if (!isRealPhoneNumber(phone)) return false;
+                                        const name = typeof contact === 'object' ? contact.name : contact;
+                                        const search = contactSearch.toLowerCase();
+                                        const displayName = isPlaceholderContactName(name, phone) ? '' : name;
+                                        return formatPhone(phone).includes(contactSearch) || displayName.toLowerCase().includes(search) || phone.includes(contactSearch);
+                                      })
+                                      .map(([phone]) => {
+                                        const isSelected = selectedBroadcastContacts.includes(phone);
+                                        const contactName = getContactName(phone);
+                                        const hasName = contactName !== formatPhone(phone);
+
+                                        const displayName = contactName;
+                                        const initial = hasName ? contactName[0].toUpperCase() : '#';
+                                        return (
+                                          <div
+                                            key={phone}
+                                            onClick={() => {
+                                              if (isSelected) {
+                                                setSelectedBroadcastContacts(selectedBroadcastContacts.filter(p => p !== phone));
+                                              } else {
+                                                setSelectedBroadcastContacts([...selectedBroadcastContacts, phone]);
+                                              }
+                                            }}
+                                            style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', borderRadius: '8px', transition: 'background 0.2s' }}
+                                            onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                                            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                          >
+                                            <div style={{ width: '20px', height: '20px', border: '2px solid var(--border)', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: isSelected ? 'var(--primary)' : 'transparent', borderColor: isSelected ? 'var(--primary)' : 'var(--border)' }}>
+                                              {isSelected && <Check size={14} color="white" />}
+                                            </div>
+                                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isSelected ? 'var(--primary)' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                                              {contacts[phone]?.photo ? (
+                                                <img src={contacts[phone].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                              ) : (
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isSelected ? 'white' : 'var(--text-muted)' }}>{initial}</span>
+                                              )}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                              <div style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
+                                              {hasName && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatPhone(phone)}</div>}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                  </div>
+
+                                  <div style={{ padding: '16px', background: '#f8fafc', borderTop: '1px solid var(--border)' }}>
+                                    <button
+                                      onClick={() => setShowContactModal(false)}
+                                      style={{ width: '100%', padding: '12px', background: 'var(--primary-dark)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+                                    >
+                                      DONE ({selectedBroadcastContacts.length} SELECTED)
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              </div>
+                            )}
+                          </AnimatePresence>
+
+
+
+                        </motion.div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Business Tools</p>
+
+                          <motion.div
+                            whileHover={{ x: 5 }}
+                            onClick={() => setCurrentBusinessTool('auto-reply')}
+                            style={{
+                              padding: '16px',
+                              background: 'white',
+                              border: '1px solid var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.2s'
+                            }}
+                          >
+                            <div style={{ width: '40px', height: '40px', background: '#e7f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0057b7' }}>
+                              <Zap size={20} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Auto Reply</h4>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Instant replies to keywords</p>
+                            </div>
+                          </motion.div>
+
+                          <motion.div
+                            whileHover={{ x: 5 }}
+                            onClick={() => setCurrentBusinessTool('broadcast')}
+                            style={{
+                              padding: '16px',
+                              background: 'white',
+                              border: '1px solid var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.2s'
+                            }}
+                          >
+                            <div style={{ width: '40px', height: '40px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
+                              <Send size={20} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Broadcast</h4>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Send to all contacts at once</p>
+                            </div>
+                          </motion.div>
+
+                          <motion.div
+                            whileHover={{ x: 5 }}
+                            onClick={() => setCurrentBusinessTool('drip')}
+                            style={{
+                              padding: '16px',
+                              background: 'white',
+                              border: '1px solid var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.2s'
+                            }}
+                          >
+                            <div style={{ width: '40px', height: '40px', background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369a1' }}>
+                              <LayoutList size={20} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Content Drip</h4>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Automated drip sequences</p>
+                            </div>
+                          </motion.div>
+
+                          <motion.div
+                            whileHover={{ x: 5 }}
+                            onClick={() => setCurrentBusinessTool('ai-assistant')}
+                            style={{
+                              padding: '16px',
+                              background: 'white',
+                              border: '1px solid var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              cursor: 'pointer',
+                              transition: 'border-color 0.2s',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 8px', background: 'var(--primary-dark)', color: 'white', fontSize: '0.5rem', fontWeight: 900, textTransform: 'uppercase' }}>New</div>
+                            <div style={{ width: '40px', height: '40px', background: '#faf5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+                              <Bot size={20} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>AI Assistant</h4>
+                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Smart AI auto-responder</p>
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              </>
+            )}
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="main-content" style={{ display: (isMobile && ((channel === 'whatsapp' ? status !== 'connected' : false) || showServiceSelector)) ? 'none' : undefined }}>
+          <header className="header" style={{
+            padding: '0px 24px',
+            height: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: isSearching ? '#f0f2f5' : 'white',
+            gap: '16px'
+          }}>
+            {isSearching ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+                <Search size={18} color="var(--primary-dark)" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Search by name, phone or message..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    width: '100%',
+                    fontSize: '0.95rem',
+                    outline: 'none',
+                    padding: '8px 0'
+                  }}
+                />
+                <X
+                  size={20}
+                  style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
+                  onClick={() => {
+                    setIsSearching(false);
+                    setSearchQuery('');
+                  }}
+                />
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '32px', height: '100%', flex: 1 }}>
+                {activeView === 'scheduler' ? (
+                  <>
+                    <div
+                      onClick={() => setQueueTab('upcoming')}
+                      style={{
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        borderBottom: queueTab === 'upcoming' ? '3px solid var(--primary-dark)' : '3px solid transparent',
+                        color: queueTab === 'upcoming' ? 'var(--primary-dark)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Upcoming ({schedules.filter(s => s.channel === channel && (s.status === 'pending' || s.status === 'failed')).length})
+                    </div>
+                    <div
+                      onClick={() => setQueueTab('history')}
+                      style={{
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        borderBottom: queueTab === 'history' ? '3px solid var(--primary-dark)' : '3px solid transparent',
+                        color: queueTab === 'history' ? 'var(--primary-dark)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      History ({schedules.filter(s => s.channel === channel && s.status !== 'pending' && s.status !== 'failed').length})
+                    </div>
+                  </>
+                ) : (
+                  <div style={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: 'var(--primary-dark)',
+                    fontWeight: 800,
+                    fontSize: '1rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px'
+                  }}>
+                    {currentBusinessTool === 'auto-reply' ? 'Auto-Reply Manager' :
+                      currentBusinessTool === 'drip' ? 'Drip Campaign Builder' :
+                        'Business Tools'}
+                  </div>
+                )}
+
+
+              </div>
+            )}
+
+
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <Search
+                size={20}
+                color="#54656f"
+                style={{ cursor: 'pointer' }}
+                onClick={() => setIsSearching(true)}
+              />
+              <div style={{ position: 'relative' }}>
+                <MoreVertical
+                  size={20}
+                  color="#54656f"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowMenu(!showMenu)}
+                />
+
+                <AnimatePresence>
+                  {showMenu && (
+                    <>
+                      <div
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                        onClick={() => setShowMenu(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          marginTop: '8px',
+                          background: 'white',
+                          borderRadius: '0px',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                          padding: '8px 0',
+                          zIndex: 1000,
+                          width: '180px',
+                          border: '1px solid var(--border)',
+                          transformOrigin: 'top right'
+                        }}
+                      >
+                        {activeView === 'scheduler' && (
+                          <>
+                            {queueTab === 'calendar' ? (
+                              <div
+                                onClick={() => { setQueueTab('upcoming'); setShowMenu(false); }}
+                                style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                              >
+                                <LayoutList size={14} /> Switch to List View
+                              </div>
+                            ) : (
+                              <div
+                                onClick={() => { setQueueTab('calendar'); setShowMenu(false); }}
+                                style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                              >
+                                <Calendar size={14} /> Switch to Calendar View
+                              </div>
+                            )}
+                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                          </>
+                        )}
+                        <div
+                          onClick={() => { handleRetryFailed(); setShowMenu(false); }}
+                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                        >
+                          <RefreshCcw size={14} /> Retry All Failed
+                        </div>
+                        <div
+                          onClick={() => { handleExportCSV(); setShowMenu(false); }}
+                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                        >
+                          <Download size={14} /> Export CSV
+                        </div>
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                        <div
+                          onClick={() => { handleClearHistory(); setShowMenu(false); }}
+                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+                        >
+                          <Trash2 size={14} /> Clear History
+                        </div>
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                        <div
+                          onClick={() => { handleDisconnectWhatsApp(); setShowMenu(false); }}
+                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+                        >
+                          <WifiOff size={14} /> Disconnect WhatsApp
+                        </div>
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                        <div
+                          onClick={() => { handleSignOut(); setShowMenu(false); }}
+                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+                        >
+                          <LogOut size={14} /> Sign Out
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {activeView === 'scheduler' && queueTab === 'history' && (
+                <div style={{ position: 'relative' }}>
+                  <ListFilter
+                    size={20}
+                    color="#54656f"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setShowFilterMenu(!showFilterMenu)}
+                  />
+
+                  <AnimatePresence>
+                    {showFilterMenu && (
+                      <>
+                        <div
+                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                          onClick={() => setShowFilterMenu(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            marginTop: '8px',
+                            background: 'white',
+                            borderRadius: '0px',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                            padding: '8px 0',
+                            zIndex: 1000,
+                            width: '150px',
+                            border: '1px solid var(--border)',
+                            transformOrigin: 'top right'
+                          }}
+                        >
+                          {['all', 'sent', 'delivered', 'read'].map(f => (
+                            <div
+                              key={f}
+                              onClick={() => { setHistoryFilter(f); setShowFilterMenu(false); }}
+                              style={{
+                                padding: '10px 16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                background: historyFilter === f ? '#f0f2f5' : 'transparent',
+                                fontWeight: historyFilter === f ? 'bold' : 'normal'
+                              }}
+                            >
+                              {f === 'all' ? 'All Status' : f.charAt(0).toUpperCase() + f.slice(1)}
+                            </div>
+                          ))}
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </header>
+
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: queueTab === 'calendar' ? '0' : '30px 5%' }}>
+            {activeView === 'scheduler' ? (
+              queueTab === 'calendar' ? (
+                <CalendarView
+                  schedules={schedules}
+                  contacts={contacts}
+                  onEventDrop={handleCalendarEventDrop}
+                  onEventClick={handleEdit}
+                  onEventHover={setHoveredSchedule}
+                />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <AnimatePresence>
+                    {schedules.filter(s => {
+                      if (s.channel !== channel) return false;
+                      const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        getContactName(s.phone.split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
+                      if (!matchesSearch) return false;
+                      if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
+                      if (historyFilter !== 'all' && s.status !== historyFilter) return false;
+                      return s.status !== 'pending' && s.status !== 'failed';
+                    }).length === 0 ? (
+                      <>
+                        <motion.div
+                          key="empty-state"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          style={{
+                            textAlign: 'center',
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            padding: '40px',
+                            borderRadius: '0px',
+                            boxShadow: 'var(--shadow)',
+                            margin: '100px auto',
+                            maxWidth: '400px'
+                          }}>
+                          <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: '#f0f2f5',
+                            borderRadius: '0px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px'
+                          }}>
+                            <MessageSquare size={32} color="#bac0c4" />
+                          </div>
+                          <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
+                            {searchQuery ? 'No matching messages' : queueTab === 'upcoming' ? 'No Upcoming Messages' : `No ${historyFilter} messages`}
+                          </h3>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            {searchQuery ? `We couldn't find anything matching "${searchQuery}"` : queueTab === 'upcoming'
+                              ? 'Your scheduled messages will appear here.'
+                              : historyFilter === 'all'
+                                ? 'Once messages are sent, they will move to history.'
+                                : `You don't have any messages with the status "${historyFilter}" yet.`}
+                          </p>
+                        </motion.div>
+
+                        {/* Recent Activity Mini-Section */}
+                        {queueTab === 'upcoming' && !searchQuery && schedules.filter(s => s.channel === channel && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+                          >
+                            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {schedules
+                                .filter(s => s.channel === channel && s.status !== 'pending' && s.status !== 'failed')
+                                .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
+                                .slice(0, 3)
+                                .map(msg => (
+                                  <div key={msg.id} style={{ background: 'white', padding: '10px 15px', borderRadius: '0px', boxShadow: '0 2px 5px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--border)' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                      {contacts[msg.phone.split('@')[0]]?.photo ? (
+                                        <img src={contacts[msg.phone.split('@')[0]].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                      ) : (
+                                        msg.phone.includes('@g.us') ? <Users size={14} color="#0057b7" /> : <User size={14} color="var(--text-muted)" />
+                                      )}
+                                    </div>
+                                    <div style={{ overflow: 'hidden', flex: 1, textAlign: 'left' }}>
+                                      <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {groups[msg.phone] || getContactName(msg.phone.split('@')[0])}
+                                      </p>
+                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.message}</p>
+                                    </div>
+                                    <div style={{ textAlign: 'right', minWidth: '70px', marginLeft: '12px' }}>
+                                      <p style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary)', margin: 0 }}>SENT</p>
+                                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>{format(new Date(msg.scheduled_at || msg.scheduledAt), 'h:mm a')}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                            <button
+                              onClick={() => setQueueTab('history')}
+                              style={{
+                                marginTop: '12px',
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--primary-dark)',
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'block',
+                                margin: '12px auto 0',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px'
+                              }}
+                            >
+                              View Full History &rarr;
+                            </button>
+                          </motion.div>
+                        )}
+                      </>
+                    ) : (
+                      schedules
+                        .filter(s => {
+                          const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            getContactName(s.phone.split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
+                          if (!matchesSearch) return false;
+                          if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
+                          if (historyFilter !== 'all' && s.status !== historyFilter) return false;
+                          return s.status !== 'pending' && s.status !== 'failed';
+                        })
+                        .map(item => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            layout
+                            style={{
+                              alignSelf: 'center',
+                              width: '100%',
+                              maxWidth: '600px',
+                              background: item.channel === 'calendar'
+                                ? '#ffffff'
+                                : (item.channel === 'email'
+                                  ? '#ffffff'
+                                  : ((item.status === 'pending' || item.status === 'failed') ? 'white' : '#dcf8c6')),
+                              border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #fee2e2' : 'none'),
+                              borderLeft: item.channel === 'calendar' ? '4px solid #1a73e8' : (item.channel === 'email' ? '4px solid #a52a2a' : 'none'),
+                              padding: '12px 16px',
+                              borderRadius: '0px',
+                              boxShadow: item.channel === 'calendar' ? '0 2px 8px rgba(26, 115, 232, 0.08)' : (item.channel === 'email' ? '0 2px 8px rgba(165, 42, 42, 0.08)' : '0 1px 0.5px rgba(0,0,0,0.13)'),
+                              position: 'relative'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: item.channel === 'email' || item.channel === 'calendar' ? '0px' : '50%',
+                                  background: item.channel === 'calendar' ? '#e8f0fe' : (item.channel === 'email' ? '#fdf2f2' : '#f0f2f5'),
+                                  overflow: 'hidden',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                  border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #f8d7da' : '1px solid rgba(0,0,0,0.05)')
+                                }}>
+                                  {item.channel === 'calendar' ? (
+                                    <Calendar size={14} color="#1a73e8" />
+                                  ) : item.channel === 'email' ? (
+                                    <Mail size={14} color="#a52a2a" />
+                                  ) : contacts[item.phone.split('@')[0]]?.photo ? (
+                                    <img src={contacts[item.phone.split('@')[0]].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : item.phone.includes('@g.us') ? (
+                                    <Users size={12} color="#0057b7" />
+                                  ) : (
+                                    <User size={12} color="var(--text-muted)" />
+                                  )}
+                                </div>
+                                {item.channel === 'calendar' && (
+                                  <span style={{
+                                    fontSize: '0.65rem',
+                                    padding: '2px 6px',
+                                    background: '#e8f0fe',
+                                    color: '#1a73e8',
+                                    border: '1px solid #d2e3fc',
+                                    fontWeight: 800,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    borderRadius: '0px'
+                                  }}>
+                                    MEETING
+                                  </span>
+                                )}
+                                {item.channel === 'email' && (
+                                  <span style={{
+                                    fontSize: '0.65rem',
+                                    padding: '2px 6px',
+                                    background: '#fdf2f2',
+                                    color: '#a52a2a',
+                                    border: '1px solid #f8d7da',
+                                    fontWeight: 800,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    borderRadius: '0px'
+                                  }}>
+                                    EMAIL
+                                  </span>
+                                )}
+                                <span style={{
+                                  fontWeight: 700,
+                                  color: item.channel === 'calendar' ? '#1a73e8' : (item.channel === 'email' ? '#a52a2a' : (item.phone.includes('@g.us') ? '#0057b7' : '#075e54')),
+                                  fontSize: '0.9rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  {item.channel === 'calendar' ? (item.metadata?.title || 'Untitled Meeting') : (item.channel === 'email' ? `To: ${item.email_to || item.phone}` : `To: ${groups[item.phone] || getContactName(item.phone.split('@')[0])}`)}
+                                </span>
+                                <span style={{ fontSize: '0.7rem', color: '#667781', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '0px' }}>
+                                  {format(new Date(item.scheduled_at || item.scheduledAt), 'MMM d, h:mm a')}
+                                </span>
+                                {item.recurrence && item.recurrence !== 'none' && (
+                                  <span style={{
+                                    fontSize: '0.65rem',
+                                    color: item.channel === 'email' ? '#a52a2a' : '#075e54',
+                                    background: item.channel === 'email' ? '#fdf2f2' : '#dcf8c6',
+                                    padding: '2px 6px',
+                                    borderRadius: '0px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase'
+                                  }}>
+                                    <Repeat size={10} /> {item.recurrence}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {(item.status === 'pending' || item.status === 'failed') && (
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    className="btn-icon"
+                                    style={{
+                                      padding: '6px',
+                                      background: item.channel === 'calendar' ? '#e8f0fe' : (item.channel === 'email' ? '#fdf2f2' : '#e7f3ff'),
+                                      color: item.channel === 'calendar' ? '#1a73e8' : (item.channel === 'email' ? '#a52a2a' : '#0057b7'),
+                                      border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #f8d7da' : '1px solid #d0e7ff'),
+                                      borderRadius: '0px'
+                                    }}
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                )}
+                                {item.status === 'read' ? (
+                                  <CheckCheck size={16} color="#34b7f1" />
+                                ) : item.status === 'delivered' ? (
+                                  <CheckCheck size={16} color="#667781" />
+                                ) : item.status === 'sent' ? (
+                                  item.channel === 'email' ? <CheckCheck size={16} color="#a52a2a" /> : <Check size={16} color="#667781" />
+                                ) : item.status === 'failed' ? (
+                                  <AlertCircle size={16} color="#ef4444" />
+                                ) : (
+                                  <Clock size={16} color="#667781" />
+                                )}
+                                <button onClick={() => deleteSchedule(item.id)} className="btn-icon" style={{ padding: '4px 5px' }}>
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {item.channel === 'calendar' && (
+                              <div style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '6px',
+                                marginBottom: '10px'
+                              }}>
+                                <span style={{
+                                  fontSize: '0.7rem',
+                                  padding: '3px 8px',
+                                  background: '#e8f0fe',
+                                  color: '#1a73e8',
+                                  fontWeight: 700,
+                                  borderRadius: '0px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  {item.metadata?.platform === 'whatsapp_call' ? (
+                                    <WhatsAppIcon size={12} color="#25D366" />
+                                  ) : item.metadata?.platform === 'phone' ? (
+                                    <Phone size={12} color="#0057b7" />
+                                  ) : (
+                                    <Video size={12} color="#1a73e8" />
+                                  )}
+                                  {{ google_meet: 'Google Meet', zoom: 'Zoom Call', whatsapp_call: 'WhatsApp Call', phone: 'Phone Call', custom: 'Online Call' }[item.metadata?.platform] || item.metadata?.platform || 'Meeting'}
+                                </span>
+                                {item.metadata?.duration && (
+                                  <span style={{
+                                    fontSize: '0.7rem',
+                                    padding: '3px 8px',
+                                    background: '#f0f2f5',
+                                    color: '#667781',
+                                    fontWeight: 700,
+                                    borderRadius: '0px'
+                                  }}>
+                                    {item.metadata?.duration} min
+                                  </span>
+                                )}
+                                <span style={{
+                                  fontSize: '0.7rem',
+                                  padding: '3px 8px',
+                                  background: '#f0f2f5',
+                                  color: '#667781',
+                                  fontWeight: 700,
+                                  borderRadius: '0px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <Clock size={11} />
+                                  {format(new Date(item.scheduled_at || item.scheduledAt), 'h:mm a')}
+                                </span>
+                              </div>
+                            )}
+                            {item.channel === 'email' && item.email_subject && (
+                              <div style={{
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                color: '#a52a2a',
+                                marginBottom: '8px',
+                                padding: '6px 10px',
+                                background: '#fdf2f2',
+                                borderLeft: '3px solid #a52a2a',
+                                borderRadius: '0px'
+                              }}>
+                                <span style={{ color: '#7f1d1d', fontWeight: 800 }}>Subject:</span> {item.email_subject}
+                              </div>
+                            )}
+                            <div style={{
+                              fontSize: '0.95rem',
+                              lineHeight: '1.5',
+                              color: '#111b21',
+                              whiteSpace: 'pre-wrap'
+                            }}>
+                              {item.message}
+                            </div>
+
+                            {item.channel === 'calendar' && (item.metadata?.meetingUrl || item.metadata?.meeting_url) && (
+                              <a
+                                href={(() => {
+                                  const rawUrl = item.metadata?.meetingUrl || item.metadata?.meeting_url || '';
+                                  if (rawUrl.startsWith('http') || rawUrl.startsWith('tel:')) return rawUrl;
+                                  if (item.metadata?.platform === 'whatsapp_call') {
+                                    const cleanPhone = (item.phone || '').replace(/\D/g, '');
+                                    return cleanPhone ? `https://wa.me/${cleanPhone}` : 'https://wa.me';
+                                  }
+                                  return '#';
+                                })()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  marginTop: '10px',
+                                  padding: '8px 14px',
+                                  background: '#1a73e8',
+                                  color: 'white',
+                                  fontWeight: 700,
+                                  fontSize: '0.8rem',
+                                  borderRadius: '0px',
+                                  textDecoration: 'none',
+                                  boxShadow: '0 2px 4px rgba(26,115,232,0.3)'
+                                }}
+                              >
+                                <Video size={14} /> Join {item.metadata?.platform === 'google_meet' ? 'Google Meet' : item.metadata?.platform === 'zoom' ? 'Zoom' : 'Meeting'} &rarr;
+                              </a>
+                            )}
+
+                            {(item.media_url || item.mediaUrl) && (
+                              <div className="queue-media-preview" style={{ marginTop: '10px' }}>
+                                {(item.media_type || item.mediaType)?.startsWith('image/') ? (
+                                  <img
+                                    src={item.media_url || item.mediaUrl}
+                                    alt="Media"
+                                    style={{ maxWidth: '100%', borderRadius: '0px', border: '1px solid rgba(0,0,0,0.1)' }}
+                                  />
+                                ) : (item.media_type || item.mediaType)?.startsWith('video/') ? (
+                                  <video
+                                    src={item.media_url || item.mediaUrl}
+                                    controls
+                                    style={{ maxWidth: '100%', borderRadius: '0px' }}
+                                  />
+                                ) : (item.media_type || item.mediaType)?.startsWith('audio/') || item.is_voice_note || item.isVoiceNote ? (
+                                  <audio
+                                    src={item.media_url || item.mediaUrl}
+                                    controls
+                                    style={{ width: '100%', height: '32px' }}
+                                  />
+                                ) : (
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '10px',
+                                    background: 'rgba(0,0,0,0.05)',
+                                    borderRadius: '0px',
+                                    fontSize: '0.85rem'
+                                  }}>
+                                    <FileIcon size={18} />
+                                    <span>Document Attachment</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            <div style={{
+                              textAlign: 'right',
+                              fontSize: '0.65rem',
+                              color: '#667781',
+                              marginTop: '4px',
+                              fontWeight: 600,
+                              textTransform: 'uppercase'
+                            }}>
+                              {item.status}
+                            </div>
+                          </motion.div>
+                        ))
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+                {currentBusinessTool === 'drip' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{
+                      background: 'white',
+                      padding: '24px',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '20px'
+                    }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Enroll Contacts</h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>Start a drip campaign for a specific phone number.</p>
+
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-dark)' }}>PHONE NUMBER</label>
+                          <input
+                            type="text"
+                            placeholder="9122500000"
+                            id="enroll-phone"
+                            style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', marginTop: '4px' }}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-dark)' }}>SELECT SEQUENCE</label>
+                          <select id="enroll-sequence" style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', marginTop: '4px', background: 'white' }}>
+                            <option value="">Choose a sequence...</option>
+                            {dripSequences.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        </div>
+                        <button
+                          className="btn btn-primary"
+                          style={{ height: '45px', padding: '0 24px' }}
+                          onClick={async () => {
+                            const phone = document.getElementById('enroll-phone').value;
+                            const sequenceId = document.getElementById('enroll-sequence').value;
+                            if (!phone || !sequenceId) return alert('Fill all fields');
+
+                            // Clean and prefix phone number
+                            let cleanPhone = phone.replace(/\D/g, '');
+                            if (cleanPhone.length === 10) cleanPhone = `91${cleanPhone}`;
+
+                            try {
+                              const response = await fetch(`${API_URL}/api/drip/enroll`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session.access_token}`
+                                },
+                                body: JSON.stringify({ sequenceId, phone: cleanPhone })
+                              });
+                              if (response.ok) {
+                                alert('Contact enrolled successfully!');
+                                document.getElementById('enroll-phone').value = '';
+                              } else {
+                                const err = await response.json();
+                                alert('Enrollment failed: ' + (err.error || 'Unknown error'));
+                              }
+                            } catch (err) {
+                              console.error('Enrollment failed:', err);
+                              alert('Enrollment failed. Please try again.');
+                            }
+                          }}
+                        >
+                          Enroll Now
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                      {dripSequences.map(seq => (
+                        <motion.div
+                          key={seq.id}
+                          whileHover={{ y: -2 }}
+                          style={{
+                            background: 'white',
+                            padding: '24px',
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                            <div style={{ width: '40px', height: '40px', background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369a1' }}>
+                              <LayoutList size={20} />
+                            </div>
+                            <h4 style={{ margin: 0, fontWeight: 800 }}>{seq.name}</h4>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {seq.steps?.map((step, i) => (
+                              <div key={i} style={{ fontSize: '0.85rem', display: 'flex', gap: '8px', color: 'var(--text-muted)' }}>
+                                <span style={{ fontWeight: 700 }}>+{step.delay_days}d:</span>
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{step.message}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+
+                  <AnimatePresence>
+                    {autoReplies.length === 0 ? (
+                      <div style={{
+                        textAlign: 'center',
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        padding: '60px 40px',
+                        borderRadius: '0px',
+                        boxShadow: 'var(--shadow)',
+                        margin: '60px auto',
+                        maxWidth: '450px'
+                      }}>
+                        <div style={{
+                          width: '80px',
+                          height: '80px',
+                          background: '#e7f3ff',
+                          borderRadius: '0px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          margin: '0 auto 24px',
+                          color: '#0057b7'
+                        }}>
+                          <Zap size={40} />
+                        </div>
+                        <h3 style={{ fontSize: '1.3rem', marginBottom: '12px', fontWeight: 700 }}>Your Bot is Quiet</h3>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                          Create your first auto-reply rule using the tool on the left.
+                        </p>
+                      </div>
+                    ) : (
+
+                      autoReplies.map(rule => (
+                        <motion.div
+                          key={rule.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          style={{
+                            alignSelf: 'center',
+                            width: '100%',
+                            maxWidth: '700px',
+                            background: 'white',
+                            borderRadius: '0px',
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                            border: '1px solid var(--border)'
+                          }}
+                        >
+                          <div style={{ display: 'flex' }}>
+                            <div style={{
+                              width: '6px',
+                              background: 'linear-gradient(to bottom, #0057b7, #34b7f1)'
+                            }} />
+                            <div style={{ flex: 1, padding: '20px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{
+                                    background: '#e7f3ff',
+                                    color: '#0057b7',
+                                    padding: '4px 12px',
+                                    borderRadius: '0px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 700,
+                                    border: '1px solid #d0e7ff'
+                                  }}>
+                                    Keyword: "{rule.keyword}"
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => deleteReply(rule.id)}
+                                  className="btn-icon"
+                                  style={{ color: '#ef4444', background: '#fef2f2' }}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                              <div style={{
+                                background: '#f8fafc',
+                                padding: '16px',
+                                borderRadius: '0px',
+                                fontSize: '0.95rem',
+                                color: '#334155',
+                                lineHeight: '1.6',
+                                border: '1px solid #edf2f7'
+                              }}>
+                                {rule.reply}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
+                  </AnimatePresence>
+                )
+                }
+              </div>
+            )}
+          </div>
+        </main>
+
+
+
+
+
+
+        {/* Email Configuration Modal */}
+        <AnimatePresence>
+          {showEmailConfig && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(11, 20, 26, 0.85)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 2000, backdropFilter: 'blur(4px)', padding: '20px'
+            }}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                style={{
+                  background: 'white', padding: '32px', borderRadius: '0px',
+                  width: '100%', maxWidth: '440px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#ea4335', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Mail size={20} color="white" />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#b31412' }}>Email Integration</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Choose how to send emails</p>
+                  </div>
+                </div>
+
+                {/* Mode 1: Default Zero-Setup */}
+                <div style={{
+                  padding: '16px', marginBottom: '16px',
+                  border: '2px solid #16a34a', background: '#f0fdf4',
+                  borderRadius: '0px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', background: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Check size={16} color="white" />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#166534', margin: 0 }}>Email Ready (Default Server Engine)</p>
+                      <p style={{ fontSize: '0.7rem', color: '#16a34a', margin: '2px 0 0' }}>
+                        Active by default — no setup needed
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mode 2: Gmail OAuth */}
+                <div style={{
+                  padding: '16px', marginBottom: '16px',
+                  border: '1px solid var(--border)', background: 'white',
+                  borderRadius: '0px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', background: '#1a73e8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1a73e8', margin: 0 }}>Connect Gmail Account</p>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                        {integrations.find(i => i.provider === 'gmail_oauth')
+                          ? `Connected as ${integrations.find(i => i.provider === 'gmail_oauth').email_address}`
+                          : 'Send from your personal Gmail'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const gmailInt = integrations.find(i => i.provider === 'gmail_oauth');
+                        if (gmailInt) {
+                          axios.delete(`${API_URL}/api/integrations/gmail_oauth`).then(() => fetchIntegrations());
+                        } else {
+                          window.location.href = `${API_URL}/api/auth/google?userId=${user.id}`;
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px', border: '1px solid #1a73e8', background: 'white',
+                        color: '#1a73e8', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer',
+                        borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0
+                      }}
+                    >
+                      {integrations.find(i => i.provider === 'gmail_oauth') ? 'Disconnect' : 'Connect'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mode 3: Advanced Custom Resend */}
+                <details style={{ marginBottom: '20px' }}>
+                  <summary style={{
+                    fontSize: '0.75rem', color: '#ea4335', fontWeight: 600, cursor: 'pointer',
+                    padding: '8px 0', userSelect: 'none'
+                  }}>
+                    Advanced: Use Custom Resend API Key &amp; Domain
+                  </summary>
+                  <div style={{ marginTop: '16px', padding: '16px', background: '#fef2f2', border: '1px solid #fecaca' }}>
+                    <div className="input-group" style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b31412' }}>RESEND API KEY</label>
+                      <input
+                        type="password"
+                        placeholder="re_xxxxxxxxxxxx"
+                        value={emailApiKey}
+                        onChange={e => setEmailApiKey(e.target.value)}
+                        style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.9rem' }}
+                      />
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        Get your API key from <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#ea4335' }}>resend.com/api-keys</a>
+                      </p>
+                    </div>
+
+                    <div className="input-group" style={{ marginBottom: '16px' }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b31412' }}>FROM EMAIL ADDRESS</label>
+                      <input
+                        type="email"
+                        placeholder="you@yourdomain.com"
+                        value={emailFromAddress}
+                        onChange={e => setEmailFromAddress(e.target.value)}
+                        style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.9rem' }}
+                      />
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        Must be a verified domain in Resend.
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button
+                        onClick={async () => {
+                          if (!emailApiKey) return alert('Please enter your Resend API key');
+                          setConfigSaving(true);
+                          try {
+                            await axios.post(`${API_URL}/api/integrations`, {
+                              provider: 'resend',
+                              apiKey: emailApiKey,
+                              emailAddress: emailFromAddress
+                            });
+                            await fetchIntegrations();
+                          } catch (err) {
+                            alert('Failed to save: ' + (err.response?.data?.error || err.message));
+                          } finally {
+                            setConfigSaving(false);
+                          }
+                        }}
+                        disabled={configSaving}
+                        style={{
+                          flex: 1, padding: '10px', background: '#ea4335', color: 'white', border: 'none',
+                          borderRadius: '0px', fontWeight: 700, cursor: configSaving ? 'not-allowed' : 'pointer',
+                          opacity: configSaving ? 0.7 : 1
+                        }}
+                      >
+                        {configSaving ? 'Saving...' : 'Save Custom Key'}
+                      </button>
+                      {integrations.find(i => i.provider === 'resend') && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await axios.delete(`${API_URL}/api/integrations/resend`);
+                              setEmailApiKey('');
+                              setEmailFromAddress('');
+                              await fetchIntegrations();
+                            } catch (err) {
+                              alert('Failed to remove');
+                            }
+                          }}
+                          style={{ flex: 1, padding: '10px', background: 'none', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 700, cursor: 'pointer', borderRadius: '0px' }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </details>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => setShowEmailConfig(false)}
+                    className="btn"
+                    style={{ flex: 1, background: '#f0f2f5', color: 'var(--text)', borderRadius: '0px' }}
+                  >
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Custom Save Contact Modal */}
+        <AnimatePresence>
+          {showSaveModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(11, 20, 26, 0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2000,
+              backdropFilter: 'blur(4px)'
+            }}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                style={{
+                  background: 'white',
+                  padding: '30px',
+                  borderRadius: '0px',
+                  width: '100%',
+                  maxWidth: '380px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                }}
+              >
+                <h3 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 700 }}>Save Contact</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+                  Enter a name for <strong>+91 {formData.phone}</strong>
+                </p>
+
+                <div className="input-group">
+                  <input
+                    type="text"
+                    placeholder="e.g. Test 2:25"
+                    autoFocus
+                    value={newContactName}
+                    onChange={e => setNewContactName(e.target.value)}
+                    style={{ fontSize: '1rem', padding: '12px 16px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                  <button
+                    onClick={() => setShowSaveModal(false)}
+                    className="btn"
+                    style={{ flex: 1, background: '#f0f2f5', color: 'var(--text)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitSaveContact}
+                    className="btn btn-primary"
+                    style={{ flex: 1 }}
+                    disabled={!newContactName}
+                  >
+                    Save Contact
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* Disconnect Confirmation Modal */}
+        <AnimatePresence>
+          {showDisconnectModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(11, 20, 26, 0.85)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '20px'
+            }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                style={{
+                  background: 'white',
+                  borderRadius: '0px',
+                  padding: '32px',
+                  maxWidth: '440px',
+                  width: '100%',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                  textAlign: 'center'
+                }}
+              >
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  background: '#fff5f5',
+                  borderRadius: '0px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  color: '#ff4d4f'
+                }}>
+                  <WifiOff size={40} />
+                </div>
+
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px', color: '#111b21' }}>
+                  Disconnect WhatsApp?
+                </h2>
+
+                <p style={{ color: '#667781', lineHeight: '1.6', fontSize: '1rem', marginBottom: '32px' }}>
+                  Disconnecting will <strong>immediately stop</strong> all your active automations, scheduled messages, and auto-replies. You will also be logged out.
+                </p>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => setShowDisconnectModal(false)}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '0px',
+                      border: '1px solid #e9edef',
+                      background: 'white',
+                      color: '#111b21',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Keep Connected
+                  </button>
+                  <button
+                    onClick={confirmDisconnect}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '0px',
+                      border: 'none',
+                      background: '#ff4d4f',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(255, 77, 79, 0.3)'
+                    }}
+                  >
+                    Yes, Disconnect
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* Sign Out Confirmation Modal */}
+        <AnimatePresence>
+          {showSignOutModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(11, 20, 26, 0.85)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '20px'
+            }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                style={{
+                  background: 'white',
+                  borderRadius: '0px',
+                  padding: '32px',
+                  maxWidth: '440px',
+                  width: '100%',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                  textAlign: 'center'
+                }}
+              >
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  background: '#e7f3ff',
+                  borderRadius: '0px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  color: '#0057b7'
+                }}>
+                  <LogOut size={40} />
+                </div>
+
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px', color: '#111b21' }}>
+                  Sign Out?
+                </h2>
+
+                <p style={{ color: '#667781', lineHeight: '1.6', fontSize: '1rem', marginBottom: '32px' }}>
+                  You will be safely signed out. Don't worry—your <strong>automations and scheduled messages will keep running</strong> in the background! 🚀
+                </p>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => setShowSignOutModal(false)}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '0px',
+                      border: '1px solid #e9edef',
+                      background: 'white',
+                      color: '#111b21',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Stay Logged In
+                  </button>
+                  <button
+                    onClick={confirmSignOut}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '0px',
+                      border: 'none',
+                      background: '#0057b7',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(0, 87, 183, 0.3)'
+                    }}
+                  >
+                    Yes, Sign Out
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* Clear History Confirmation Modal */}
+        <AnimatePresence>
+          {showClearHistoryModal && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(11, 20, 26, 0.85)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '20px'
+            }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                style={{
+                  background: 'white',
+                  borderRadius: '0px',
+                  padding: '32px',
+                  maxWidth: '440px',
+                  width: '100%',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                  textAlign: 'center'
+                }}
+              >
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  background: '#fff7ed',
+                  borderRadius: '0px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  color: '#f97316'
+                }}>
+                  <Trash2 size={40} />
+                </div>
+
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px', color: '#111b21' }}>
+                  Clear All History?
+                </h2>
+
+                <p style={{ color: '#667781', lineHeight: '1.6', fontSize: '1rem', marginBottom: '32px' }}>
+                  This will permanently delete all <strong>sent, delivered, read, and failed</strong> messages. This action cannot be undone.
+                </p>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => setShowClearHistoryModal(false)}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '0px',
+                      border: '1px solid #e9edef',
+                      background: 'white',
+                      color: '#111b21',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Keep History
+                  </button>
+                  <button
+                    onClick={confirmClearHistory}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '0px',
+                      border: 'none',
+                      background: '#f97316',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)'
+                    }}
+                  >
+                    Yes, Clear All
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        {/* Mobile Floating Action Button (FAB) */}
+        {isMobile && !showServiceSelector && !showMobileForm && (channel !== 'whatsapp' || status === 'connected') && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            whileTap={{ scale: 0.9 }}
+            className="fab"
+            style={{
+              background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
+              boxShadow: channel === 'email' ? '0 6px 20px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 6px 20px rgba(26, 115, 230, 0.4)' : '0 6px 20px rgba(37, 211, 102, 0.4)')
+            }}
+            onClick={() => {
+              setFormStep(1);
+              setShowMobileForm(true);
+            }}
+          >
+            <Plus size={32} />
+          </motion.button>
+        )}
+
+        {/* Multi-Step Wizard Modal */}
+        <AnimatePresence>
+          {showMobileForm && (
+            <motion.div
+              className="mobile-modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileForm(false)}
+            >
+              <motion.div
+                className="mobile-modal-content"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Wizard Header */}
+                <div className="wizard-header">
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : 'Schedule Message')}
+                    </h2>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of 3</span>
+                  </div>
+                  <div className="wizard-step-indicator">
+                    <div className={`step-dot ${formStep >= 1 ? 'active' : ''}`} />
+                    <div className={`step-dot ${formStep >= 2 ? 'active' : ''}`} />
+                    <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />
+                  </div>
+                  <button
+                    onClick={() => setShowMobileForm(false)}
+                    className="btn-icon"
+                    style={{ background: '#f0f2f5', borderRadius: '0px' }}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Wizard Body */}
+                <div className="wizard-body">
+                  <AnimatePresence mode="wait">
+                    {formStep === 1 && (
+                      <motion.div
+                        key="step1"
+                        className="wizard-stage"
+                        initial={{ x: 50, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -50, opacity: 0 }}
+                      >
+                        {channel === 'email' ? (
+                          <>
+                            <div>
+                              <h3 className="stage-title">Who are we emailing?</h3>
+                              <p className="stage-desc">Enter the recipient email and subject line.</p>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ea4335', marginBottom: '8px', display: 'block' }}>TO (EMAIL)</label>
+                              <input
+                                type="email"
+                                placeholder="user@example.com"
+                                value={formData.emailTo || ''}
+                                onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                              />
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ea4335', marginBottom: '8px', display: 'block' }}>SUBJECT</label>
+                              <input
+                                type="text"
+                                placeholder="Subject line"
+                                value={formData.emailSubject || ''}
+                                onChange={e => setFormData({ ...formData, emailSubject: e.target.value })}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                              />
+                            </div>
+                          </>
+                        ) : channel === 'calendar' ? (
+                          <>
+                            <div>
+                              <h3 className="stage-title">Meeting Recipient</h3>
+                              <p className="stage-desc">Who is this meeting with?</p>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>RECIPIENT CONTACT (WHATSAPP)</label>
+                              <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ padding: '12px 16px', background: '#f0f2f5', border: '1px solid var(--border)', fontSize: '1rem', fontWeight: 800, color: 'var(--primary-dark)', display: 'flex', alignItems: 'center' }}>+91</div>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 9122500000"
+                                  value={formData.phone}
+                                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                  style={{ flex: 1, padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                                />
+                              </div>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>RECIPIENT EMAIL (OPTIONAL)</label>
+                              <input
+                                type="email"
+                                placeholder="client@example.com"
+                                value={formData.emailTo || ''}
+                                onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <h3 className="stage-title">Who are we messaging?</h3>
+                              <p className="stage-desc">Enter a phone number or select a contact.</p>
+                            </div>
+
+                            <div className="input-group">
+                              <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{
+                                  padding: '12px 16px',
+                                  background: 'white',
+                                  borderRadius: '0px',
+                                  border: '1px solid var(--border)',
+                                  fontSize: '1rem',
+                                  fontWeight: 800,
+                                  color: 'var(--primary-dark)',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}>+91</div>
+                                <input
+                                  type="text"
+                                  placeholder="Enter phone number..."
+                                  value={formData.phone}
+                                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                  style={{
+                                    flex: 1,
+                                    padding: '12px 16px',
+                                    borderRadius: '0px',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '1rem',
+                                    outline: 'none'
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            <div style={{ marginTop: '10px' }}>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Recent Contacts</label>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {Object.entries(contacts).slice(0, 5).map(([id, name]) => {
+                                  const displayName = getContactName(id);
+                                  const hasSavedName = !isPlaceholderContactName(name, id);
+                                  return (
+                                    <button
+                                      key={id}
+                                      onClick={() => setFormData({ ...formData, phone: id })}
+                                      style={{
+                                        padding: '12px 16px',
+                                        background: 'white',
+                                        borderRadius: '0px',
+                                        border: '1px solid var(--border)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        cursor: 'pointer',
+                                        textAlign: 'left'
+                                      }}
+                                    >
+                                      <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: 'var(--primary-light)', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>
+                                        {hasSavedName ? displayName[0].toUpperCase() : '#'}
+                                      </div>
+                                      <span style={{ fontWeight: 600 }}>{displayName}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {formStep === 2 && (
+                      <motion.div
+                        key="step2"
+                        className="wizard-stage"
+                        initial={{ x: 50, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -50, opacity: 0 }}
+                      >
+                        {channel === 'calendar' ? (
+                          <>
+                            <div>
+                              <h3 className="stage-title">Meeting Settings</h3>
+                              <p className="stage-desc">Configure meeting details, platform, and date.</p>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 30-Min Strategy Call"
+                                value={meetingTitle}
+                                onChange={e => setMeetingTitle(e.target.value)}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                              />
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>PLATFORM</label>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setMeetingPlatform('google_meet')}
+                                  style={{
+                                    padding: '10px 12px',
+                                    border: meetingPlatform === 'google_meet' ? '1px solid #1a73e8' : '1px solid var(--border)',
+                                    borderRadius: '0px',
+                                    background: meetingPlatform === 'google_meet' ? '#e8f0fe' : 'white',
+                                    color: meetingPlatform === 'google_meet' ? '#1a73e8' : 'var(--text-main)',
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Google Meet
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setMeetingPlatform('custom')}
+                                  style={{
+                                    padding: '10px 12px',
+                                    border: meetingPlatform === 'custom' ? '1px solid #1a73e8' : '1px solid var(--border)',
+                                    borderRadius: '0px',
+                                    background: meetingPlatform === 'custom' ? '#e8f0fe' : 'white',
+                                    color: meetingPlatform === 'custom' ? '#1a73e8' : 'var(--text-main)',
+                                    fontWeight: 700,
+                                    fontSize: '0.8rem',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Custom Link
+                                </button>
+                              </div>
+                              {meetingPlatform === 'custom' && (
+                                <input
+                                  type="url"
+                                  placeholder="i have a meeting link"
+                                  value={formData.customLink || ''}
+                                  onChange={e => setFormData({ ...formData, customLink: e.target.value })}
+                                  style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                                />
+                              )}
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>PICK DATE & TIME</label>
+                              <DatePicker
+                                selected={scheduledDate}
+                                onChange={(date) => setScheduledDate(date)}
+                                showTimeSelect
+                                timeFormat={is24Hour ? "HH:mm" : "h:mm aa"}
+                                timeIntervals={15}
+                                timeCaption="Time"
+                                dateFormat={is24Hour ? "MMMM d, yyyy HH:mm" : "MMMM d, yyyy h:mm aa"}
+                                customInput={<CustomDateInput />}
+                                minDate={new Date()}
+                              />
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>DURATION (MINUTES)</label>
+                              <select
+                                value={meetingDuration}
+                                onChange={e => setMeetingDuration(parseInt(e.target.value))}
+                                style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', background: 'white', fontSize: '1rem' }}
+                              >
+                                <option value={15}>15 Minutes</option>
+                                <option value={30}>30 Minutes</option>
+                                <option value={45}>45 Minutes</option>
+                                <option value={60}>60 Minutes</option>
+                              </select>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <h3 className="stage-title">When should it go out?</h3>
+                              <p className="stage-desc">Pick a date and time for your schedule.</p>
+                            </div>
+
+                            <div className="input-group">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#ea4335' : 'var(--primary-dark)', margin: 0, display: 'block' }}>PICK DATE & TIME</label>
+                                <button
+                                  type="button"
+                                  onClick={() => setIs24Hour(!is24Hour)}
+                                  style={{
+                                    fontSize: '0.65rem',
+                                    padding: '4px 10px',
+                                    borderRadius: '0px',
+                                    background: 'white',
+                                    border: '1px solid var(--border)',
+                                    fontWeight: 700,
+                                    color: channel === 'email' ? '#ea4335' : 'var(--primary-dark)',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {is24Hour ? 'Switch to 12H' : 'Switch to 24H'}
+                                </button>
+                              </div>
+                              <DatePicker
+                                selected={scheduledDate}
+                                onChange={(date) => setScheduledDate(date)}
+                                showTimeSelect
+                                timeFormat={is24Hour ? "HH:mm" : "h:mm aa"}
+                                timeIntervals={15}
+                                timeCaption="Time"
+                                dateFormat={is24Hour ? "MMMM d, yyyy HH:mm" : "MMMM d, yyyy h:mm aa"}
+                                customInput={<CustomDateInput />}
+                                minDate={new Date()}
+                              />
+                            </div>
+
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}><Repeat size={14} /> REPEAT CYCLE</label>
+                              <select
+                                value={formData.recurrence}
+                                onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
+                                style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', background: 'white', fontSize: '1rem' }}
+                              >
+                                <option value="none">Does not repeat</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                              </select>
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {formStep === 3 && (
+                      <motion.div
+                        key="step3"
+                        className="wizard-stage"
+                        initial={{ x: 50, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -50, opacity: 0 }}
+                      >
+                        {channel === 'calendar' ? (
+                          <>
+                            <div>
+                              <h3 className="stage-title">Invite Message Preview</h3>
+                              <p className="stage-desc">Review the invitation message that will be scheduled.</p>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>ADDITIONAL NOTES / CUSTOM MESSAGE</label>
+                              <textarea
+                                placeholder="Type any custom meeting details..."
+                                value={formData.message}
+                                onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                style={{ width: '100%', border: '1px solid var(--border)', padding: '16px', fontSize: '1rem', minHeight: '120px', outline: 'none', resize: 'none', background: 'white' }}
+                              />
+                            </div>
+                            <div style={{ background: '#f8fafc', padding: '16px', border: '1px solid var(--border)', fontSize: '0.85rem', color: '#111b21', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                              <strong>Invitation Preview:</strong>
+                              {"\n\n"}
+                              {`You're invited to: ${meetingTitle || 'Meeting'}
+Date & Time: ${format(scheduledDate, 'MMMM d, yyyy h:mm aa')}
+Platform: ${meetingPlatform === 'google_meet' ? 'Google Meet' : 'Online Call'}
+Join Link: [Auto-generated after scheduling]`}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <h3 className="stage-title">{channel === 'email' ? 'The Email Body' : 'The Message'}</h3>
+                              <p className="stage-desc">What do you want to say?</p>
+                            </div>
+
+                            <div className="input-group">
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <p className="stage-desc" style={{ margin: 0, fontWeight: 700 }}>Craft your message</p>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAiPrompt(!showAiPrompt)}
+                                  className="gemini-ai-btn"
+                                  style={{
+                                    borderColor: channel === 'email' ? '#ea4335' : 'var(--primary-light)',
+                                    color: channel === 'email' ? '#ea4335' : 'var(--primary-dark)'
+                                  }}
+                                >
+                                  <Sparkles size={16} /> AI WRITE
+                                </button>
+                              </div>
+
+                              <div style={{ position: 'relative', border: '1px solid var(--border)', background: 'white' }}>
+                                <AnimatePresence>
+                                  {showAiPrompt && (
+                                    <motion.div
+                                      initial={{ y: -10, opacity: 0 }}
+                                      animate={{ y: 0, opacity: 1 }}
+                                      exit={{ y: -10, opacity: 0 }}
+                                      style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        zIndex: 10,
+                                        background: 'rgba(255, 255, 255, 0.98)',
+                                        backdropFilter: 'blur(10px)',
+                                        borderBottom: channel === 'email' ? '1px solid #f9d5d3' : '1px solid var(--primary-light)',
+                                        padding: '15px'
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '15px' }}>
+                                        {[
+                                          { l: '✨ Improve', p: 'Improve this message' },
+                                          { l: '👔 Professional', p: 'Make professional' },
+                                          { l: '🏃 Shorter', p: 'Make shorter' },
+                                          { l: '😊 Emojis', p: 'Add emojis' }
+                                        ].map(chip => (
+                                          <button
+                                            key={chip.l}
+                                            type="button"
+                                            onClick={() => handleGenerateAiMessage(chip.p)}
+                                            style={{
+                                              fontSize: '0.75rem',
+                                              padding: '6px 12px',
+                                              background: 'white',
+                                              border: '1px solid #e2e8f0',
+                                              borderRadius: '0px',
+                                              fontWeight: 600
+                                            }}
+                                          >
+                                            {chip.l}
+                                          </button>
+                                        ))}
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                          type="text"
+                                          placeholder="Or type instruction..."
+                                          value={aiPrompt}
+                                          onChange={e => setAiPrompt(e.target.value)}
+                                          style={{
+                                            flex: 1,
+                                            padding: '12px',
+                                            borderRadius: '0px',
+                                            border: '1px solid var(--border)',
+                                            fontSize: '1rem',
+                                            outline: 'none'
+                                          }}
+                                        />
+                                        <button
+                                          onClick={() => handleGenerateAiMessage()}
+                                          disabled={isAiGenerating}
+                                          className="gemini-ai-btn"
+                                          style={{
+                                            padding: '8px 16px !important',
+                                            borderColor: channel === 'email' ? '#ea4335' : 'var(--primary-light)',
+                                            color: channel === 'email' ? '#ea4335' : 'var(--primary-dark)'
+                                          }}
+                                        >
+                                          {isAiGenerating ? '...' : 'GO'}
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+
+                                <textarea
+                                  placeholder={channel === 'email' ? "Type your email content here..." : "Type your message here, then use AI Magic to refine it..."}
+                                  value={formData.message}
+                                  onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                  style={{
+                                    width: '100%',
+                                    border: 'none',
+                                    padding: '16px',
+                                    fontSize: '1.05rem',
+                                    minHeight: '180px',
+                                    outline: 'none',
+                                    background: 'transparent',
+                                    resize: 'none'
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            {channel === 'whatsapp' && (
+                              <>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                  <button
+                                    onClick={() => document.getElementById('wizard-media').click()}
+                                    style={{
+                                      flex: 1,
+                                      padding: '12px',
+                                      borderRadius: '0px',
+                                      border: '1px solid var(--border)',
+                                      background: 'white',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '8px',
+                                      fontWeight: 600
+                                    }}
+                                  >
+                                    <ImageIcon size={18} /> {selectedFile ? 'Change Media' : 'Add Media'}
+                                  </button>
+                                  <input
+                                    id="wizard-media"
+                                    type="file"
+                                    style={{ display: 'none' }}
+                                    onChange={e => {
+                                      const file = e.target.files[0];
+                                      if (file) {
+                                        setSelectedFile(file);
+                                        setFilePreview(URL.createObjectURL(file));
+                                      }
+                                    }}
+                                  />
+                                </div>
+
+                                {filePreview && (
+                                  <div style={{ position: 'relative', marginTop: '12px' }}>
+                                    <img src={filePreview} alt="Preview" style={{ width: '100%', maxHeight: '100px', objectFit: 'cover', borderRadius: '0px' }} />
+                                    <button
+                                      onClick={() => { setSelectedFile(null); setFilePreview(null); }}
+                                      style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'var(--text)', color: 'white', border: 'none', borderRadius: '0px', padding: '4px' }}
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Wizard Footer */}
+                <div className="wizard-footer">
+                  {formStep > 1 && (
+                    <button
+                      onClick={() => setFormStep(prev => prev - 1)}
+                      className="btn-secondary"
+                      style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 800 }}
+                    >
+                      Back
+                    </button>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (formStep === 1) {
+                        if (channel === 'whatsapp' && !formData.phone.trim()) {
+                          alert('Please enter a phone number');
+                          return;
+                        }
+                        if (channel === 'email' && !(formData.emailTo || '').trim()) {
+                          alert('Please enter recipient email');
+                          return;
+                        }
+                        if (channel === 'email' && !(formData.emailSubject || '').trim()) {
+                          alert('Please enter subject line');
+                          return;
+                        }
+                        if (channel === 'calendar' && !formData.phone.trim()) {
+                          alert('Please enter recipient phone number');
+                          return;
+                        }
+                        setFormStep(2);
+                      } else if (formStep === 2) {
+                        if (channel === 'calendar' && !meetingTitle.trim()) {
+                          alert('Please enter meeting title');
+                          return;
+                        }
+                        setFormStep(3);
+                      } else {
+                        // Validate final step inputs
+                        if (channel === 'whatsapp' && !formData.phone.trim()) {
+                          alert('Please enter a phone number');
+                          return;
+                        }
+                        if (channel === 'email' && (!(formData.emailTo || '').trim() || !(formData.emailSubject || '').trim())) {
+                          alert('Please fill in email recipient and subject');
+                          return;
+                        }
+                        if (channel === 'calendar' && !meetingTitle.trim()) {
+                          alert('Please fill in meeting title');
+                          return;
+                        }
+                        await handleSubmit({ preventDefault: () => { } });
+                        setShowMobileForm(false);
+                      }
+                    }}
+                    className="btn-primary"
+                    style={{
+                      flex: 2,
+                      padding: '16px',
+                      borderRadius: '0px',
+                      fontWeight: 800,
+                      background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
+                      color: 'white',
+                      border: 'none'
+                    }}
+                  >
+                    {formStep === 3 ? 'Schedule Now' : 'Next Step'}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+
+      </div>
+    </div>
+  );
+}
+
+export default Dashboard;

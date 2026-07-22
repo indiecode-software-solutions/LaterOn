@@ -1,0 +1,12 @@
+{
+  "verbose": true,
+  "ignore": [
+    "**/auth_sessions/**",
+    "**/auth_info_baileys/**",
+    "**/data/**",
+    "**/*.json",
+    "**/node_modules/**",
+    "client/**"
+  ],
+  "delay": "2500"
+}

@@ -1,0 +1,6 @@
+{
+  "watch": ["index.js"],
+  "ext": "js",
+  "ignore": ["*.log", "groups/*", "auth_info_baileys/*"],
+  "delay": "2000"
+}

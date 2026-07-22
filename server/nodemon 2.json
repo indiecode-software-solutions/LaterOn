@@ -1,0 +1,10 @@
+{
+  "ignore": [
+    "schedules.json",
+    "contacts.json",
+    "groups.json",
+    "autoreplies.json",
+    "auth_info_baileys/*",
+    "uploads/*"
+  ]
+}

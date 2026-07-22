@@ -1,0 +1,90 @@
+[
+  {
+    "id": "1778304571867",
+    "phone": "919765367501",
+    "message": "Hi !",
+    "scheduledAt": "2026-05-09T05:30:00.000Z",
+    "status": "sent",
+    "createdAt": "2026-05-09T05:29:31.867Z",
+    "sentAt": "2026-05-09T05:30:02.024Z"
+  },
+  {
+    "id": "1778304683040",
+    "phone": "917709925041",
+    "message": "Hi, How are you ?",
+    "scheduledAt": "2026-05-09T05:32:00.000Z",
+    "status": "sent",
+    "createdAt": "2026-05-09T05:31:23.040Z",
+    "sentAt": "2026-05-09T05:32:01.807Z"
+  },
+  {
+    "id": "1778305301803",
+    "phone": "917709925041",
+    "message": "\n Folders we need for Document HUB with access for all:\n\n1.⁠ ⁠Creative Images\n2.⁠ ⁠Creative videos\na. META videos\nb. Instagram videos\nc. Facebook videos etc\nd. Gyanschool videos etc\n\n3.⁠ ⁠HR Policies - Komal to upload\n4.Team structure - Org chart etc\n\n4.⁠ ⁠Product Documents\na. SOPs\nb. Product Brief\nc. Feasibility ROI decks\nd. Other Product docs, legal agreement etc\n5.⁠ ⁠Team Communication\na. Meeting minutes, action items\n6.⁠ ⁠Operational Metrics - Tejas\n7.⁠ ⁠Financial Metrics - Deepali.\n8.⁠ ⁠Other folders similar to above.\n\nAll Filenames should be clearly, easily understood, no junk names allowed",
+    "scheduledAt": "2026-05-09T05:42:00.000Z",
+    "status": "sent",
+    "createdAt": "2026-05-09T05:41:41.803Z",
+    "sentAt": "2026-05-09T05:42:01.559Z"
+  },
+  {
+    "id": "1778312872334",
+    "phone": "917709925041",
+    "message": "WOW !",
+    "scheduledAt": "2026-05-09T07:48:00.000Z",
+    "status": "sent",
+    "createdAt": "2026-05-09T07:47:52.334Z",
+    "media": {
+      "path": "/Users/pranavpatil/Desktop/INDIECODE/whatsapp messages automation/server/uploads/1778312872326-WhatsApp Image 2026-04-29 at 17.00.37.jpeg",
+      "filename": "1778312872326-WhatsApp Image 2026-04-29 at 17.00.37.jpeg",
+      "mimetype": "image/jpeg",
+      "isVoiceNote": false
+    },
+    "sentAt": "2026-05-09T07:48:04.164Z"
+  },
+  {
+    "id": "1778314076022",
+    "phone": "917709925041",
+    "message": "Hi Rohan ! \r\nThis is your daily reminder to join the huddle in 5 minutes - BE READY !",
+    "scheduledAt": "2026-05-10T05:55:00.000Z",
+    "status": "pending",
+    "createdAt": "2026-05-09T08:07:56.022Z",
+    "media": null,
+    "recurrence": "none"
+  },
+  {
+    "id": "1778316914056",
+    "phone": "919156367501",
+    "message": "Hi",
+    "scheduledAt": "2026-05-09T08:55:00.000Z",
+    "recurrence": "none",
+    "status": "read",
+    "createdAt": "2026-05-09T08:55:14.056Z",
+    "media": null,
+    "sentAt": "2026-05-09T08:55:14.774Z",
+    "waMessageId": "3EB01038F92FA1874B44E3"
+  },
+  {
+    "id": "1778316976155",
+    "phone": "919156367501",
+    "message": "Hi. ",
+    "scheduledAt": "2026-05-09T08:56:00.000Z",
+    "recurrence": "none",
+    "status": "read",
+    "createdAt": "2026-05-09T08:56:16.155Z",
+    "media": null,
+    "sentAt": "2026-05-09T08:56:16.182Z",
+    "waMessageId": "3EB035965198ACC7A8BCC3"
+  },
+  {
+    "id": "1778329652682",
+    "phone": "919156367501",
+    "message": "Hi !",
+    "scheduledAt": "2026-05-09T12:28:00.000Z",
+    "recurrence": "none",
+    "status": "read",
+    "createdAt": "2026-05-09T12:27:32.682Z",
+    "media": null,
+    "sentAt": "2026-05-09T12:28:01.354Z",
+    "waMessageId": "3EB03D8FA401952DEFB119"
+  }
+]
