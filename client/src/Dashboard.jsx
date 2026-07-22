@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { triggerLight, triggerMedium, triggerSuccess, triggerError, triggerSelection } from './haptics';
 import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -416,7 +417,9 @@ function Dashboard() {
   };
 
   const handleSyncContacts = async () => {
+    triggerMedium();
     if (status !== 'connected') {
+      triggerError();
       alert('Connect WhatsApp before syncing contacts.');
       return;
     }
@@ -435,7 +438,9 @@ function Dashboard() {
       if (photos) parts.push(`${photos} photos`);
       if (removed) parts.push(`${removed} invalid entries cleaned`);
       setContactSyncMessage(parts.length ? `Synced ${parts.join(', ')}.` : 'Contacts are already up to date.');
+      triggerSuccess();
     } catch (err) {
+      triggerError();
       setContactSyncMessage('');
       alert(err.response?.data?.error || 'Failed to sync contacts');
     } finally {
@@ -623,6 +628,7 @@ function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    triggerMedium();
     setLoading(true);
 
     try {
@@ -644,6 +650,7 @@ function Dashboard() {
 
       if (channel === 'calendar') {
         if (!meetingTitle.trim()) {
+          triggerError();
           alert('Please fill in meeting title');
           setLoading(false);
           return;
@@ -700,6 +707,7 @@ Looking forward to connecting!`;
         setSidebarStep(1);
         fetchSchedules();
         setLoading(false);
+        triggerSuccess();
         return;
       }
 
@@ -707,6 +715,7 @@ Looking forward to connecting!`;
         const targetEmail = (formData.emailTo || emailTo || '').trim();
         const targetSubject = (formData.emailSubject || emailSubject || '').trim();
         if (!targetEmail || !targetSubject) {
+          triggerError();
           alert('Please fill in email recipient and subject');
           setLoading(false);
           return;
@@ -746,6 +755,7 @@ Looking forward to connecting!`;
         setSidebarStep(1);
         fetchSchedules();
         setLoading(false);
+        triggerSuccess();
         return;
       }
 
@@ -771,6 +781,7 @@ Looking forward to connecting!`;
       }
 
       if (recipientsToProcess.length === 0) {
+        triggerError();
         alert('Please add at least one recipient');
         setLoading(false);
         return;
@@ -812,7 +823,9 @@ Looking forward to connecting!`;
       setIsVoiceNote(false);
       setSidebarStep(1);
       fetchSchedules();
+      triggerSuccess();
     } catch (err) {
+      triggerError();
       alert('Failed to save message: ' + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
@@ -1103,6 +1116,7 @@ Looking forward to connecting!`;
                 <button
                   className="btn-icon"
                   onClick={() => {
+                    triggerLight();
                     setShowServiceSelector(true);
                     setSidebarStep(1);
                   }}
@@ -1115,6 +1129,7 @@ Looking forward to connecting!`;
                 <button
                   className={`btn-icon ${activeView === 'business' ? 'active' : ''}`}
                   onClick={() => {
+                    triggerLight();
                     setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler');
                     setCurrentBusinessTool(null);
                     setSidebarStep(1);
@@ -1126,7 +1141,7 @@ Looking forward to connecting!`;
               )}
 
               {!showServiceSelector && channel === 'whatsapp' && (
-                <button className="btn-icon" onClick={fetchStatus} title="Refresh Connection Status">
+                <button className="btn-icon" onClick={() => { triggerLight(); fetchStatus(); }} title="Refresh Connection Status">
                   <RefreshCcw size={18} color={status === 'connected' ? '#25d366' : '#667781'} />
                 </button>
               )}
@@ -2360,8 +2375,10 @@ Looking forward to connecting!`;
                                 type="button"
                                 className="btn"
                                 onClick={() => {
+                                  triggerLight();
                                   if (channel === 'calendar') {
                                     if (!formData.phone?.trim() && !formData.emailTo?.trim()) {
+                                      triggerError();
                                       alert('Please enter a recipient phone number or email address');
                                       return;
                                     }
@@ -2370,16 +2387,19 @@ Looking forward to connecting!`;
                                   } else if (channel === 'email') {
                                     const targetEmail = formData.emailTo || emailTo;
                                     if (!targetEmail || !targetEmail.trim() || !targetEmail.includes('@')) {
+                                      triggerError();
                                       alert('Please enter a valid recipient email address');
                                       return;
                                     }
                                     const targetSubject = formData.emailSubject || emailSubject;
                                     if (!targetSubject || !targetSubject.trim()) {
+                                      triggerError();
                                       alert('Please enter an email subject');
                                       return;
                                     }
                                   } else {
                                     if (selectedRecipients.length === 0 && (!formData.phone || formData.phone.length < 10)) {
+                                      triggerError();
                                       alert('Please enter a valid phone number');
                                       return;
                                     }
@@ -2543,7 +2563,7 @@ Looking forward to connecting!`;
                                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '20px' }}>
                                     <button
                                       type="button"
-                                      onClick={() => setSidebarStep(1)}
+                                      onClick={() => { triggerLight(); setSidebarStep(1); }}
                                       style={{
                                         padding: '12px 16px',
                                         background: '#f0f2f5',
@@ -2564,11 +2584,14 @@ Looking forward to connecting!`;
                                       type="button"
                                       className="btn"
                                       onClick={() => {
+                                        triggerLight();
                                         if (!meetingTitle.trim()) {
+                                          triggerError();
                                           alert('Please enter a meeting title');
                                           return;
                                         }
                                         if (meetingPlatform === 'custom' && !formData.customLink?.trim()) {
+                                          triggerError();
                                           alert('Please enter a meeting link');
                                           return;
                                         }
@@ -2916,7 +2939,7 @@ Looking forward to connecting!`;
                                   <button
                                     type="button"
                                     className="btn"
-                                    onClick={() => setSidebarStep(1)}
+                                    onClick={() => { triggerLight(); setSidebarStep(1); }}
                                     style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
                                   >
                                     Back
@@ -3856,7 +3879,7 @@ Looking forward to connecting!`;
                 {activeView === 'scheduler' ? (
                   <>
                     <div
-                      onClick={() => setQueueTab('upcoming')}
+                      onClick={() => { triggerSelection(); setQueueTab('upcoming'); }}
                       style={{
                         height: '100%',
                         display: 'flex',
@@ -3871,7 +3894,7 @@ Looking forward to connecting!`;
                       Upcoming ({schedules.filter(s => s.channel === channel && (s.status === 'pending' || s.status === 'failed')).length})
                     </div>
                     <div
-                      onClick={() => setQueueTab('history')}
+                      onClick={() => { triggerSelection(); setQueueTab('history'); }}
                       style={{
                         height: '100%',
                         display: 'flex',
@@ -3913,14 +3936,14 @@ Looking forward to connecting!`;
                 size={20}
                 color="#54656f"
                 style={{ cursor: 'pointer' }}
-                onClick={() => setIsSearching(true)}
+                onClick={() => { triggerLight(); setIsSearching(true); }}
               />
               <div style={{ position: 'relative' }}>
                 <MoreVertical
                   size={20}
                   color="#54656f"
                   style={{ cursor: 'pointer' }}
-                  onClick={() => setShowMenu(!showMenu)}
+                  onClick={() => { triggerLight(); setShowMenu(!showMenu); }}
                 />
 
                 <AnimatePresence>
@@ -4014,7 +4037,7 @@ Looking forward to connecting!`;
                     size={20}
                     color="#54656f"
                     style={{ cursor: 'pointer' }}
-                    onClick={() => setShowFilterMenu(!showFilterMenu)}
+                    onClick={() => { triggerLight(); setShowFilterMenu(!showFilterMenu); }}
                   />
 
                   <AnimatePresence>
@@ -5805,7 +5828,7 @@ Join Link: [Auto-generated after scheduling]`}
                 <div className="wizard-footer">
                   {formStep > 1 && (
                     <button
-                      onClick={() => setFormStep(prev => prev - 1)}
+                      onClick={() => { triggerLight(); setFormStep(prev => prev - 1); }}
                       className="btn-secondary"
                       style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 800 }}
                     >
@@ -5814,26 +5837,32 @@ Join Link: [Auto-generated after scheduling]`}
                   )}
                   <button
                     onClick={async () => {
+                      triggerLight();
                       if (formStep === 1) {
                         if (channel === 'whatsapp' && !formData.phone.trim()) {
+                          triggerError();
                           alert('Please enter a phone number');
                           return;
                         }
                         if (channel === 'email' && !(formData.emailTo || '').trim()) {
+                          triggerError();
                           alert('Please enter recipient email');
                           return;
                         }
                         if (channel === 'email' && !(formData.emailSubject || '').trim()) {
+                          triggerError();
                           alert('Please enter subject line');
                           return;
                         }
                         if (channel === 'calendar' && !formData.phone.trim()) {
+                          triggerError();
                           alert('Please enter recipient phone number');
                           return;
                         }
                         setFormStep(2);
                       } else if (formStep === 2) {
                         if (channel === 'calendar' && !meetingTitle.trim()) {
+                          triggerError();
                           alert('Please enter meeting title');
                           return;
                         }
@@ -5841,14 +5870,17 @@ Join Link: [Auto-generated after scheduling]`}
                       } else {
                         // Validate final step inputs
                         if (channel === 'whatsapp' && !formData.phone.trim()) {
+                          triggerError();
                           alert('Please enter a phone number');
                           return;
                         }
                         if (channel === 'email' && (!(formData.emailTo || '').trim() || !(formData.emailSubject || '').trim())) {
+                          triggerError();
                           alert('Please fill in email recipient and subject');
                           return;
                         }
                         if (channel === 'calendar' && !meetingTitle.trim()) {
+                          triggerError();
                           alert('Please fill in meeting title');
                           return;
                         }
