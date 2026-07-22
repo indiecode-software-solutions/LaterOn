@@ -1,64 +1,59 @@
-import { Haptics, NotificationType } from '@capacitor/haptics';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 
-// Safely trigger haptics only on native mobile platforms
-const isNative = Capacitor.isNativePlatform();
+// Check at call-time (not at module load) to avoid race conditions
+const isNative = () => Capacitor.isNativePlatform();
 
 export const triggerLight = async () => {
-  if (!isNative) return;
+  if (!isNative()) return;
   try {
-    // 30ms short vibrate is excellent for standard button taps
-    await Haptics.vibrate({ duration: 35 });
+    await Haptics.impact({ style: ImpactStyle.Light });
   } catch (e) {
-    console.warn('Haptics failed', e);
+    try { await Haptics.vibrate({ duration: 50 }); } catch (_) {}
   }
 };
 
 export const triggerMedium = async () => {
-  if (!isNative) return;
+  if (!isNative()) return;
   try {
-    // 60ms is a solid tactile button press
-    await Haptics.vibrate({ duration: 60 });
+    await Haptics.impact({ style: ImpactStyle.Medium });
   } catch (e) {
-    console.warn('Haptics failed', e);
+    try { await Haptics.vibrate({ duration: 100 }); } catch (_) {}
   }
 };
 
 export const triggerHeavy = async () => {
-  if (!isNative) return;
+  if (!isNative()) return;
   try {
-    await Haptics.vibrate({ duration: 100 });
+    await Haptics.impact({ style: ImpactStyle.Heavy });
   } catch (e) {
-    console.warn('Haptics failed', e);
+    try { await Haptics.vibrate({ duration: 200 }); } catch (_) {}
   }
 };
 
 export const triggerSuccess = async () => {
-  if (!isNative) return;
+  if (!isNative()) return;
   try {
     await Haptics.notification({ type: NotificationType.Success });
   } catch (e) {
-    // Fallback if notification patterns fail
-    await Haptics.vibrate({ duration: 120 });
+    try { await Haptics.vibrate({ duration: 150 }); } catch (_) {}
   }
 };
 
 export const triggerError = async () => {
-  if (!isNative) return;
+  if (!isNative()) return;
   try {
-    await Haptics.notification({ type: NotificationType.Warning });
+    await Haptics.notification({ type: NotificationType.Error });
   } catch (e) {
-    // Fallback if notification patterns fail
-    await Haptics.vibrate({ duration: 200 });
+    try { await Haptics.vibrate({ duration: 300 }); } catch (_) {}
   }
 };
 
 export const triggerSelection = async () => {
-  if (!isNative) return;
+  if (!isNative()) return;
   try {
-    // Very quick tap for list selection/tab switching
-    await Haptics.vibrate({ duration: 20 });
+    await Haptics.selectionChanged();
   } catch (e) {
-    console.warn('Haptics failed', e);
+    try { await Haptics.vibrate({ duration: 30 }); } catch (_) {}
   }
 };
