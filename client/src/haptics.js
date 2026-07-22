@@ -1,4 +1,4 @@
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { Haptics, NotificationType } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 
 // Safely trigger haptics only on native mobile platforms
@@ -7,7 +7,8 @@ const isNative = Capacitor.isNativePlatform();
 export const triggerLight = async () => {
   if (!isNative) return;
   try {
-    await Haptics.impact({ style: ImpactStyle.Light });
+    // 30ms short vibrate is excellent for standard button taps
+    await Haptics.vibrate({ duration: 35 });
   } catch (e) {
     console.warn('Haptics failed', e);
   }
@@ -16,7 +17,8 @@ export const triggerLight = async () => {
 export const triggerMedium = async () => {
   if (!isNative) return;
   try {
-    await Haptics.impact({ style: ImpactStyle.Medium });
+    // 60ms is a solid tactile button press
+    await Haptics.vibrate({ duration: 60 });
   } catch (e) {
     console.warn('Haptics failed', e);
   }
@@ -25,7 +27,7 @@ export const triggerMedium = async () => {
 export const triggerHeavy = async () => {
   if (!isNative) return;
   try {
-    await Haptics.impact({ style: ImpactStyle.Heavy });
+    await Haptics.vibrate({ duration: 100 });
   } catch (e) {
     console.warn('Haptics failed', e);
   }
@@ -36,7 +38,8 @@ export const triggerSuccess = async () => {
   try {
     await Haptics.notification({ type: NotificationType.Success });
   } catch (e) {
-    console.warn('Haptics failed', e);
+    // Fallback if notification patterns fail
+    await Haptics.vibrate({ duration: 120 });
   }
 };
 
@@ -45,17 +48,16 @@ export const triggerError = async () => {
   try {
     await Haptics.notification({ type: NotificationType.Warning });
   } catch (e) {
-    console.warn('Haptics failed', e);
+    // Fallback if notification patterns fail
+    await Haptics.vibrate({ duration: 200 });
   }
 };
 
 export const triggerSelection = async () => {
   if (!isNative) return;
   try {
-    await Haptics.selectionStart();
-    setTimeout(() => {
-      Haptics.selectionEnd();
-    }, 100);
+    // Very quick tap for list selection/tab switching
+    await Haptics.vibrate({ duration: 20 });
   } catch (e) {
     console.warn('Haptics failed', e);
   }
