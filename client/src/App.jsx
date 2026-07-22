@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 import Auth from './Auth';
@@ -62,7 +63,15 @@ function App() {
       <Routes>
         <Route 
           path="/" 
-          element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} 
+          element={
+            session ? (
+              <Navigate to="/dashboard" replace />
+            ) : Capacitor.isNativePlatform() ? (
+              <Navigate to="/auth" replace />
+            ) : (
+              <LandingPage />
+            )
+          } 
         />
         <Route 
           path="/auth" 

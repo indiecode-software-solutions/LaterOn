@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, MessageSquare, Loader2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -52,6 +54,39 @@ const Auth = () => {
       }
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      if (Capacitor.isNativePlatform()) {
+        GoogleAuth.initialize();
+        const googleUser = await GoogleAuth.signIn();
+        const idToken = googleUser.authentication.idToken;
+        if (!idToken) throw new Error("Google Sign-In failed to return an ID Token.");
+        
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        });
+        if (error) throw error;
+        
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/dashboard');
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + '/dashboard' }
+        });
+        if (error) throw error;
+      }
+    } catch (err) {
+      setError(err.message || 'Google Sign-in failed');
     } finally {
       setLoading(false);
     }
@@ -134,10 +169,7 @@ const Auth = () => {
         </div>
 
         <button 
-          onClick={() => supabase.auth.signInWithOAuth({ 
-            provider: 'google',
-            options: { redirectTo: window.location.origin + '/dashboard' }
-          })}
+          onClick={handleGoogleSignIn}
           className="google-auth-btn"
         >
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />

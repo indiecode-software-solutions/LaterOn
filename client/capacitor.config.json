@@ -1,5 +1,12 @@
 {
   "appId": "com.lateron.app",
   "appName": "LaterOn",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "861000551892-emlf5q1qtciqf2o5m1b3g8crd7hop343.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
 }
