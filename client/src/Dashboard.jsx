@@ -3206,6 +3206,53 @@ Looking forward to connecting!`;
                         </AnimatePresence>
                       </form>
                     </>
+                  ) : activeView === 'credits' ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Later Credits</p>
+                      
+                      <div style={{
+                        background: 'white',
+                        border: '1px solid var(--border)',
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                      }}>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)', margin: 0 }}>System Credit Rules</h4>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.8rem', color: '#4a5568', lineHeight: '1.4' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                            <span>Plain Text Message</span>
+                            <strong style={{ color: 'var(--primary-dark)' }}>5 credits</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                            <span>Message with Attachment</span>
+                            <strong style={{ color: 'var(--primary-dark)' }}>7 credits</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                            <span>Using AI Generation</span>
+                            <strong style={{ color: 'var(--primary-dark)' }}>+3 credits</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '4px' }}>
+                            <span>Failed Delivery</span>
+                            <strong style={{ color: '#2e7d32' }}>Refunded</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        background: 'rgba(26, 115, 232, 0.05)',
+                        border: '1px dashed #1a73e8',
+                        padding: '16px',
+                        fontSize: '0.8rem',
+                        color: '#1a73e8',
+                        fontWeight: 600,
+                        lineHeight: '1.5'
+                      }}>
+                        💡 Refills happen monthly automatically. Purchased credits do not expire and will only be consumed after free credits run out.
+                      </div>
+                    </div>
                   ) : (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                       {currentBusinessTool ? (
@@ -4126,9 +4173,10 @@ Looking forward to connecting!`;
                     textTransform: 'uppercase',
                     letterSpacing: '1px'
                   }}>
-                    {currentBusinessTool === 'auto-reply' ? 'Auto-Reply Manager' :
+                    {activeView === 'credits' ? 'Later Credits' : 
+                     (currentBusinessTool === 'auto-reply' ? 'Auto-Reply Manager' :
                       currentBusinessTool === 'drip' ? 'Drip Campaign Builder' :
-                        'Business Tools'}
+                        'Business Tools')}
                   </div>
                 )}
 
