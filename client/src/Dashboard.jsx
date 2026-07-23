@@ -1255,7 +1255,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { setChannel('whatsapp'); }}
+                    onClick={() => { triggerLight(); setChannel('whatsapp'); }}
                     onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
                   >
@@ -1287,7 +1287,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { setChannel('email'); }}
+                    onClick={() => { triggerLight(); setChannel('email'); }}
                     onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
                   >
@@ -1315,7 +1315,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { setChannel('calendar'); }}
+                    onClick={() => { triggerLight(); setChannel('calendar'); }}
                     onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
                   >
@@ -1341,7 +1341,7 @@ Looking forward to connecting!`;
                 </div>
 
                 <button
-                  onClick={() => setShowServiceSelector(false)}
+                  onClick={() => { triggerMedium(); setShowServiceSelector(false); }}
                   className="btn-primary"
                   style={{
                     width: '100%',
@@ -3976,14 +3976,14 @@ Looking forward to connecting!`;
                           <>
                             {queueTab === 'calendar' ? (
                               <div
-                                onClick={() => { setQueueTab('upcoming'); setShowMenu(false); }}
+                                onClick={() => { triggerLight(); setQueueTab('upcoming'); setShowMenu(false); }}
                                 style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                               >
                                 <LayoutList size={14} /> Switch to List View
                               </div>
                             ) : (
                               <div
-                                onClick={() => { setQueueTab('calendar'); setShowMenu(false); }}
+                                onClick={() => { triggerLight(); setQueueTab('calendar'); setShowMenu(false); }}
                                 style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                               >
                                 <Calendar size={14} /> Switch to Calendar View
@@ -3993,34 +3993,34 @@ Looking forward to connecting!`;
                           </>
                         )}
                         <div
-                          onClick={() => { handleRetryFailed(); setShowMenu(false); }}
+                          onClick={() => { triggerLight(); handleRetryFailed(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                         >
                           <RefreshCcw size={14} /> Retry All Failed
                         </div>
                         <div
-                          onClick={() => { handleExportCSV(); setShowMenu(false); }}
+                          onClick={() => { triggerLight(); handleExportCSV(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                         >
                           <Download size={14} /> Export CSV
                         </div>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                         <div
-                          onClick={() => { handleClearHistory(); setShowMenu(false); }}
+                          onClick={() => { triggerLight(); handleClearHistory(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
                         >
                           <Trash2 size={14} /> Clear History
                         </div>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                         <div
-                          onClick={() => { handleDisconnectWhatsApp(); setShowMenu(false); }}
+                          onClick={() => { triggerLight(); handleDisconnectWhatsApp(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
                         >
                           <WifiOff size={14} /> Disconnect WhatsApp
                         </div>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                         <div
-                          onClick={() => { handleSignOut(); setShowMenu(false); }}
+                          onClick={() => { triggerLight(); handleSignOut(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
                         >
                           <LogOut size={14} /> Sign Out
@@ -4037,7 +4037,7 @@ Looking forward to connecting!`;
                     size={20}
                     color="#54656f"
                     style={{ cursor: 'pointer' }}
-                    onClick={() => { triggerLight(); setShowFilterMenu(!showFilterMenu); }}
+                    onClick={() => { triggerLight(); triggerLight(); setShowFilterMenu(!showFilterMenu); }}
                   />
 
                   <AnimatePresence>
@@ -4069,7 +4069,7 @@ Looking forward to connecting!`;
                           {['all', 'sent', 'delivered', 'read'].map(f => (
                             <div
                               key={f}
-                              onClick={() => { setHistoryFilter(f); setShowFilterMenu(false); }}
+                              onClick={() => { triggerLight(); setHistoryFilter(f); setShowFilterMenu(false); }}
                               style={{
                                 padding: '10px 16px',
                                 display: 'flex',
@@ -5277,6 +5277,7 @@ Looking forward to connecting!`;
               boxShadow: channel === 'email' ? '0 6px 20px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 6px 20px rgba(26, 115, 230, 0.4)' : '0 6px 20px rgba(37, 211, 102, 0.4)')
             }}
             onClick={() => {
+              triggerLight();
               setFormStep(1);
               setShowMobileForm(true);
             }}
