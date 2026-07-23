@@ -26,8 +26,10 @@ function normalizeWhatsAppJid(rawValue, defaultCountryCode = '91') {
   return `${digits}@s.whatsapp.net`;
 }
 
-function isSocketReadyForMessaging(sock) {
+function isSocketReadyForMessaging(sock, connectionStatus) {
   if (!sock || !sock.user || !sock.user.id) return false;
+  // Socket must be in 'open' connection state, not just authenticated
+  if (connectionStatus !== 'open') return false;
   return true;
 }
 

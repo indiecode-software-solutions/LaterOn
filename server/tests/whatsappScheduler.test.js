@@ -13,9 +13,11 @@ test('normalizeWhatsAppJid converts local numbers into WhatsApp JIDs with countr
   assert.equal(normalizeWhatsAppJid('09999999999'), '919999999999@s.whatsapp.net');
 });
 
-test('isSocketReadyForMessaging requires an authenticated socket', () => {
-  assert.equal(isSocketReadyForMessaging(null), false);
-  assert.equal(isSocketReadyForMessaging({ user: null }), false);
-  assert.equal(isSocketReadyForMessaging({ user: { id: '123' } }), true);
-  assert.equal(isSocketReadyForMessaging({ user: {} }), false);
+test('isSocketReadyForMessaging requires an authenticated socket in open connection state', () => {
+  assert.equal(isSocketReadyForMessaging(null, 'open'), false);
+  assert.equal(isSocketReadyForMessaging({ user: null }, 'open'), false);
+  assert.equal(isSocketReadyForMessaging({ user: { id: '123' } }, 'open'), true);
+  assert.equal(isSocketReadyForMessaging({ user: { id: '123' } }, 'connecting'), false);
+  assert.equal(isSocketReadyForMessaging({ user: { id: '123' } }, 'close'), false);
+  assert.equal(isSocketReadyForMessaging({ user: {} }, 'open'), false);
 });

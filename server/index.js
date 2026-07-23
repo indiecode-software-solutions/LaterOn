@@ -128,7 +128,8 @@ const verifyToken = async (req, res, next) => {
 
 // Map to store active sockets per user
 const userSockets = {};
-const userConnectionStates = {};
+const userConnectionStates = {}; // Tracks 'connecting', 'qr', 'qr-scanned', 'connected', 'disconnected'
+const socketConnectionStatus = {}; // Tracks actual 'open'/'close' connection event state
 const connectingUsers = new Set();
 const processedMessages = new Map(); // Map<userId, Set<msgId>>
 const lastGroupFetch = {}; // Map<userId, timestamp>
@@ -465,6 +466,13 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
     sock.ev.on('connection.update', async (update) => {
         if (!isCurrentSocket()) return;
         const { connection, lastDisconnect, qr } = update;
+        
+        // Track the actual connection status from the 'connection' event
+        if (connection === 'open') {
+            socketConnectionStatus[userId] = 'open';
+        } else if (connection === 'close') {
+            socketConnectionStatus[userId] = 'close';
+        }
         
         if (qr) {
             if (pairingPhone) {
@@ -1827,7 +1835,7 @@ async function checkAndSendMessages() {
 
         const sock = await ensureSocketReady(userId);
 
-        if (!isSocketReadyForMessaging(sock)) {
+        if (!isSocketReadyForMessaging(sock, socketConnectionStatus[userId])) {
             console.log(`[Scheduler] WhatsApp socket is not ready for ${userId} — skipping schedule ${schedule.id} this tick.`);
             continue;
         }
