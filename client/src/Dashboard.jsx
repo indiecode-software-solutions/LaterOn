@@ -138,7 +138,7 @@ const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
   if (currentStatus === 'connected') return false;
   // Always accept disconnected, connecting, or qr states to ensure the UI updates instantly
   if (nextStatus === 'disconnected' || nextStatus === 'connecting' || nextStatus === 'qr') return false;
-  
+
   const currentRank = CONNECTION_STATUS_RANK[currentStatus] ?? 0;
   const nextRank = CONNECTION_STATUS_RANK[nextStatus] ?? 0;
   return currentRank >= CONNECTION_STATUS_RANK['qr-scanned'] && nextRank < currentRank;
@@ -1412,12 +1412,6 @@ Looking forward to connecting!`;
             ) : showServiceSelector ? (
               <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ marginBottom: '24px' }}>
-                  <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', color: 'var(--text)', margin: '0 0 6px 0' }}>
-                    Welcome
-                  </h2>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
-                    Choose the channels you want to automate:
-                  </p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
@@ -1429,7 +1423,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerLight(); setChannel('whatsapp'); }}
+                    onClick={() => { triggerMedium(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                     onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
                   >
@@ -1461,7 +1455,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerLight(); setChannel('email'); }}
+                    onClick={() => { triggerMedium(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                     onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
                   >
@@ -1489,7 +1483,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerLight(); setChannel('calendar'); }}
+                    onClick={() => { triggerMedium(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                     onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
                   >
@@ -1521,7 +1515,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerLight(); setChannel('telegram'); }}
+                    onClick={() => { triggerMedium(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                     onMouseOver={e => { if (channel !== 'telegram') e.currentTarget.style.borderColor = '#0088cc'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'telegram' ? '#0088cc' : 'var(--border)'; }}
                   >
@@ -1549,7 +1543,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerLight(); setChannel('instagram'); }}
+                    onClick={() => { triggerMedium(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                     onMouseOver={e => { if (channel !== 'instagram') e.currentTarget.style.borderColor = '#e1306c'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'instagram' ? '#e1306c' : 'var(--border)'; }}
                   >
@@ -1577,7 +1571,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerLight(); setChannel('reminders'); }}
+                    onClick={() => { triggerMedium(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                     onMouseOver={e => { if (channel !== 'reminders') e.currentTarget.style.borderColor = '#f59e0b'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'reminders' ? '#f59e0b' : 'var(--border)'; }}
                   >
@@ -1597,26 +1591,6 @@ Looking forward to connecting!`;
                     </div>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => { triggerMedium(); setShowServiceSelector(false); setActiveView('scheduler'); }}
-                  className="btn-primary"
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    marginTop: '16px',
-                    borderRadius: '0px',
-                    fontWeight: 800,
-                    border: 'none',
-                    color: 'white',
-                    cursor: 'pointer',
-                    background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : '#25d366')))),
-                    boxShadow: channel === 'email' ? '0 4px 12px rgba(234,67,53,0.2)' : (channel === 'calendar' ? '0 4px 12px rgba(26,115,230,0.2)' : (channel === 'telegram' ? '0 4px 12px rgba(0,136,204,0.2)' : (channel === 'instagram' ? '0 4px 12px rgba(225,48,108,0.2)' : (channel === 'reminders' ? '0 4px 12px rgba(245,158,11,0.2)' : '0 4px 12px rgba(37,211,102,0.2)')))),
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  Continue with {channel === 'email' ? 'Email' : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram' : (channel === 'instagram' ? 'Instagram' : (channel === 'reminders' ? 'Reminders' : 'WhatsApp'))))} &rarr;
-                </button>
               </div>
             ) : (channel === 'whatsapp' && !userInfo && status !== 'connected') ? (
               <div style={{
@@ -2170,7 +2144,7 @@ Looking forward to connecting!`;
                                 padding: '16px'
                               }}>
                                 <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Reminders</h5>
-                                
+
                                 <div style={{
                                   padding: '12px',
                                   background: '#fffbeb',
@@ -2247,45 +2221,228 @@ Looking forward to connecting!`;
                         </div>
                       ) : (
                         <form onSubmit={handleSubmit} style={{ display: hoveredSchedule ? 'none' : 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
-                        {/* Desktop Step Indicator */}
-                        {!isMobile && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '20px',
-                            background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : '#f8fafc'),
-                            padding: '10px 16px',
-                            borderRadius: '0px',
-                            border: '1px solid var(--border)'
-                          }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), textTransform: 'uppercase' }}>
-                              {channel === 'calendar'
-                                ? (sidebarStep === 1 ? '1. Recipient Details' : sidebarStep === 2 ? '2. Meeting Settings' : '3. Preview & Confirm')
-                                : (sidebarStep === 1 ? '1. Scheduling' : '2. Message')}
-                            </span>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 1 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
-                              <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 2 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
-                              {channel === 'calendar' && (
-                                <div style={{ width: '16px', height: '4px', borderRadius: '0px', background: sidebarStep >= 3 ? '#1a73e8' : 'var(--border)' }} />
-                              )}
+                          {/* Desktop Step Indicator */}
+                          {!isMobile && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginBottom: '20px',
+                              background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : '#f8fafc'),
+                              padding: '10px 16px',
+                              borderRadius: '0px',
+                              border: '1px solid var(--border)'
+                            }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), textTransform: 'uppercase' }}>
+                                {channel === 'calendar'
+                                  ? (sidebarStep === 1 ? '1. Recipient Details' : sidebarStep === 2 ? '2. Meeting Settings' : '3. Preview & Confirm')
+                                  : (sidebarStep === 1 ? '1. Scheduling' : '2. Message')}
+                              </span>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 1 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
+                                <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 2 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
+                                {channel === 'calendar' && (
+                                  <div style={{ width: '16px', height: '4px', borderRadius: '0px', background: sidebarStep >= 3 ? '#1a73e8' : 'var(--border)' }} />
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        <AnimatePresence mode="wait">
-                          {sidebarStep === 1 ? (
-                            <motion.div
-                              key="sidebar-step-1"
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: 10 }}
-                            >
-                              {channel === 'calendar' ? (
-                                <>
+                          <AnimatePresence mode="wait">
+                            {sidebarStep === 1 ? (
+                              <motion.div
+                                key="sidebar-step-1"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                              >
+                                {channel === 'calendar' ? (
+                                  <>
+                                    <div className="input-group phone-input-container">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT CONTACT (WHATSAPP)</label>
+                                      <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div style={{
+                                          padding: '12px 16px',
+                                          background: '#f0f2f5',
+                                          border: '1px solid var(--border)',
+                                          borderRadius: '0px',
+                                          fontSize: '0.9rem',
+                                          fontWeight: 600,
+                                          color: '#54656f',
+                                          display: 'flex',
+                                          alignItems: 'center'
+                                        }}>
+                                          +91
+                                        </div>
+                                        <div style={{
+                                          position: 'relative',
+                                          flex: 1,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          background: 'white',
+                                          border: '1px solid var(--border)',
+                                          borderRadius: '0px',
+                                          padding: '0 12px',
+                                          gap: '8px',
+                                          transition: 'border-color 0.2s',
+                                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                        }}
+                                          onFocusCapture={(e) => e.currentTarget.style.borderColor = '#1a73e8'}
+                                          onBlurCapture={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                                        >
+                                          <Phone size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+
+                                          {(getContactName(formData.phone) !== formatPhone(formData.phone) || groups[formData.phone]) && (
+                                            <div style={{
+                                              background: groups[formData.phone] ? '#e8f0fe' : '#e8f0fe',
+                                              color: '#1a73e8',
+                                              padding: '2px 8px',
+                                              borderRadius: '0px',
+                                              fontSize: '0.8rem',
+                                              fontWeight: 700,
+                                              whiteSpace: 'nowrap',
+                                              flexShrink: 0
+                                            }}>
+                                              {groups[formData.phone] || getContactName(formData.phone)}
+                                            </div>
+                                          )}
+
+                                          <input
+                                            type="text"
+                                            placeholder="e.g. 9122500000"
+                                            style={{
+                                              border: 'none',
+                                              padding: '12px 0',
+                                              background: 'transparent',
+                                              width: '100%',
+                                              outline: 'none',
+                                              boxShadow: 'none',
+                                              fontSize: '1rem',
+                                              WebkitAppearance: 'none'
+                                            }}
+                                            value={formData.phone}
+                                            onFocus={() => setShowSuggestions(true)}
+                                            onChange={e => {
+                                              const val = e.target.value;
+                                              setFormData({ ...formData, phone: val });
+                                              setShowSuggestions(true);
+                                            }}
+                                          />
+
+                                          {showSuggestions && (
+                                            <div style={{
+                                              position: 'absolute',
+                                              top: '105%',
+                                              left: 0,
+                                              right: 0,
+                                              background: 'white',
+                                              borderRadius: '0px',
+                                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                              zIndex: 100,
+                                              maxHeight: '250px',
+                                              overflowY: 'auto',
+                                              border: '1px solid var(--border)'
+                                            }}>
+                                              {schedules.length > 0 && (
+                                                <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>RECENT</div>
+                                              )}
+                                              {[...new Set(schedules.map(s => s.phone))].slice(0, 3).map(num => (
+                                                <div
+                                                  key={num}
+                                                  onClick={() => {
+                                                    setFormData({ ...formData, phone: num.startsWith('91') ? num.slice(2) : num });
+                                                    setShowSuggestions(false);
+                                                  }}
+                                                  style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f0f2f5', fontSize: '0.9rem' }}
+                                                  onMouseDown={e => e.preventDefault()}
+                                                >
+                                                  <p style={{ fontWeight: 600 }}>{getContactName(num.startsWith('91') ? num.slice(2) : num)}</p>
+                                                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatPhone(num)}</p>
+                                                </div>
+                                              ))}
+
+                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
+                                              {Object.entries(contacts)
+                                                .filter(([id, contact]) => {
+                                                  if (!isRealPhoneNumber(id)) return false;
+                                                  const name = typeof contact === 'object' ? contact.name : contact;
+                                                  const displayName = isPlaceholderContactName(name, id) ? '' : String(name || '');
+                                                  return displayName.toLowerCase().includes(formData.phone.toLowerCase()) || id.includes(formData.phone);
+                                                })
+                                                .slice(0, 20)
+                                                .map(([id]) => (
+                                                  <div
+                                                    key={id}
+                                                    onClick={() => {
+                                                      setFormData({ ...formData, phone: id.startsWith('91') ? id.slice(2) : id });
+                                                      setShowSuggestions(false);
+                                                    }}
+                                                    style={{
+                                                      padding: '10px 12px',
+                                                      cursor: 'pointer',
+                                                      borderBottom: '1px solid #f0f2f5',
+                                                      fontSize: '0.9rem'
+                                                    }}
+                                                    onMouseDown={e => e.preventDefault()}
+                                                  >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                        {contacts[id]?.photo ? (
+                                                          <img src={contacts[id].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                          <User size={16} color="var(--text-muted)" />
+                                                        )}
+                                                      </div>
+                                                      <div>
+                                                        <p style={{ fontWeight: 600, margin: 0 }}>{getContactName(id)}</p>
+                                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{formatPhone(id)}</p>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                ))
+                                              }
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT EMAIL (OPTIONAL)</label>
+                                      <input
+                                        type="email"
+                                        placeholder="client@example.com"
+                                        value={formData.emailTo || ''}
+                                        onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
+                                        style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                      />
+                                    </div>
+                                  </>
+                                ) : channel === 'email' ? (
+                                  <>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>TO (EMAIL)</label>
+                                      <input
+                                        type="email"
+                                        placeholder="user@example.com"
+                                        value={formData.emailTo || ''}
+                                        onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
+                                        style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                      />
+                                    </div>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>SUBJECT</label>
+                                      <input
+                                        type="text"
+                                        placeholder="Subject line"
+                                        value={formData.emailSubject || ''}
+                                        onChange={e => setFormData({ ...formData, emailSubject: e.target.value })}
+                                        style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
                                   <div className="input-group phone-input-container">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT CONTACT (WHATSAPP)</label>
+                                    <label>Phone Number</label>
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                       <div style={{
                                         padding: '12px 16px',
@@ -2313,15 +2470,15 @@ Looking forward to connecting!`;
                                         transition: 'border-color 0.2s',
                                         boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                       }}
-                                        onFocusCapture={(e) => e.currentTarget.style.borderColor = '#1a73e8'}
+                                        onFocusCapture={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
                                         onBlurCapture={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                                       >
                                         <Phone size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
 
                                         {(getContactName(formData.phone) !== formatPhone(formData.phone) || groups[formData.phone]) && (
                                           <div style={{
-                                            background: groups[formData.phone] ? '#e8f0fe' : '#e8f0fe',
-                                            color: '#1a73e8',
+                                            background: groups[formData.phone] ? '#e7f3ff' : '#dcf8c6',
+                                            color: groups[formData.phone] ? '#0057b7' : '#075e54',
                                             padding: '2px 8px',
                                             borderRadius: '0px',
                                             fontSize: '0.8rem',
@@ -2348,12 +2505,40 @@ Looking forward to connecting!`;
                                           }}
                                           value={formData.phone}
                                           onFocus={() => setShowSuggestions(true)}
+                                          onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              handleAddRecipient();
+                                            }
+                                          }}
                                           onChange={e => {
                                             const val = e.target.value;
                                             setFormData({ ...formData, phone: val });
                                             setShowSuggestions(true);
                                           }}
                                         />
+                                        {formData.phone.trim() && (
+                                          <button
+                                            type="button"
+                                            onClick={handleAddRecipient}
+                                            style={{
+                                              background: 'var(--primary)',
+                                              color: 'white',
+                                              border: 'none',
+                                              borderRadius: '0px',
+                                              width: '32px',
+                                              height: '32px',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              cursor: 'pointer',
+                                              flexShrink: 0,
+                                              marginLeft: '8px'
+                                            }}
+                                          >
+                                            <Plus size={18} />
+                                          </button>
+                                        )}
 
                                         {showSuggestions && (
                                           <div style={{
@@ -2387,9 +2572,12 @@ Looking forward to connecting!`;
                                               </div>
                                             ))}
 
+
+                                            {/* All Contacts — filter out LID/garbage IDs */}
                                             <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
                                             {Object.entries(contacts)
                                               .filter(([id, contact]) => {
+                                                // Skip LID-style long numeric IDs and group numbers
                                                 if (!isRealPhoneNumber(id)) return false;
                                                 const name = typeof contact === 'object' ? contact.name : contact;
                                                 const displayName = isPlaceholderContactName(name, id) ? '' : String(name || '');
@@ -2400,30 +2588,78 @@ Looking forward to connecting!`;
                                                 <div
                                                   key={id}
                                                   onClick={() => {
-                                                    setFormData({ ...formData, phone: id.startsWith('91') ? id.slice(2) : id });
+                                                    if (!selectedRecipients.includes(id)) {
+                                                      setSelectedRecipients([...selectedRecipients, id]);
+                                                    }
+                                                    setFormData({ ...formData, phone: '' });
                                                     setShowSuggestions(false);
                                                   }}
                                                   style={{
                                                     padding: '10px 12px',
                                                     cursor: 'pointer',
                                                     borderBottom: '1px solid #f0f2f5',
-                                                    fontSize: '0.9rem'
+                                                    fontSize: '0.9rem',
+                                                    background: selectedRecipients.includes(id) ? '#f0f9ff' : 'transparent'
                                                   }}
                                                   onMouseDown={e => e.preventDefault()}
                                                 >
-                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                      {contacts[id]?.photo ? (
-                                                        <img src={contacts[id].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                      ) : (
-                                                        <User size={16} color="var(--text-muted)" />
-                                                      )}
+                                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                        {contacts[id]?.photo ? (
+                                                          <img src={contacts[id].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                          <User size={16} color="var(--text-muted)" />
+                                                        )}
+                                                      </div>
+                                                      <div>
+                                                        <p style={{ fontWeight: 600, margin: 0 }}>{getContactName(id)}</p>
+                                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{formatPhone(id)}</p>
+                                                      </div>
                                                     </div>
-                                                    <div>
-                                                      <p style={{ fontWeight: 600, margin: 0 }}>{getContactName(id)}</p>
-                                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{formatPhone(id)}</p>
-                                                    </div>
+                                                    {selectedRecipients.includes(id) && <Check size={14} color="var(--primary)" />}
                                                   </div>
+                                                </div>
+                                              ))
+                                            }
+
+                                            {/* Groups */}
+                                            {Object.keys(groups).length > 0 && (
+                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>GROUPS</div>
+                                            )}
+                                            {Object.entries(groups)
+                                              .filter(([, name]) =>
+                                                name.toLowerCase().includes(formData.phone.toLowerCase())
+                                              )
+                                              .slice(0, 10)
+                                              .map(([id, name]) => (
+                                                <div
+                                                  key={id}
+                                                  onClick={() => {
+                                                    if (!selectedRecipients.includes(id)) {
+                                                      setSelectedRecipients([...selectedRecipients, id]);
+                                                    }
+                                                    setFormData({ ...formData, phone: '' });
+                                                    setShowSuggestions(false);
+                                                  }}
+                                                  style={{
+                                                    padding: '10px 12px',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid #f0f2f5',
+                                                    fontSize: '0.9rem',
+                                                    background: selectedRecipients.includes(id) ? '#f0f9ff' : 'transparent',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px'
+                                                  }}
+                                                  onMouseDown={e => e.preventDefault()}
+                                                >
+                                                  <Users size={16} color="var(--primary-dark)" />
+                                                  <div style={{ flex: 1 }}>
+                                                    <p style={{ fontWeight: 600 }}>{name}</p>
+                                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Group Chat</p>
+                                                  </div>
+                                                  {selectedRecipients.includes(id) && <Check size={14} color="var(--primary)" />}
                                                 </div>
                                               ))
                                             }
@@ -2431,1155 +2667,893 @@ Looking forward to connecting!`;
                                         )}
                                       </div>
                                     </div>
-                                  </div>
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT EMAIL (OPTIONAL)</label>
-                                    <input
-                                      type="email"
-                                      placeholder="client@example.com"
-                                      value={formData.emailTo || ''}
-                                      onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
-                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
-                                    />
-                                  </div>
-                                </>
-                              ) : channel === 'email' ? (
-                                <>
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>TO (EMAIL)</label>
-                                    <input
-                                      type="email"
-                                      placeholder="user@example.com"
-                                      value={formData.emailTo || ''}
-                                      onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
-                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
-                                    />
-                                  </div>
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>SUBJECT</label>
-                                    <input
-                                      type="text"
-                                      placeholder="Subject line"
-                                      value={formData.emailSubject || ''}
-                                      onChange={e => setFormData({ ...formData, emailSubject: e.target.value })}
-                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="input-group phone-input-container">
-                                  <label>Phone Number</label>
-                                  <div style={{ display: 'flex', gap: '8px' }}>
-                                    <div style={{
-                                      padding: '12px 16px',
-                                      background: '#f0f2f5',
-                                      border: '1px solid var(--border)',
-                                      borderRadius: '0px',
-                                      fontSize: '0.9rem',
-                                      fontWeight: 600,
-                                      color: '#54656f',
-                                      display: 'flex',
-                                      alignItems: 'center'
-                                    }}>
-                                      +91
-                                    </div>
-                                    <div style={{
-                                      position: 'relative',
-                                      flex: 1,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      background: 'white',
-                                      border: '1px solid var(--border)',
-                                      borderRadius: '0px',
-                                      padding: '0 12px',
-                                      gap: '8px',
-                                      transition: 'border-color 0.2s',
-                                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                    }}
-                                      onFocusCapture={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-                                      onBlurCapture={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
-                                    >
-                                      <Phone size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
 
-                                      {(getContactName(formData.phone) !== formatPhone(formData.phone) || groups[formData.phone]) && (
-                                        <div style={{
-                                          background: groups[formData.phone] ? '#e7f3ff' : '#dcf8c6',
-                                          color: groups[formData.phone] ? '#0057b7' : '#075e54',
-                                          padding: '2px 8px',
-                                          borderRadius: '0px',
-                                          fontSize: '0.8rem',
-                                          fontWeight: 700,
-                                          whiteSpace: 'nowrap',
-                                          flexShrink: 0
-                                        }}>
-                                          {groups[formData.phone] || getContactName(formData.phone)}
-                                        </div>
-                                      )}
-
-                                      <input
-                                        type="text"
-                                        placeholder="e.g. 9122500000"
-                                        style={{
-                                          border: 'none',
-                                          padding: '12px 0',
-                                          background: 'transparent',
-                                          width: '100%',
-                                          outline: 'none',
-                                          boxShadow: 'none',
-                                          fontSize: '1rem',
-                                          WebkitAppearance: 'none'
-                                        }}
-                                        value={formData.phone}
-                                        onFocus={() => setShowSuggestions(true)}
-                                        onKeyDown={e => {
-                                          if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            handleAddRecipient();
-                                          }
-                                        }}
-                                        onChange={e => {
-                                          const val = e.target.value;
-                                          setFormData({ ...formData, phone: val });
-                                          setShowSuggestions(true);
-                                        }}
-                                      />
-                                      {formData.phone.trim() && (
+                                    {/* Recipient Chips Area */}
+                                    {selectedRecipients.length > 0 && (
+                                      <div style={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '6px',
+                                        marginTop: '10px',
+                                        padding: '8px',
+                                        background: '#f8fafc',
+                                        border: '1px dashed var(--border)'
+                                      }}>
+                                        {selectedRecipients.map(phone => (
+                                          <div
+                                            key={phone}
+                                            style={{
+                                              background: 'white',
+                                              border: '1px solid var(--border)',
+                                              padding: '4px 8px',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '6px',
+                                              fontSize: '0.75rem',
+                                              fontWeight: 700
+                                            }}
+                                          >
+                                            <span>{groups[phone] || getContactName(phone)}</span>
+                                            <X
+                                              size={12}
+                                              style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
+                                              onClick={() => setSelectedRecipients(selectedRecipients.filter(p => p !== phone))}
+                                            />
+                                          </div>
+                                        ))}
                                         <button
                                           type="button"
-                                          onClick={handleAddRecipient}
+                                          onClick={() => setSelectedRecipients([])}
                                           style={{
-                                            background: 'var(--primary)',
-                                            color: 'white',
+                                            fontSize: '0.7rem',
+                                            color: '#ef4444',
+                                            background: 'none',
                                             border: 'none',
-                                            borderRadius: '0px',
-                                            width: '32px',
-                                            height: '32px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            flexShrink: 0,
-                                            marginLeft: '8px'
+                                            textDecoration: 'underline',
+                                            cursor: 'pointer'
                                           }}
                                         >
-                                          <Plus size={18} />
+                                          Clear All
                                         </button>
-                                      )}
-
-                                      {showSuggestions && (
-                                        <div style={{
-                                          position: 'absolute',
-                                          top: '105%',
-                                          left: 0,
-                                          right: 0,
-                                          background: 'white',
-                                          borderRadius: '0px',
-                                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                                          zIndex: 100,
-                                          maxHeight: '250px',
-                                          overflowY: 'auto',
-                                          border: '1px solid var(--border)'
-                                        }}>
-                                          {schedules.length > 0 && (
-                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>RECENT</div>
-                                          )}
-                                          {[...new Set(schedules.map(s => s.phone))].slice(0, 3).map(num => (
-                                            <div
-                                              key={num}
-                                              onClick={() => {
-                                                setFormData({ ...formData, phone: num.startsWith('91') ? num.slice(2) : num });
-                                                setShowSuggestions(false);
-                                              }}
-                                              style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #f0f2f5', fontSize: '0.9rem' }}
-                                              onMouseDown={e => e.preventDefault()}
-                                            >
-                                              <p style={{ fontWeight: 600 }}>{getContactName(num.startsWith('91') ? num.slice(2) : num)}</p>
-                                              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatPhone(num)}</p>
-                                            </div>
-                                          ))}
-
-
-                                          {/* All Contacts — filter out LID/garbage IDs */}
-                                          <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
-                                          {Object.entries(contacts)
-                                            .filter(([id, contact]) => {
-                                              // Skip LID-style long numeric IDs and group numbers
-                                              if (!isRealPhoneNumber(id)) return false;
-                                              const name = typeof contact === 'object' ? contact.name : contact;
-                                              const displayName = isPlaceholderContactName(name, id) ? '' : String(name || '');
-                                              return displayName.toLowerCase().includes(formData.phone.toLowerCase()) || id.includes(formData.phone);
-                                            })
-                                            .slice(0, 20)
-                                            .map(([id]) => (
-                                              <div
-                                                key={id}
-                                                onClick={() => {
-                                                  if (!selectedRecipients.includes(id)) {
-                                                    setSelectedRecipients([...selectedRecipients, id]);
-                                                  }
-                                                  setFormData({ ...formData, phone: '' });
-                                                  setShowSuggestions(false);
-                                                }}
-                                                style={{
-                                                  padding: '10px 12px',
-                                                  cursor: 'pointer',
-                                                  borderBottom: '1px solid #f0f2f5',
-                                                  fontSize: '0.9rem',
-                                                  background: selectedRecipients.includes(id) ? '#f0f9ff' : 'transparent'
-                                                }}
-                                                onMouseDown={e => e.preventDefault()}
-                                              >
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                      {contacts[id]?.photo ? (
-                                                        <img src={contacts[id].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                      ) : (
-                                                        <User size={16} color="var(--text-muted)" />
-                                                      )}
-                                                    </div>
-                                                    <div>
-                                                      <p style={{ fontWeight: 600, margin: 0 }}>{getContactName(id)}</p>
-                                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>{formatPhone(id)}</p>
-                                                    </div>
-                                                  </div>
-                                                  {selectedRecipients.includes(id) && <Check size={14} color="var(--primary)" />}
-                                                </div>
-                                              </div>
-                                            ))
-                                          }
-
-                                          {/* Groups */}
-                                          {Object.keys(groups).length > 0 && (
-                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>GROUPS</div>
-                                          )}
-                                          {Object.entries(groups)
-                                            .filter(([, name]) =>
-                                              name.toLowerCase().includes(formData.phone.toLowerCase())
-                                            )
-                                            .slice(0, 10)
-                                            .map(([id, name]) => (
-                                              <div
-                                                key={id}
-                                                onClick={() => {
-                                                  if (!selectedRecipients.includes(id)) {
-                                                    setSelectedRecipients([...selectedRecipients, id]);
-                                                  }
-                                                  setFormData({ ...formData, phone: '' });
-                                                  setShowSuggestions(false);
-                                                }}
-                                                style={{
-                                                  padding: '10px 12px',
-                                                  cursor: 'pointer',
-                                                  borderBottom: '1px solid #f0f2f5',
-                                                  fontSize: '0.9rem',
-                                                  background: selectedRecipients.includes(id) ? '#f0f9ff' : 'transparent',
-                                                  display: 'flex',
-                                                  alignItems: 'center',
-                                                  gap: '8px'
-                                                }}
-                                                onMouseDown={e => e.preventDefault()}
-                                              >
-                                                <Users size={16} color="var(--primary-dark)" />
-                                                <div style={{ flex: 1 }}>
-                                                  <p style={{ fontWeight: 600 }}>{name}</p>
-                                                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Group Chat</p>
-                                                </div>
-                                                {selectedRecipients.includes(id) && <Check size={14} color="var(--primary)" />}
-                                              </div>
-                                            ))
-                                          }
-                                        </div>
-                                      )}
+                                      </div>
+                                    )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                        Sending to India (+91) by default
+                                      </p>
                                     </div>
                                   </div>
+                                )}
 
-                                  {/* Recipient Chips Area */}
-                                  {selectedRecipients.length > 0 && (
-                                    <div style={{
-                                      display: 'flex',
-                                      flexWrap: 'wrap',
-                                      gap: '6px',
-                                      marginTop: '10px',
-                                      padding: '8px',
-                                      background: '#f8fafc',
-                                      border: '1px dashed var(--border)'
-                                    }}>
-                                      {selectedRecipients.map(phone => (
-                                        <div
-                                          key={phone}
+                                {channel !== 'calendar' && (
+                                  <>
+                                    <div className="input-group">
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : 'var(--primary-dark)', margin: 0, display: 'block' }}>SCHEDULE FOR</label>
+                                        <button
+                                          type="button"
+                                          onClick={() => setIs24Hour(!is24Hour)}
                                           style={{
-                                            background: 'white',
+                                            fontSize: '0.65rem',
+                                            padding: '2px 8px',
+                                            borderRadius: '0px',
+                                            background: '#f0f2f5',
                                             border: '1px solid var(--border)',
-                                            padding: '4px 8px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700
+                                            fontWeight: 700,
+                                            color: 'var(--text-muted)',
+                                            cursor: 'pointer'
                                           }}
                                         >
-                                          <span>{groups[phone] || getContactName(phone)}</span>
-                                          <X
-                                            size={12}
-                                            style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
-                                            onClick={() => setSelectedRecipients(selectedRecipients.filter(p => p !== phone))}
-                                          />
-                                        </div>
-                                      ))}
-                                      <button
-                                        type="button"
-                                        onClick={() => setSelectedRecipients([])}
-                                        style={{
-                                          fontSize: '0.7rem',
-                                          color: '#ef4444',
-                                          background: 'none',
-                                          border: 'none',
-                                          textDecoration: 'underline',
-                                          cursor: 'pointer'
-                                        }}
-                                      >
-                                        Clear All
-                                      </button>
-                                    </div>
-                                  )}
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                      Sending to India (+91) by default
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-
-                              {channel !== 'calendar' && (
-                                <>
-                                  <div className="input-group">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : 'var(--primary-dark)', margin: 0, display: 'block' }}>SCHEDULE FOR</label>
-                                      <button
-                                        type="button"
-                                        onClick={() => setIs24Hour(!is24Hour)}
-                                        style={{
-                                          fontSize: '0.65rem',
-                                          padding: '2px 8px',
-                                          borderRadius: '0px',
-                                          background: '#f0f2f5',
-                                          border: '1px solid var(--border)',
-                                          fontWeight: 700,
-                                          color: 'var(--text-muted)',
-                                          cursor: 'pointer'
-                                        }}
-                                      >
-                                        {is24Hour ? '24H' : '12H'}
-                                      </button>
-                                    </div>
-                                    <DatePicker
-                                      selected={scheduledDate}
-                                      onChange={(date) => setScheduledDate(date)}
-                                      showTimeSelect
-                                      timeFormat={is24Hour ? "HH:mm" : "h:mm aa"}
-                                      timeIntervals={5}
-                                      timeCaption="Time"
-                                      dateFormat={is24Hour ? "MMMM d, yyyy HH:mm" : "MMMM d, yyyy h:mm aa"}
-                                      customInput={<CustomDateInput />}
-                                    />
-                                  </div>
-
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <Repeat size={14} /> REPEAT CYCLE
-                                    </label>
-                                    <select
-                                      value={formData.recurrence}
-                                      onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
-                                      style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        borderRadius: '0px',
-                                        border: '1px solid var(--border)',
-                                        background: 'white',
-                                        fontSize: '0.9rem',
-                                        outline: 'none',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      <option value="none">Does not repeat</option>
-                                      <option value="daily">Every day</option>
-                                      <option value="weekly">Every week</option>
-                                      <option value="monthly">Every month</option>
-                                      <option value="yearly">Every year / Birthday</option>
-                                      <option value="custom">Custom (Select Days)</option>
-                                    </select>
-                                  </div>
-
-                                  {formData.recurrence === 'custom' && (
-                                    <div className="input-group">
-                                      <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SELECT DAYS</label>
-                                      <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                                        {[
-                                          { l: 'M', v: 1 }, { l: 'T', v: 2 }, { l: 'W', v: 3 },
-                                          { l: 'T', v: 4 }, { l: 'F', v: 5 }, { l: 'S', v: 6 }, { l: 'S', v: 0 }
-                                        ].map(day => (
-                                          <button
-                                            key={day.v}
-                                            type="button"
-                                            onClick={() => {
-                                              const newDays = formData.customDays.includes(day.v)
-                                                ? formData.customDays.filter(d => d !== day.v)
-                                                : [...formData.customDays, day.v];
-                                              setFormData({ ...formData, customDays: newDays });
-                                            }}
-                                            style={{
-                                              width: '32px',
-                                              height: '32px',
-                                              borderRadius: '0px',
-                                              border: '1px solid var(--border)',
-                                              fontSize: '0.75rem',
-                                              fontWeight: 700,
-                                              cursor: 'pointer',
-                                              display: 'flex',
-                                              alignItems: 'center',
-                                              justifyContent: 'center',
-                                              transition: 'all 0.2s ease',
-                                              background: formData.customDays.includes(day.v) ? 'var(--primary)' : 'white',
-                                              color: formData.customDays.includes(day.v) ? 'white' : 'var(--text-main)',
-                                              borderColor: formData.customDays.includes(day.v) ? 'var(--primary)' : 'var(--border)'
-                                            }}
-                                          >
-                                            {day.l}
-                                          </button>
-                                        ))}
+                                          {is24Hour ? '24H' : '12H'}
+                                        </button>
                                       </div>
+                                      <DatePicker
+                                        selected={scheduledDate}
+                                        onChange={(date) => setScheduledDate(date)}
+                                        showTimeSelect
+                                        timeFormat={is24Hour ? "HH:mm" : "h:mm aa"}
+                                        timeIntervals={5}
+                                        timeCaption="Time"
+                                        dateFormat={is24Hour ? "MMMM d, yyyy HH:mm" : "MMMM d, yyyy h:mm aa"}
+                                        customInput={<CustomDateInput />}
+                                      />
                                     </div>
-                                  )}
-                                </>
-                              )}
 
-                              <button
-                                type="button"
-                                className="btn"
-                                onClick={() => {
-                                  triggerLight();
-                                  if (channel === 'calendar') {
-                                    if (!formData.phone?.trim() && !formData.emailTo?.trim()) {
-                                      triggerError();
-                                      alert('Please enter a recipient phone number or email address');
-                                      return;
-                                    }
-                                    setSidebarStep(2);
-                                    return;
-                                  } else if (channel === 'email') {
-                                    const targetEmail = formData.emailTo || emailTo;
-                                    if (!targetEmail || !targetEmail.trim() || !targetEmail.includes('@')) {
-                                      triggerError();
-                                      alert('Please enter a valid recipient email address');
-                                      return;
-                                    }
-                                    const targetSubject = formData.emailSubject || emailSubject;
-                                    if (!targetSubject || !targetSubject.trim()) {
-                                      triggerError();
-                                      alert('Please enter an email subject');
-                                      return;
-                                    }
-                                  } else {
-                                    if (selectedRecipients.length === 0 && (!formData.phone || formData.phone.length < 10)) {
-                                      triggerError();
-                                      alert('Please enter a valid phone number');
-                                      return;
-                                    }
-                                  }
-                                  setSidebarStep(2);
-                                }}
-                                style={{
-                                  width: '100%',
-                                  marginTop: '12px',
-                                  marginBottom: '12px',
-                                  borderRadius: '0px',
-                                  background: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
-                                  color: 'white',
-                                  fontWeight: 800,
-                                  border: 'none',
-                                  padding: '12px',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '8px'
-                                }}
-                              >
-                                {channel === 'calendar' ? (
-                                  <>
-                                    <span>Next: Meeting Settings</span>
-                                    <ArrowRight size={16} />
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>Next: Message Content</span>
-                                    <Send size={16} />
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : 'var(--primary-dark)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Repeat size={14} /> REPEAT CYCLE
+                                      </label>
+                                      <select
+                                        value={formData.recurrence}
+                                        onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
+                                        style={{
+                                          width: '100%',
+                                          padding: '12px 16px',
+                                          borderRadius: '0px',
+                                          border: '1px solid var(--border)',
+                                          background: 'white',
+                                          fontSize: '0.9rem',
+                                          outline: 'none',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        <option value="none">Does not repeat</option>
+                                        <option value="daily">Every day</option>
+                                        <option value="weekly">Every week</option>
+                                        <option value="monthly">Every month</option>
+                                        <option value="yearly">Every year / Birthday</option>
+                                        <option value="custom">Custom (Select Days)</option>
+                                      </select>
+                                    </div>
+
+                                    {formData.recurrence === 'custom' && (
+                                      <div className="input-group">
+                                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SELECT DAYS</label>
+                                        <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                                          {[
+                                            { l: 'M', v: 1 }, { l: 'T', v: 2 }, { l: 'W', v: 3 },
+                                            { l: 'T', v: 4 }, { l: 'F', v: 5 }, { l: 'S', v: 6 }, { l: 'S', v: 0 }
+                                          ].map(day => (
+                                            <button
+                                              key={day.v}
+                                              type="button"
+                                              onClick={() => {
+                                                const newDays = formData.customDays.includes(day.v)
+                                                  ? formData.customDays.filter(d => d !== day.v)
+                                                  : [...formData.customDays, day.v];
+                                                setFormData({ ...formData, customDays: newDays });
+                                              }}
+                                              style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                borderRadius: '0px',
+                                                border: '1px solid var(--border)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                transition: 'all 0.2s ease',
+                                                background: formData.customDays.includes(day.v) ? 'var(--primary)' : 'white',
+                                                color: formData.customDays.includes(day.v) ? 'white' : 'var(--text-main)',
+                                                borderColor: formData.customDays.includes(day.v) ? 'var(--primary)' : 'var(--border)'
+                                              }}
+                                            >
+                                              {day.l}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </>
                                 )}
-                              </button>
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="sidebar-step-2"
-                              initial={{ opacity: 0, x: 10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -10 }}
-                              style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
-                            >
-                              {channel === 'calendar' && sidebarStep === 2 ? (
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
-                                    <input
-                                      type="text"
-                                      placeholder="e.g. 30-Min Strategy Call"
-                                      value={meetingTitle}
-                                      onChange={e => setMeetingTitle(e.target.value)}
-                                      style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
-                                    />
-                                  </div>
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' }}>PLATFORM</label>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                      {meetingPlatform !== 'custom' ? (
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                                          <button
-                                            type="button"
-                                            onClick={() => setMeetingPlatform('google_meet')}
-                                            style={{
-                                              padding: '10px 12px',
-                                              border: meetingPlatform === 'google_meet' ? '1px solid #1a73e8' : '1px solid var(--border)',
-                                              borderRadius: '0px',
-                                              background: meetingPlatform === 'google_meet' ? '#e8f0fe' : 'white',
-                                              color: meetingPlatform === 'google_meet' ? '#1a73e8' : 'var(--text-main)',
-                                              fontWeight: 700,
-                                              fontSize: '0.78rem',
-                                              cursor: 'pointer',
-                                              display: 'flex',
-                                              alignItems: 'center',
-                                              gap: '8px',
-                                              justifyContent: 'center'
-                                            }}
-                                          >
-                                            <VideoIcon size={16} color="#1a73e8" />
-                                            <span>Google Meet</span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setMeetingPlatform('custom')}
-                                            style={{
-                                              padding: '10px 12px',
-                                              border: '1px solid var(--border)',
-                                              borderRadius: '0px',
-                                              background: 'white',
-                                              color: 'var(--text-main)',
-                                              fontWeight: 700,
-                                              fontSize: '0.78rem',
-                                              cursor: 'pointer',
-                                              display: 'flex',
-                                              alignItems: 'center',
-                                              gap: '8px',
-                                              justifyContent: 'center'
-                                            }}
-                                          >
-                                            <LinkIcon size={16} color="#667781" />
-                                            <span>Custom Link</span>
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
-                                          <input
-                                            type="url"
-                                            placeholder="i have a meeting link"
-                                            value={formData.customLink || ''}
-                                            onChange={e => setFormData({ ...formData, customLink: e.target.value })}
-                                            style={{
-                                              width: '100%',
-                                              padding: '12px 40px 12px 12px',
-                                              border: '1px solid #1a73e8',
-                                              borderRadius: '0px',
-                                              outline: 'none',
-                                              fontSize: '0.85rem'
-                                            }}
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setMeetingPlatform('google_meet');
-                                              setFormData({ ...formData, customLink: '' });
-                                            }}
-                                            style={{
-                                              position: 'absolute',
-                                              right: '12px',
-                                              background: 'none',
-                                              border: 'none',
-                                              cursor: 'pointer',
-                                              padding: '4px',
-                                              display: 'flex',
-                                              alignItems: 'center',
-                                              justifyContent: 'center',
-                                              borderRadius: '50%'
-                                            }}
-                                            onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
-                                            onMouseOut={e => e.currentTarget.style.background = 'none'}
-                                          >
-                                            <X size={16} color="#667781" />
-                                          </button>
-                                        </div>
-                                      )}
+
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  onClick={() => {
+                                    triggerLight();
+                                    if (channel === 'calendar') {
+                                      if (!formData.phone?.trim() && !formData.emailTo?.trim()) {
+                                        triggerError();
+                                        alert('Please enter a recipient phone number or email address');
+                                        return;
+                                      }
+                                      setSidebarStep(2);
+                                      return;
+                                    } else if (channel === 'email') {
+                                      const targetEmail = formData.emailTo || emailTo;
+                                      if (!targetEmail || !targetEmail.trim() || !targetEmail.includes('@')) {
+                                        triggerError();
+                                        alert('Please enter a valid recipient email address');
+                                        return;
+                                      }
+                                      const targetSubject = formData.emailSubject || emailSubject;
+                                      if (!targetSubject || !targetSubject.trim()) {
+                                        triggerError();
+                                        alert('Please enter an email subject');
+                                        return;
+                                      }
+                                    } else {
+                                      if (selectedRecipients.length === 0 && (!formData.phone || formData.phone.length < 10)) {
+                                        triggerError();
+                                        alert('Please enter a valid phone number');
+                                        return;
+                                      }
+                                    }
+                                    setSidebarStep(2);
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    marginTop: '12px',
+                                    marginBottom: '12px',
+                                    borderRadius: '0px',
+                                    background: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
+                                    color: 'white',
+                                    fontWeight: 800,
+                                    border: 'none',
+                                    padding: '12px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                  }}
+                                >
+                                  {channel === 'calendar' ? (
+                                    <>
+                                      <span>Next: Meeting Settings</span>
+                                      <ArrowRight size={16} />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>Next: Message Content</span>
+                                      <Send size={16} />
+                                    </>
+                                  )}
+                                </button>
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="sidebar-step-2"
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
+                              >
+                                {channel === 'calendar' && sidebarStep === 2 ? (
+                                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. 30-Min Strategy Call"
+                                        value={meetingTitle}
+                                        onChange={e => setMeetingTitle(e.target.value)}
+                                        style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none' }}
+                                      />
                                     </div>
-                                  </div>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' }}>PLATFORM</label>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {meetingPlatform !== 'custom' ? (
+                                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                                            <button
+                                              type="button"
+                                              onClick={() => setMeetingPlatform('google_meet')}
+                                              style={{
+                                                padding: '10px 12px',
+                                                border: meetingPlatform === 'google_meet' ? '1px solid #1a73e8' : '1px solid var(--border)',
+                                                borderRadius: '0px',
+                                                background: meetingPlatform === 'google_meet' ? '#e8f0fe' : 'white',
+                                                color: meetingPlatform === 'google_meet' ? '#1a73e8' : 'var(--text-main)',
+                                                fontWeight: 700,
+                                                fontSize: '0.78rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                justifyContent: 'center'
+                                              }}
+                                            >
+                                              <VideoIcon size={16} color="#1a73e8" />
+                                              <span>Google Meet</span>
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => setMeetingPlatform('custom')}
+                                              style={{
+                                                padding: '10px 12px',
+                                                border: '1px solid var(--border)',
+                                                borderRadius: '0px',
+                                                background: 'white',
+                                                color: 'var(--text-main)',
+                                                fontWeight: 700,
+                                                fontSize: '0.78rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                justifyContent: 'center'
+                                              }}
+                                            >
+                                              <LinkIcon size={16} color="#667781" />
+                                              <span>Custom Link</span>
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+                                            <input
+                                              type="url"
+                                              placeholder="i have a meeting link"
+                                              value={formData.customLink || ''}
+                                              onChange={e => setFormData({ ...formData, customLink: e.target.value })}
+                                              style={{
+                                                width: '100%',
+                                                padding: '12px 40px 12px 12px',
+                                                border: '1px solid #1a73e8',
+                                                borderRadius: '0px',
+                                                outline: 'none',
+                                                fontSize: '0.85rem'
+                                              }}
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setMeetingPlatform('google_meet');
+                                                setFormData({ ...formData, customLink: '' });
+                                              }}
+                                              style={{
+                                                position: 'absolute',
+                                                right: '12px',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                padding: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                borderRadius: '50%'
+                                              }}
+                                              onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+                                              onMouseOut={e => e.currentTarget.style.background = 'none'}
+                                            >
+                                              <X size={16} color="#667781" />
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
 
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8' }}>SCHEDULE FOR</label>
-                                    <DatePicker
-                                      selected={scheduledDate}
-                                      onChange={date => setScheduledDate(date)}
-                                      showTimeSelect
-                                      dateFormat="MMMM d, yyyy h:mm aa"
-                                      minDate={new Date()}
-                                      customInput={<CustomDateInput color="#1a73e8" />}
-                                    />
-                                  </div>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8' }}>SCHEDULE FOR</label>
+                                      <DatePicker
+                                        selected={scheduledDate}
+                                        onChange={date => setScheduledDate(date)}
+                                        showTimeSelect
+                                        dateFormat="MMMM d, yyyy h:mm aa"
+                                        minDate={new Date()}
+                                        customInput={<CustomDateInput color="#1a73e8" />}
+                                      />
+                                    </div>
 
-                                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '20px' }}>
-                                    <button
-                                      type="button"
-                                      onClick={() => { triggerLight(); setSidebarStep(1); }}
-                                      style={{
-                                        padding: '12px 16px',
-                                        background: '#f0f2f5',
-                                        color: '#54656f',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '0px',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px'
-                                      }}
-                                    >
-                                      <ArrowLeft size={16} />
-                                      <span>Back</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn"
-                                      onClick={() => {
-                                        triggerLight();
-                                        if (!meetingTitle.trim()) {
-                                          triggerError();
-                                          alert('Please enter a meeting title');
-                                          return;
-                                        }
-                                        if (meetingPlatform === 'custom' && !formData.customLink?.trim()) {
-                                          triggerError();
-                                          alert('Please enter a meeting link');
-                                          return;
-                                        }
-                                        if (!formData.message?.trim()) {
-                                          const userPhone = userInfo?.id || user?.phone || formData.phone || '';
-                                          const customLinkVal = meetingPlatform === 'custom' ? (formData.customLink || '') : '';
-                                          const meetingLink = generateMeetingLink(meetingPlatform, userPhone, customLinkVal, personalMeetLink, personalZoomLink);
-                                          const platformLabel = { google_meet: 'Google Meet', zoom: 'Zoom Call', whatsapp_call: 'WhatsApp Call', phone: 'Phone Call', custom: 'Online Call' }[meetingPlatform] || 'Online Call';
-                                          const invitation = `You're invited to: ${meetingTitle}
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '20px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => { triggerLight(); setSidebarStep(1); }}
+                                        style={{
+                                          padding: '12px 16px',
+                                          background: '#f0f2f5',
+                                          color: '#54656f',
+                                          border: '1px solid var(--border)',
+                                          borderRadius: '0px',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <ArrowLeft size={16} />
+                                        <span>Back</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn"
+                                        onClick={() => {
+                                          triggerLight();
+                                          if (!meetingTitle.trim()) {
+                                            triggerError();
+                                            alert('Please enter a meeting title');
+                                            return;
+                                          }
+                                          if (meetingPlatform === 'custom' && !formData.customLink?.trim()) {
+                                            triggerError();
+                                            alert('Please enter a meeting link');
+                                            return;
+                                          }
+                                          if (!formData.message?.trim()) {
+                                            const userPhone = userInfo?.id || user?.phone || formData.phone || '';
+                                            const customLinkVal = meetingPlatform === 'custom' ? (formData.customLink || '') : '';
+                                            const meetingLink = generateMeetingLink(meetingPlatform, userPhone, customLinkVal, personalMeetLink, personalZoomLink);
+                                            const platformLabel = { google_meet: 'Google Meet', zoom: 'Zoom Call', whatsapp_call: 'WhatsApp Call', phone: 'Phone Call', custom: 'Online Call' }[meetingPlatform] || 'Online Call';
+                                            const invitation = `You're invited to: ${meetingTitle}
 Date & Time: ${format(scheduledDate, 'MMMM d, yyyy h:mm aa')}
 Platform: ${platformLabel}
 Join Link: ${meetingLink}
 
 Looking forward to connecting!`;
-                                          setFormData({ ...formData, message: invitation });
-                                        }
-                                        setStepChangedAt(Date.now());
-                                        setSidebarStep(3);
-                                      }}
-                                      style={{
-                                        flex: 1,
-                                        borderRadius: '0px',
-                                        background: '#1a73e8',
-                                        color: 'white',
-                                        fontWeight: 800,
-                                        border: 'none',
-                                        padding: '12px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px'
-                                      }}
-                                    >
-                                      <span>Next: Preview</span>
-                                      <ArrowRight size={16} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : channel === 'calendar' && sidebarStep === 3 ? (
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>NOTIFICATIONS</label>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                      <button
-                                        type="button"
-                                        onClick={() => setMeetingNotifyWhatsApp(!meetingNotifyWhatsApp)}
+                                            setFormData({ ...formData, message: invitation });
+                                          }
+                                          setStepChangedAt(Date.now());
+                                          setSidebarStep(3);
+                                        }}
                                         style={{
                                           flex: 1,
-                                          padding: '10px 12px',
                                           borderRadius: '0px',
-                                          border: meetingNotifyWhatsApp ? '1px solid #25d366' : '1px solid var(--border)',
-                                          background: meetingNotifyWhatsApp ? '#f0fdf4' : 'white',
-                                          color: meetingNotifyWhatsApp ? '#128c7e' : 'var(--text-muted)',
-                                          fontWeight: 700,
-                                          fontSize: '0.78rem',
+                                          background: '#1a73e8',
+                                          color: 'white',
+                                          fontWeight: 800,
+                                          border: 'none',
+                                          padding: '12px',
                                           cursor: 'pointer',
                                           display: 'flex',
                                           alignItems: 'center',
                                           justifyContent: 'center',
-                                          gap: '6px'
+                                          gap: '8px'
                                         }}
                                       >
-                                        <WhatsAppIcon size={16} color={meetingNotifyWhatsApp ? '#25d366' : '#94a3b8'} />
-                                        WhatsApp
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setMeetingNotifyEmail(!meetingNotifyEmail)}
-                                        style={{
-                                          flex: 1,
-                                          padding: '10px 12px',
-                                          borderRadius: '0px',
-                                          border: meetingNotifyEmail ? '1px solid #ea4335' : '1px solid var(--border)',
-                                          background: meetingNotifyEmail ? '#fdf2f2' : 'white',
-                                          color: meetingNotifyEmail ? '#d93025' : 'var(--text-muted)',
-                                          fontWeight: 700,
-                                          fontSize: '0.78rem',
-                                          cursor: 'pointer',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: '6px'
-                                        }}
-                                      >
-                                        <Mail size={16} color={meetingNotifyEmail ? '#ea4335' : '#94a3b8'} />
-                                        Email
+                                        <span>Next: Preview</span>
+                                        <ArrowRight size={16} />
                                       </button>
                                     </div>
                                   </div>
-
-                                  <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>REMINDERS</label>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                      {[
-                                        { value: '24h', label: '24h Before' },
-                                        { value: '1h', label: '1h Before' },
-                                        { value: '15m', label: '15m Before' }
-                                      ].map(r => (
+                                ) : channel === 'calendar' && sidebarStep === 3 ? (
+                                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>NOTIFICATIONS</label>
+                                      <div style={{ display: 'flex', gap: '8px' }}>
                                         <button
-                                          key={r.value}
                                           type="button"
-                                          onClick={() => setMeetingReminderTiming(r.value)}
+                                          onClick={() => setMeetingNotifyWhatsApp(!meetingNotifyWhatsApp)}
                                           style={{
                                             flex: 1,
-                                            padding: '10px 4px',
+                                            padding: '10px 12px',
                                             borderRadius: '0px',
-                                            border: meetingReminderTiming === r.value ? '1px solid #1a73e8' : '1px solid var(--border)',
-                                            background: meetingReminderTiming === r.value ? '#e8f0fe' : 'white',
-                                            color: meetingReminderTiming === r.value ? '#1a73e8' : 'var(--text-muted)',
+                                            border: meetingNotifyWhatsApp ? '1px solid #25d366' : '1px solid var(--border)',
+                                            background: meetingNotifyWhatsApp ? '#f0fdf4' : 'white',
+                                            color: meetingNotifyWhatsApp ? '#128c7e' : 'var(--text-muted)',
                                             fontWeight: 700,
-                                            fontSize: '0.75rem',
+                                            fontSize: '0.78rem',
                                             cursor: 'pointer',
-                                            textAlign: 'center'
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
                                           }}
                                         >
-                                          {r.label}
+                                          <WhatsAppIcon size={16} color={meetingNotifyWhatsApp ? '#25d366' : '#94a3b8'} />
+                                          WhatsApp
                                         </button>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: '#1a73e8', letterSpacing: '0.5px', marginBottom: '8px' }}>INVITATION PREVIEW</label>
-                                    <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                      <textarea
-                                        value={formData.message}
-                                        onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                        rows={5}
-                                        style={{
-                                          width: '100%',
-                                          flex: 1,
-                                          padding: '12px',
-                                          paddingBottom: '40px',
-                                          border: '1px solid var(--border)',
-                                          borderRadius: '0px',
-                                          outline: 'none',
-                                          fontSize: '0.88rem',
-                                          lineHeight: '1.5',
-                                          resize: 'none'
-                                        }}
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_desktop' ? null : 'meeting_desktop'); }}
-                                        style={{
-                                          position: 'absolute',
-                                          bottom: '10px',
-                                          right: '10px',
-                                          background: 'transparent',
-                                          border: 'none',
-                                          cursor: 'pointer',
-                                          color: 'var(--text-muted)',
-                                          padding: '4px',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          zIndex: 5
-                                        }}
-                                      >
-                                        <Smile size={18} />
-                                      </button>
-                                      {activeEmojiPicker === 'meeting_desktop' && (
-                                        <EmojiPicker
-                                          onSelect={insertEmoji}
-                                          onClose={() => setActiveEmojiPicker(null)}
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                    <button
-                                      type="button"
-                                      onClick={() => setSidebarStep(2)}
-                                      style={{
-                                        padding: '12px 16px',
-                                        background: '#f0f2f5',
-                                        color: '#54656f',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '0px',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px'
-                                      }}
-                                    >
-                                      <ArrowLeft size={16} />
-                                      <span>Back</span>
-                                    </button>
-                                    <button
-                                      type="submit"
-                                      disabled={loading || (Date.now() - stepChangedAt < 400)}
-                                      style={{
-                                        flex: 1,
-                                        padding: '12px',
-                                        background: '#1a73e8',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '0px',
-                                        fontWeight: 800,
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px'
-                                      }}
-                                    >
-                                      <Calendar size={16} />
-                                      <span>{loading ? 'Scheduling...' : 'Create Meeting'}</span>
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px', position: 'relative' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                                      <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: 'var(--primary-dark)', letterSpacing: '0.5px' }}>MESSAGE CONTENT</label>
-                                      <button
-                                        type="button"
-                                        onClick={() => setShowAiPrompt(!showAiPrompt)}
-                                        className="gemini-ai-btn"
-                                        style={{ padding: '6px 12px !important' }}
-                                      >
-                                        <Sparkles size={14} /> AI MAGIC
-                                      </button>
-                                    </div>
-
-                                    <div style={{ flex: 1, position: 'relative', border: '1px solid var(--border)', background: 'white', display: 'flex', flexDirection: 'column' }}>
-                                      <AnimatePresence>
-                                        {showAiPrompt && (
-                                          <motion.div
-                                            initial={{ y: -10, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            exit={{ y: -10, opacity: 0 }}
-                                            style={{
-                                              position: 'absolute',
-                                              top: 0,
-                                              left: 0,
-                                              right: 0,
-                                              zIndex: 10,
-                                              background: 'rgba(255, 255, 255, 0.95)',
-                                              backdropFilter: 'blur(10px)',
-                                              borderBottom: '1px solid var(--primary-light)',
-                                              padding: '12px'
-                                            }}
-                                          >
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                                              {[
-                                                { l: '✨ Improve', p: 'Improve this message and make it sound better' },
-                                                { l: '👔 Professional', p: 'Make this message sound more professional and corporate' },
-                                                { l: '🏃 Shorter', p: 'Make this message concise and short' },
-                                                { l: '😊 Add Emojis', p: 'Add relevant emojis to this message' }
-                                              ].map(chip => (
-                                                <button
-                                                  key={chip.l}
-                                                  type="button"
-                                                  onClick={() => {
-                                                    setAiPrompt(chip.p);
-                                                    handleGenerateAiMessage(chip.p);
-                                                  }}
-                                                  style={{
-                                                    fontSize: '0.65rem',
-                                                    padding: '4px 10px',
-                                                    background: 'white',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '0px',
-                                                    cursor: 'pointer',
-                                                    fontWeight: 600,
-                                                    color: 'var(--text-muted)'
-                                                  }}
-                                                >
-                                                  {chip.l}
-                                                </button>
-                                              ))}
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                              <input
-                                                type="text"
-                                                placeholder="Or type custom instruction..."
-                                                value={aiPrompt}
-                                                onChange={e => setAiPrompt(e.target.value)}
-                                                onKeyPress={e => e.key === 'Enter' && handleGenerateAiMessage()}
-                                                style={{
-                                                  flex: 1,
-                                                  padding: '8px 12px',
-                                                  borderRadius: '0px',
-                                                  border: '1px solid var(--border)',
-                                                  fontSize: '0.85rem',
-                                                  outline: 'none'
-                                                }}
-                                              />
-                                              <button
-                                                type="button"
-                                                disabled={isAiGenerating}
-                                                onClick={() => handleGenerateAiMessage()}
-                                                className="gemini-ai-btn"
-                                                style={{ padding: '4px 12px !important' }}
-                                              >
-                                                {isAiGenerating ? '...' : 'GO'}
-                                              </button>
-                                            </div>
-                                          </motion.div>
-                                        )}
-                                      </AnimatePresence>
-
-                                      <textarea
-                                        placeholder="Type your message here, then use AI Magic to refine it..."
-                                        value={formData.message}
-                                        onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                        required={!selectedFile}
-                                        style={{
-                                          flex: 1,
-                                          width: '100%',
-                                          border: 'none',
-                                          padding: '15px',
-                                          paddingBottom: '45px',
-                                          fontSize: '0.95rem',
-                                          outline: 'none',
-                                          resize: 'none',
-                                          background: 'transparent'
-                                        }}
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_desktop' ? null : 'schedule_desktop'); }}
-                                        style={{
-                                          position: 'absolute',
-                                          bottom: '10px',
-                                          right: '10px',
-                                          background: 'transparent',
-                                          border: 'none',
-                                          cursor: 'pointer',
-                                          color: 'var(--text-muted)',
-                                          padding: '4px',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          zIndex: 5
-                                        }}
-                                      >
-                                        <Smile size={18} />
-                                      </button>
-                                      {activeEmojiPicker === 'schedule_desktop' && (
-                                        <EmojiPicker
-                                          onSelect={insertEmoji}
-                                          onClose={() => setActiveEmojiPicker(null)}
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Media Upload Section */}
-                                  <div className="media-upload-area">
-                                    {!selectedFile && !filePreview ? (
-                                      <div className="media-buttons">
-                                        <label className="media-btn" title="Image">
-                                          <ImageIcon size={20} />
-                                          <input type="file" accept="image/*" onChange={handleFileChange} hidden />
-                                        </label>
-                                        <label className="media-btn" title="Video">
-                                          <VideoIcon size={20} />
-                                          <input type="file" accept="video/*" onChange={handleFileChange} hidden />
-                                        </label>
-                                        <label className="media-btn" title="Document">
-                                          <FileIcon size={20} />
-                                          <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileChange} hidden />
-                                        </label>
-                                        <label className="media-btn" title="Voice Note">
-                                          <Mic size={20} />
-                                          <input type="file" accept="audio/*" onChange={e => handleFileChange(e, true)} hidden />
-                                        </label>
-                                      </div>
-                                    ) : (
-                                      <div className="media-preview-container">
-                                        {filePreview?.type === 'image' && <img src={filePreview.url} alt="Preview" />}
-                                        {filePreview?.type === 'video' && <video src={filePreview.url} controls={false} />}
-                                        {(filePreview?.type === 'file' || filePreview?.type === 'audio') && (
-                                          <div className="file-preview-icon">
-                                            {filePreview.type === 'audio' ? <Mic size={24} /> : <FileIcon size={24} />}
-                                            <span>{filePreview.name}</span>
-                                          </div>
-                                        )}
                                         <button
                                           type="button"
-                                          className="remove-media"
-                                          onClick={() => { setSelectedFile(null); setFilePreview(null); }}
+                                          onClick={() => setMeetingNotifyEmail(!meetingNotifyEmail)}
+                                          style={{
+                                            flex: 1,
+                                            padding: '10px 12px',
+                                            borderRadius: '0px',
+                                            border: meetingNotifyEmail ? '1px solid #ea4335' : '1px solid var(--border)',
+                                            background: meetingNotifyEmail ? '#fdf2f2' : 'white',
+                                            color: meetingNotifyEmail ? '#d93025' : 'var(--text-muted)',
+                                            fontWeight: 700,
+                                            fontSize: '0.78rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
+                                          }}
                                         >
-                                          <X size={14} />
+                                          <Mail size={16} color={meetingNotifyEmail ? '#ea4335' : '#94a3b8'} />
+                                          Email
                                         </button>
-                                        {isVoiceNote && <div className="vn-badge">Voice Note</div>}
+                                      </div>
+                                    </div>
+
+                                    <div className="input-group">
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>REMINDERS</label>
+                                      <div style={{ display: 'flex', gap: '6px' }}>
+                                        {[
+                                          { value: '24h', label: '24h Before' },
+                                          { value: '1h', label: '1h Before' },
+                                          { value: '15m', label: '15m Before' }
+                                        ].map(r => (
+                                          <button
+                                            key={r.value}
+                                            type="button"
+                                            onClick={() => setMeetingReminderTiming(r.value)}
+                                            style={{
+                                              flex: 1,
+                                              padding: '10px 4px',
+                                              borderRadius: '0px',
+                                              border: meetingReminderTiming === r.value ? '1px solid #1a73e8' : '1px solid var(--border)',
+                                              background: meetingReminderTiming === r.value ? '#e8f0fe' : 'white',
+                                              color: meetingReminderTiming === r.value ? '#1a73e8' : 'var(--text-muted)',
+                                              fontWeight: 700,
+                                              fontSize: '0.75rem',
+                                              cursor: 'pointer',
+                                              textAlign: 'center'
+                                            }}
+                                          >
+                                            {r.label}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                      <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: '#1a73e8', letterSpacing: '0.5px', marginBottom: '8px' }}>INVITATION PREVIEW</label>
+                                      <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                        <textarea
+                                          value={formData.message}
+                                          onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                          rows={5}
+                                          style={{
+                                            width: '100%',
+                                            flex: 1,
+                                            padding: '12px',
+                                            paddingBottom: '40px',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '0px',
+                                            outline: 'none',
+                                            fontSize: '0.88rem',
+                                            lineHeight: '1.5',
+                                            resize: 'none'
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_desktop' ? null : 'meeting_desktop'); }}
+                                          style={{
+                                            position: 'absolute',
+                                            bottom: '10px',
+                                            right: '10px',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'var(--text-muted)',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            zIndex: 5
+                                          }}
+                                        >
+                                          <Smile size={18} />
+                                        </button>
+                                        {activeEmojiPicker === 'meeting_desktop' && (
+                                          <EmojiPicker
+                                            onSelect={insertEmoji}
+                                            onClose={() => setActiveEmojiPicker(null)}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSidebarStep(2)}
+                                        style={{
+                                          padding: '12px 16px',
+                                          background: '#f0f2f5',
+                                          color: '#54656f',
+                                          border: '1px solid var(--border)',
+                                          borderRadius: '0px',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '6px'
+                                        }}
+                                      >
+                                        <ArrowLeft size={16} />
+                                        <span>Back</span>
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        disabled={loading || (Date.now() - stepChangedAt < 400)}
+                                        style={{
+                                          flex: 1,
+                                          padding: '12px',
+                                          background: '#1a73e8',
+                                          color: 'white',
+                                          border: 'none',
+                                          borderRadius: '0px',
+                                          fontWeight: 800,
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '8px'
+                                        }}
+                                      >
+                                        <Calendar size={16} />
+                                        <span>{loading ? 'Scheduling...' : 'Create Meeting'}</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px', position: 'relative' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                                        <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: 'var(--primary-dark)', letterSpacing: '0.5px' }}>MESSAGE CONTENT</label>
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowAiPrompt(!showAiPrompt)}
+                                          className="gemini-ai-btn"
+                                          style={{ padding: '6px 12px !important' }}
+                                        >
+                                          <Sparkles size={14} /> AI MAGIC
+                                        </button>
+                                      </div>
+
+                                      <div style={{ flex: 1, position: 'relative', border: '1px solid var(--border)', background: 'white', display: 'flex', flexDirection: 'column' }}>
+                                        <AnimatePresence>
+                                          {showAiPrompt && (
+                                            <motion.div
+                                              initial={{ y: -10, opacity: 0 }}
+                                              animate={{ y: 0, opacity: 1 }}
+                                              exit={{ y: -10, opacity: 0 }}
+                                              style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                right: 0,
+                                                zIndex: 10,
+                                                background: 'rgba(255, 255, 255, 0.95)',
+                                                backdropFilter: 'blur(10px)',
+                                                borderBottom: '1px solid var(--primary-light)',
+                                                padding: '12px'
+                                              }}
+                                            >
+                                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                                                {[
+                                                  { l: '✨ Improve', p: 'Improve this message and make it sound better' },
+                                                  { l: '👔 Professional', p: 'Make this message sound more professional and corporate' },
+                                                  { l: '🏃 Shorter', p: 'Make this message concise and short' },
+                                                  { l: '😊 Add Emojis', p: 'Add relevant emojis to this message' }
+                                                ].map(chip => (
+                                                  <button
+                                                    key={chip.l}
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setAiPrompt(chip.p);
+                                                      handleGenerateAiMessage(chip.p);
+                                                    }}
+                                                    style={{
+                                                      fontSize: '0.65rem',
+                                                      padding: '4px 10px',
+                                                      background: 'white',
+                                                      border: '1px solid #e2e8f0',
+                                                      borderRadius: '0px',
+                                                      cursor: 'pointer',
+                                                      fontWeight: 600,
+                                                      color: 'var(--text-muted)'
+                                                    }}
+                                                  >
+                                                    {chip.l}
+                                                  </button>
+                                                ))}
+                                              </div>
+                                              <div style={{ display: 'flex', gap: '8px' }}>
+                                                <input
+                                                  type="text"
+                                                  placeholder="Or type custom instruction..."
+                                                  value={aiPrompt}
+                                                  onChange={e => setAiPrompt(e.target.value)}
+                                                  onKeyPress={e => e.key === 'Enter' && handleGenerateAiMessage()}
+                                                  style={{
+                                                    flex: 1,
+                                                    padding: '8px 12px',
+                                                    borderRadius: '0px',
+                                                    border: '1px solid var(--border)',
+                                                    fontSize: '0.85rem',
+                                                    outline: 'none'
+                                                  }}
+                                                />
+                                                <button
+                                                  type="button"
+                                                  disabled={isAiGenerating}
+                                                  onClick={() => handleGenerateAiMessage()}
+                                                  className="gemini-ai-btn"
+                                                  style={{ padding: '4px 12px !important' }}
+                                                >
+                                                  {isAiGenerating ? '...' : 'GO'}
+                                                </button>
+                                              </div>
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+
+                                        <textarea
+                                          placeholder="Type your message here, then use AI Magic to refine it..."
+                                          value={formData.message}
+                                          onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                          required={!selectedFile}
+                                          style={{
+                                            flex: 1,
+                                            width: '100%',
+                                            border: 'none',
+                                            padding: '15px',
+                                            paddingBottom: '45px',
+                                            fontSize: '0.95rem',
+                                            outline: 'none',
+                                            resize: 'none',
+                                            background: 'transparent'
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_desktop' ? null : 'schedule_desktop'); }}
+                                          style={{
+                                            position: 'absolute',
+                                            bottom: '10px',
+                                            right: '10px',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'var(--text-muted)',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            zIndex: 5
+                                          }}
+                                        >
+                                          <Smile size={18} />
+                                        </button>
+                                        {activeEmojiPicker === 'schedule_desktop' && (
+                                          <EmojiPicker
+                                            onSelect={insertEmoji}
+                                            onClose={() => setActiveEmojiPicker(null)}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Media Upload Section */}
+                                    <div className="media-upload-area">
+                                      {!selectedFile && !filePreview ? (
+                                        <div className="media-buttons">
+                                          <label className="media-btn" title="Image">
+                                            <ImageIcon size={20} />
+                                            <input type="file" accept="image/*" onChange={handleFileChange} hidden />
+                                          </label>
+                                          <label className="media-btn" title="Video">
+                                            <VideoIcon size={20} />
+                                            <input type="file" accept="video/*" onChange={handleFileChange} hidden />
+                                          </label>
+                                          <label className="media-btn" title="Document">
+                                            <FileIcon size={20} />
+                                            <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileChange} hidden />
+                                          </label>
+                                          <label className="media-btn" title="Voice Note">
+                                            <Mic size={20} />
+                                            <input type="file" accept="audio/*" onChange={e => handleFileChange(e, true)} hidden />
+                                          </label>
+                                        </div>
+                                      ) : (
+                                        <div className="media-preview-container">
+                                          {filePreview?.type === 'image' && <img src={filePreview.url} alt="Preview" />}
+                                          {filePreview?.type === 'video' && <video src={filePreview.url} controls={false} />}
+                                          {(filePreview?.type === 'file' || filePreview?.type === 'audio') && (
+                                            <div className="file-preview-icon">
+                                              {filePreview.type === 'audio' ? <Mic size={24} /> : <FileIcon size={24} />}
+                                              <span>{filePreview.name}</span>
+                                            </div>
+                                          )}
+                                          <button
+                                            type="button"
+                                            className="remove-media"
+                                            onClick={() => { setSelectedFile(null); setFilePreview(null); }}
+                                          >
+                                            <X size={14} />
+                                          </button>
+                                          {isVoiceNote && <div className="vn-badge">Voice Note</div>}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+
+                                {channel !== 'calendar' && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '20px' }}>
+                                    {/* Credit Balance & Requirement Badge */}
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      background: '#f8fafc',
+                                      padding: '8px 12px',
+                                      border: '1px solid var(--border)',
+                                      fontSize: '0.8rem',
+                                      fontWeight: 700
+                                    }}>
+                                      <span style={{ color: 'var(--text-muted)' }}>
+                                        Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
+                                      </span>
+                                      <span style={{ color: credits.total_balance < getEstimatedCredits() ? '#ea4335' : '#2e7d32' }}>
+                                        Your Balance: {credits.total_balance}
+                                      </span>
+                                    </div>
+
+                                    {credits.total_balance < getEstimatedCredits() && (
+                                      <div style={{
+                                        fontSize: '0.75rem',
+                                        color: '#ea4335',
+                                        fontWeight: 600,
+                                        textAlign: 'center',
+                                        background: '#fdf2f2',
+                                        padding: '6px',
+                                        border: '1px solid #f9d5d3'
+                                      }}>
+                                        ⚠️ Insufficient credits. Please recharge your account.
                                       </div>
                                     )}
-                                  </div>
-                                </>
-                              )}
 
-                              {channel !== 'calendar' && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '20px' }}>
-                                  {/* Credit Balance & Requirement Badge */}
-                                  <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    background: '#f8fafc',
-                                    padding: '8px 12px',
-                                    border: '1px solid var(--border)',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 700
-                                  }}>
-                                    <span style={{ color: 'var(--text-muted)' }}>
-                                      Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
-                                    </span>
-                                    <span style={{ color: credits.total_balance < getEstimatedCredits() ? '#ea4335' : '#2e7d32' }}>
-                                      Your Balance: {credits.total_balance}
-                                    </span>
-                                  </div>
-
-                                  {credits.total_balance < getEstimatedCredits() && (
-                                    <div style={{
-                                      fontSize: '0.75rem',
-                                      color: '#ea4335',
-                                      fontWeight: 600,
-                                      textAlign: 'center',
-                                      background: '#fdf2f2',
-                                      padding: '6px',
-                                      border: '1px solid #f9d5d3'
-                                    }}>
-                                      ⚠️ Insufficient credits. Please recharge your account.
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                      <button
+                                        type="button"
+                                        className="btn"
+                                        onClick={() => { triggerLight(); setSidebarStep(1); }}
+                                        style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
+                                      >
+                                        Back
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        className="btn"
+                                        style={{
+                                          flex: 1,
+                                          opacity: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 1 : 0.5),
+                                          cursor: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 'pointer' : 'not-allowed'),
+                                          background: editingId ? '#0057b7' : (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')),
+                                          color: 'white',
+                                          fontWeight: 800,
+                                          border: 'none',
+                                          height: '42px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '8px',
+                                          borderRadius: '0px'
+                                        }}
+                                        disabled={(channel === 'whatsapp' && status !== 'connected') || loading || credits.total_balance < getEstimatedCredits()}
+                                      >
+                                        {loading ? (
+                                          <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                            style={{ display: 'flex', alignItems: 'center' }}
+                                          >
+                                            <RefreshCcw size={18} />
+                                          </motion.div>
+                                        ) : (
+                                          <>
+                                            {editingId ? <Edit2 size={18} /> : <Calendar size={18} />}
+                                            {editingId ? 'Update Meeting' : (channel === 'calendar' ? 'Create Meeting' : 'Schedule Now')}
+                                          </>
+                                        )}
+                                      </button>
                                     </div>
-                                  )}
-
-                                  <div style={{ display: 'flex', gap: '12px' }}>
-                                    <button
-                                      type="button"
-                                      className="btn"
-                                      onClick={() => { triggerLight(); setSidebarStep(1); }}
-                                      style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
-                                    >
-                                      Back
-                                    </button>
-                                    <button
-                                      type="submit"
-                                      className="btn"
-                                      style={{
-                                        flex: 1,
-                                        opacity: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 1 : 0.5),
-                                        cursor: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 'pointer' : 'not-allowed'),
-                                        background: editingId ? '#0057b7' : (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')),
-                                        color: 'white',
-                                        fontWeight: 800,
-                                        border: 'none',
-                                        height: '42px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        borderRadius: '0px'
-                                      }}
-                                      disabled={(channel === 'whatsapp' && status !== 'connected') || loading || credits.total_balance < getEstimatedCredits()}
-                                    >
-                                      {loading ? (
-                                        <motion.div
-                                          animate={{ rotate: 360 }}
-                                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                                          style={{ display: 'flex', alignItems: 'center' }}
-                                        >
-                                          <RefreshCcw size={18} />
-                                        </motion.div>
-                                      ) : (
-                                        <>
-                                          {editingId ? <Edit2 size={18} /> : <Calendar size={18} />}
-                                          {editingId ? 'Update Meeting' : (channel === 'calendar' ? 'Create Meeting' : 'Schedule Now')}
-                                        </>
-                                      )}
-                                    </button>
                                   </div>
-                                </div>
-                              )}
-                              {editingId && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingId(null);
-                                    setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
-                                    setScheduledDate(new Date());
-                                    setSidebarStep(1);
-                                  }}
-                                  style={{ width: '100%', marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}
-                                >
-                                  Cancel Edit
-                                </button>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </form>
-                    )}
+                                )}
+                                {editingId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingId(null);
+                                      setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
+                                      setScheduledDate(new Date());
+                                      setSidebarStep(1);
+                                    }}
+                                    style={{ width: '100%', marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}
+                                  >
+                                    Cancel Edit
+                                  </button>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </form>
+                      )}
                     </>
                   ) : activeView === 'credits' ? (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Later Credits</p>
-                      
+
                       <div style={{
                         background: 'white',
                         border: '1px solid var(--border)',
@@ -3590,7 +3564,7 @@ Looking forward to connecting!`;
                         boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                       }}>
                         <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)', margin: 0 }}>System Credit Rules</h4>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.8rem', color: '#4a5568', lineHeight: '1.4' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
                             <span>Plain Text Message</span>
@@ -4543,10 +4517,10 @@ Looking forward to connecting!`;
                     textTransform: 'uppercase',
                     letterSpacing: '1px'
                   }}>
-                    {activeView === 'credits' ? 'Later Credits' : 
-                     (currentBusinessTool === 'auto-reply' ? 'Auto-Reply Manager' :
-                      currentBusinessTool === 'drip' ? 'Drip Campaign Builder' :
-                        'Business Tools')}
+                    {activeView === 'credits' ? 'Later Credits' :
+                      (currentBusinessTool === 'auto-reply' ? 'Auto-Reply Manager' :
+                        currentBusinessTool === 'drip' ? 'Drip Campaign Builder' :
+                          'Business Tools')}
                   </div>
                 )}
 
@@ -4723,7 +4697,7 @@ Looking forward to connecting!`;
               <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', flex: 1, paddingBottom: '40px' }}>
                 {/* Balance Cards Header */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                  
+
                   {/* Total Balance Card */}
                   <div style={{
                     background: 'linear-gradient(135deg, var(--primary-dark), #0057b7)',
@@ -4831,7 +4805,7 @@ Looking forward to connecting!`;
                         )}
 
                         <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{pkg.name}</span>
-                        
+
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '12px 0 6px 0' }}>
                           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>
                             {pkg.credits.toLocaleString()}
@@ -4997,7 +4971,7 @@ Looking forward to connecting!`;
                 {/* Transaction History Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
                   <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: '0 0 16px 0', color: 'var(--text)' }}>Usage & Transaction History</h3>
-                  
+
                   {credits.transactions.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                       No credit transactions recorded yet.
