@@ -1732,6 +1732,52 @@ function getNextOccurrence(date, recurrence) {
     return nextDate > now ? nextDate.toISOString() : null;
 }
 
+// Headless session restore — called by scheduler when no live socket exists.
+// Returns the ready socket, or null if session data is missing / restore times out.
+const sessionRestoreInProgress = new Set();
+async function ensureSocketReady(userId, timeoutMs = 18000) {
+    // Already in memory and authenticated?
+    const existing = await getWorkspaceSocket(userId);
+    if (existing && existing.user) return existing;
+
+    // Avoid duplicate restores running concurrently for the same user.
+    if (sessionRestoreInProgress.has(userId)) {
+        // Wait out the timeout for the other call to finish.
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+            await new Promise(r => setTimeout(r, 500));
+            const s = await getWorkspaceSocket(userId);
+            if (s && s.user) return s;
+        }
+        return null;
+    }
+
+    // Only attempt restore if saved creds exist.
+    const hasCreds = await hasSavedWhatsAppSession(userId);
+    if (!hasCreds) return null;
+
+    console.log(`[Scheduler] No live socket for ${userId} — restoring session headlessly…`);
+    sessionRestoreInProgress.add(userId);
+    try {
+        connectToWhatsApp(userId); // non-blocking, mutates userSockets when ready
+
+        // Poll until connected or timeout.
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+            await new Promise(r => setTimeout(r, 600));
+            const s = await getWorkspaceSocket(userId);
+            if (s && s.user) {
+                console.log(`[Scheduler] Headless session ready for ${userId}`);
+                return s;
+            }
+        }
+        console.warn(`[Scheduler] Headless restore timed out for ${userId}`);
+        return null;
+    } finally {
+        sessionRestoreInProgress.delete(userId);
+    }
+}
+
 async function checkAndSendMessages() {
     const now = new Date().toISOString();
     
@@ -1778,9 +1824,12 @@ async function checkAndSendMessages() {
             continue;
         }
 
-        const sock = await getWorkspaceSocket(userId);
-        
-        if (!sock || !sock.user) continue;
+        const sock = await ensureSocketReady(userId);
+
+        if (!sock || !sock.user) {
+            console.log(`[Scheduler] No socket available for ${userId} — skipping schedule ${schedule.id} this tick.`);
+            continue;
+        }
 
         const jid = schedule.phone.includes('@g.us')
             ? schedule.phone
