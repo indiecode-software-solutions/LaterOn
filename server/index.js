@@ -24,6 +24,13 @@ const axios = require('axios');
 const { addDays, addWeeks, addMonths, addYears } = require('date-fns');
 const { sendScheduleEmail } = require('./services/emailService');
 const { calculateCredits, getUserCredits, maybeRefillCredits, deductCredits, refundCredits } = require('./services/creditService');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+
+const razorpay = new Razorpay({
+    key_id: process.env.Razorpay_live,
+    key_secret: process.env.Razorpay_secret,
+});
 
 const app = express();
 app.use(cors());
@@ -1991,10 +1998,103 @@ cron.schedule('*/10 * * * * *', checkAndSendMessages);
 cron.schedule('*/30 * * * * *', processDripCampaigns); // Every 30 seconds for snappier drip triggers
 
 
+// ── Razorpay: Create Order ───────────────────────────────────────────────────
+app.post('/api/credits/order', async (req, res) => {
+    const { amount, credits, packageName } = req.body; // amount in paise
+    if (!amount || !credits) return res.status(400).json({ error: 'amount and credits required' });
+    try {
+        const order = await razorpay.orders.create({
+            amount: amount, // already in paise from client
+            currency: 'INR',
+            receipt: `credits_${Date.now()}`,
+            notes: { credits, packageName }
+        });
+        res.json({ orderId: order.id, amount: order.amount, currency: order.currency, key: process.env.Razorpay_live });
+    } catch (err) {
+        console.error('[Razorpay] order creation failed:', err);
+        res.status(500).json({ error: 'Failed to create payment order' });
+    }
+});
+
+// ── Razorpay: Verify Payment & Credit Account ─────────────────────────────────
+app.post('/api/credits/verify', async (req, res) => {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, credits, packageName } = req.body;
+
+    // Verify HMAC signature
+    const expectedSig = crypto
+        .createHmac('sha256', process.env.Razorpay_secret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+
+    if (expectedSig !== razorpay_signature) {
+        return res.status(400).json({ error: 'Payment signature verification failed' });
+    }
+
+    try {
+        // Decode user from Supabase JWT
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE);
+        const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+        if (authErr || !user) return res.status(401).json({ error: 'Invalid token' });
+
+        const userId = user.id;
+        const creditsToAdd = parseInt(credits, 10);
+
+        // Add purchased credits (never expire)
+        const { data: existing } = await supabase
+            .from('user_credits')
+            .select('purchased_balance')
+            .eq('user_id', userId)
+            .single();
+
+        if (existing) {
+            await supabase
+                .from('user_credits')
+                .update({ purchased_balance: existing.purchased_balance + creditsToAdd })
+                .eq('user_id', userId);
+        } else {
+            await supabase
+                .from('user_credits')
+                .insert({ user_id: userId, purchased_balance: creditsToAdd });
+        }
+
+        // Log transaction
+        await supabase.from('credit_transactions').insert({
+            user_id: userId,
+            type: 'purchase',
+            amount: creditsToAdd,
+            description: `Purchased ${packageName} pack (${creditsToAdd} credits) — ${razorpay_payment_id}`
+        });
+
+        res.json({ success: true, credits_added: creditsToAdd });
+    } catch (err) {
+        console.error('[Razorpay] verify error:', err);
+        res.status(500).json({ error: 'Credit update failed' });
+    }
+});
+
 // Serve Frontend
 const clientDistPath = path.join(__dirname, '../client/dist');
 if (fs.existsSync(clientDistPath)) {
     app.use(express.static(clientDistPath));
+
+    // Explicit APK download — must come BEFORE the SPA catch-all so the
+    // wildcard `app.get(/.*/)` doesn't intercept binary downloads.
+    const apkPublicPath = path.join(__dirname, '../client/public/LaterOn.apk');
+    app.get('/LaterOn.apk', (req, res) => {
+        if (fs.existsSync(apkPublicPath)) {
+            res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+            res.setHeader('Content-Disposition', 'attachment; filename="LaterOn.apk"');
+            res.sendFile(apkPublicPath);
+        } else {
+            res.status(404).send('APK not found');
+        }
+    });
+
     app.get(/.*/, (req, res) => {
         res.sendFile(path.join(clientDistPath, 'index.html'));
     });

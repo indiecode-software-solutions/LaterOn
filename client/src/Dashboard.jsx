@@ -4491,11 +4491,79 @@ Looking forward to connecting!`;
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', flex: 1 }}>{pkg.desc}</span>
 
                         <button
-                          onClick={() => {
+                         onClick={async () => {
                             if (pkg.name === 'Enterprise') {
                               alert('Please email support at sales@indiecode.in to configure high volume enterprise custom pricing.');
-                            } else {
-                              alert(`Payment integration is coming soon. To purchase the ${pkg.name} pack manually, contact sales@indiecode.in.`);
+                              return;
+                            }
+
+                            // Parse price to paise (₹19 → 1900)
+                            const priceStr = pkg.price.replace('₹', '').replace(',', '');
+                            const amountPaise = parseInt(priceStr, 10) * 100;
+
+                            try {
+                              // 1. Get auth token from existing supabase session
+                              const { data: { session } } = await supabase.auth.getSession();
+                              const token = session?.access_token || '';
+
+                              const orderRes = await fetch('/api/credits/order', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ amount: amountPaise, credits: pkg.credits, packageName: pkg.name })
+                              });
+                              const order = await orderRes.json();
+                              if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
+
+                              // 2. Load Razorpay checkout script if not already loaded
+                              if (!window.Razorpay) {
+                                await new Promise((resolve, reject) => {
+                                  const s = document.createElement('script');
+                                  s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                                  s.onload = resolve;
+                                  s.onerror = reject;
+                                  document.body.appendChild(s);
+                                });
+                              }
+
+                              // 3. Open Razorpay modal
+                              const rzp = new window.Razorpay({
+                                key: order.key,
+                                amount: order.amount,
+                                currency: order.currency,
+                                name: 'LaterOn',
+                                description: `${pkg.name} — ${pkg.credits} credits`,
+                                order_id: order.orderId,
+                                theme: { color: '#1a73e8' },
+                                handler: async (response) => {
+                                  // 4. Verify payment server-side and credit account
+                                  const verifyRes = await fetch('/api/credits/verify', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({
+                                      razorpay_order_id: response.razorpay_order_id,
+                                      razorpay_payment_id: response.razorpay_payment_id,
+                                      razorpay_signature: response.razorpay_signature,
+                                      credits: pkg.credits,
+                                      packageName: pkg.name
+                                    })
+                                  });
+                                  const result = await verifyRes.json();
+                                  if (verifyRes.ok) {
+                                    alert(`✅ Payment successful! ${result.credits_added} credits have been added to your account.`);
+                                    fetchCredits(); // refresh credit balance
+                                  } else {
+                                    alert('⚠️ Payment received but credit update failed. Please contact support@indiecode.in with your payment ID: ' + response.razorpay_payment_id);
+                                  }
+                                },
+                                modal: { ondismiss: () => {} }
+                              });
+                              rzp.open();
+                            } catch (err) {
+                              console.error('[Purchase]', err);
+                              alert('Payment initiation failed. Please try again or contact support@indiecode.in');
                             }
                           }}
                           style={{
