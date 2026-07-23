@@ -530,12 +530,21 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
         if (connection === 'close') {
             connectingUsers.delete(userId);
             const statusCode = lastDisconnect?.error?.output?.statusCode;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            const isConflict = statusCode === 440; // Another WhatsApp session replaced this one
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut && !isConflict;
             
             if (statusCode === DisconnectReason.loggedOut) {
                 console.log(`[WA] User ${userId} logged out. Clearing all session data...`);
                 await supabaseAdmin.from('whatsapp_sessions').delete().eq('user_id', userId);
                 setUserConnectionState(userId, 'disconnected', { qr: null });
+            } else if (isConflict) {
+                // Conflict = another instance (e.g. local dev server) stole the session.
+                // Wait 15s then reconnect once to reclaim it.
+                console.log(`[WA] Conflict detected for ${userId} — another client replaced this session. Reclaiming in 15s...`);
+                setUserConnectionState(userId, 'connecting', { qr: null });
+                setTimeout(() => {
+                    if (userSockets[userId] === sock) connectToWhatsApp(userId);
+                }, 15000);
             } else if (shouldReconnect) {
                 console.log(`[WA] Connection closed for ${userId}. Reconnecting in 5s...`);
                 setUserConnectionState(userId, 'connecting', { qr: null });
