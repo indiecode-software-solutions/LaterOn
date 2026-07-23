@@ -1153,6 +1153,30 @@ Looking forward to connecting!`;
           <span className="strip-label">Meetings</span>
           <span className="strip-icon"><Calendar size={18} /></span>
         </button>
+        <button
+          className={`channel-strip ${channel === 'telegram' ? 'active' : ''}`}
+          style={{ '--strip-accent': '#0088cc' }}
+          onClick={() => { setChannel('telegram'); setActiveView('scheduler'); }}
+        >
+          <span className="strip-label">Telegram</span>
+          <span className="strip-icon"><Send size={18} /></span>
+        </button>
+        <button
+          className={`channel-strip ${channel === 'instagram' ? 'active' : ''}`}
+          style={{ '--strip-accent': '#e1306c' }}
+          onClick={() => { setChannel('instagram'); setActiveView('scheduler'); }}
+        >
+          <span className="strip-label">Instagram</span>
+          <span className="strip-icon"><Instagram size={18} /></span>
+        </button>
+        <button
+          className={`channel-strip ${channel === 'reminders' ? 'active' : ''}`}
+          style={{ '--strip-accent': '#f59e0b' }}
+          onClick={() => { setChannel('reminders'); setActiveView('scheduler'); }}
+        >
+          <span className="strip-label">Reminders</span>
+          <span className="strip-icon"><Bell size={18} /></span>
+        </button>
       </div>
       <div className="brand-tagline">Messages, Scheduled.</div>
       <div className="app-wrapper">
@@ -1473,6 +1497,90 @@ Looking forward to connecting!`;
                       </div>
                     </div>
                   </div>
+
+                  {/* Telegram Card */}
+                  <div style={{
+                    padding: '20px',
+                    border: channel === 'telegram' ? '2px solid #0088cc' : '2px solid var(--border)',
+                    background: channel === 'telegram' ? '#e6f3ff' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => { triggerLight(); setChannel('telegram'); }}
+                    onMouseOver={e => { if (channel !== 'telegram') e.currentTarget.style.borderColor = '#0088cc'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'telegram' ? '#0088cc' : 'var(--border)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', background: '#0088cc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Send size={22} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#005f9e' }}>Telegram</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#0088cc', margin: 0 }}>
+                          Schedule and automate Telegram messages
+                        </p>
+                      </div>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Plus size={20} color="#94a3b8" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Instagram Card */}
+                  <div style={{
+                    padding: '20px',
+                    border: channel === 'instagram' ? '2px solid #e1306c' : '2px solid var(--border)',
+                    background: channel === 'instagram' ? '#fff0f5' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => { triggerLight(); setChannel('instagram'); }}
+                    onMouseOver={e => { if (channel !== 'instagram') e.currentTarget.style.borderColor = '#e1306c'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'instagram' ? '#e1306c' : 'var(--border)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', background: '#e1306c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Instagram size={22} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#a81c4e' }}>Instagram</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#e1306c', margin: 0 }}>
+                          Automate Instagram messages and workflows
+                        </p>
+                      </div>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Plus size={20} color="#94a3b8" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Personal Reminders Card */}
+                  <div style={{
+                    padding: '20px',
+                    border: channel === 'reminders' ? '2px solid #f59e0b' : '2px solid var(--border)',
+                    background: channel === 'reminders' ? '#fffbeb' : 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                    onClick={() => { triggerLight(); setChannel('reminders'); }}
+                    onMouseOver={e => { if (channel !== 'reminders') e.currentTarget.style.borderColor = '#f59e0b'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'reminders' ? '#f59e0b' : 'var(--border)'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '44px', height: '44px', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Bell size={22} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#b45309' }}>Personal Reminders</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#d97706', margin: 0 }}>
+                          Create reminders for yourself and never forget anything
+                        </p>
+                      </div>
+                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Plus size={20} color="#94a3b8" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <button
@@ -1487,12 +1595,12 @@ Looking forward to connecting!`;
                     border: 'none',
                     color: 'white',
                     cursor: 'pointer',
-                    background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366'),
-                    boxShadow: channel === 'email' ? '0 4px 12px rgba(234,67,53,0.2)' : (channel === 'calendar' ? '0 4px 12px rgba(26,115,230,0.2)' : '0 4px 12px rgba(37,211,102,0.2)'),
+                    background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : '#25d366')))),
+                    boxShadow: channel === 'email' ? '0 4px 12px rgba(234,67,53,0.2)' : (channel === 'calendar' ? '0 4px 12px rgba(26,115,230,0.2)' : (channel === 'telegram' ? '0 4px 12px rgba(0,136,204,0.2)' : (channel === 'instagram' ? '0 4px 12px rgba(225,48,108,0.2)' : (channel === 'reminders' ? '0 4px 12px rgba(245,158,11,0.2)' : '0 4px 12px rgba(37,211,102,0.2)')))),
                     transition: 'all 0.2s'
                   }}
                 >
-                  Continue with {channel === 'email' ? 'Email' : (channel === 'calendar' ? 'Meetings' : 'WhatsApp')} &rarr;
+                  Continue with {channel === 'email' ? 'Email' : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram' : (channel === 'instagram' ? 'Instagram' : (channel === 'reminders' ? 'Reminders' : 'WhatsApp'))))} &rarr;
                 </button>
               </div>
             ) : (channel === 'whatsapp' && !userInfo && status !== 'connected') ? (
@@ -1897,7 +2005,221 @@ Looking forward to connecting!`;
                         </motion.div>
                       ) : null}
 
-                      <form onSubmit={handleSubmit} style={{ display: hoveredSchedule ? 'none' : 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
+                      {['telegram', 'instagram', 'reminders'].includes(channel) ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', flex: 1, overflowY: 'auto' }}>
+                          {channel === 'telegram' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+                              <div style={{
+                                padding: '24px 20px',
+                                border: '1px dashed #cbd5e1',
+                                borderRadius: '0px',
+                                background: '#f8fafc',
+                                textAlign: 'center',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '12px'
+                              }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e6f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0088cc' }}>
+                                  <Send size={20} />
+                                </div>
+                                <div>
+                                  <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 2px 0', textTransform: 'uppercase' }}>Connection State</p>
+                                  <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>No Telegram Account Connected</p>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => alert('Telegram integration coming soon!')}
+                                style={{
+                                  width: '100%',
+                                  padding: '14px',
+                                  background: '#0088cc',
+                                  color: 'white',
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem',
+                                  border: 'none',
+                                  borderRadius: '0px',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 4px 12px rgba(0,136,204,0.2)',
+                                  transition: 'all 0.2s',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = '#0077b3'}
+                                onMouseOut={e => e.currentTarget.style.background = '#0088cc'}
+                              >
+                                Connect Telegram
+                              </button>
+
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '12px'
+                              }}>
+                                <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', textAlign: 'center' }}>
+                                  <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 4px 0', textTransform: 'uppercase' }}>Automations</p>
+                                  <p style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0088cc', margin: 0 }}>0</p>
+                                </div>
+                                <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', textAlign: 'center' }}>
+                                  <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 4px 0', textTransform: 'uppercase' }}>Status</p>
+                                  <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10b981', margin: '6px 0 0 0', textTransform: 'uppercase' }}>Available</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {channel === 'instagram' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+                              <div style={{
+                                padding: '24px 20px',
+                                border: '1px dashed #cbd5e1',
+                                borderRadius: '0px',
+                                background: '#f8fafc',
+                                textAlign: 'center',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '12px'
+                              }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff0f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e1306c' }}>
+                                  <Instagram size={20} />
+                                </div>
+                                <div>
+                                  <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 2px 0', textTransform: 'uppercase' }}>Connection State</p>
+                                  <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>No Instagram Profile Connected</p>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => alert('Instagram integration coming soon!')}
+                                style={{
+                                  width: '100%',
+                                  padding: '14px',
+                                  background: '#e1306c',
+                                  color: 'white',
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem',
+                                  border: 'none',
+                                  borderRadius: '0px',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 4px 12px rgba(225,48,108,0.2)',
+                                  transition: 'all 0.2s',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = '#d0225c'}
+                                onMouseOut={e => e.currentTarget.style.background = '#e1306c'}
+                              >
+                                Connect Instagram
+                              </button>
+
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '12px'
+                              }}>
+                                <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', textAlign: 'center' }}>
+                                  <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 4px 0', textTransform: 'uppercase' }}>Automations</p>
+                                  <p style={{ fontSize: '1.4rem', fontWeight: 800, color: '#e1306c', margin: 0 }}>0</p>
+                                </div>
+                                <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', textAlign: 'center' }}>
+                                  <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 4px 0', textTransform: 'uppercase' }}>Status</p>
+                                  <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10b981', margin: '6px 0 0 0', textTransform: 'uppercase' }}>Available</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {channel === 'reminders' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+                              {/* Reminder List Placeholder */}
+                              <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px',
+                                background: 'white',
+                                border: '1px solid var(--border)',
+                                padding: '16px'
+                              }}>
+                                <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Reminders</h5>
+                                
+                                <div style={{
+                                  padding: '12px',
+                                  background: '#fffbeb',
+                                  border: '1px solid #fef3c7',
+                                  borderLeft: '4px solid #f59e0b',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center'
+                                }}>
+                                  <div>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400e', margin: '0 0 2px 0' }}>Call with Rohan</p>
+                                    <p style={{ fontSize: '0.7rem', color: '#b45309', margin: 0 }}>Today, 3:00 PM</p>
+                                  </div>
+                                  <span style={{ fontSize: '0.65rem', background: 'white', padding: '3px 8px', border: '1px solid #f59e0b', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Today</span>
+                                </div>
+
+                                <div style={{
+                                  padding: '12px',
+                                  background: '#fffbeb',
+                                  border: '1px solid #fef3c7',
+                                  borderLeft: '4px solid #f59e0b',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center'
+                                }}>
+                                  <div>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400e', margin: '0 0 2px 0' }}>Review App Blueprint</p>
+                                    <p style={{ fontSize: '0.7rem', color: '#b45309', margin: 0 }}>Tomorrow, 10:00 AM</p>
+                                  </div>
+                                  <span style={{ fontSize: '0.65rem', background: 'white', padding: '3px 8px', border: '1px solid #f59e0b', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Tomorrow</span>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => alert('Reminders coming soon!')}
+                                style={{
+                                  width: '100%',
+                                  padding: '14px',
+                                  background: '#f59e0b',
+                                  color: 'white',
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem',
+                                  border: 'none',
+                                  borderRadius: '0px',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 4px 12px rgba(245,158,11,0.2)',
+                                  transition: 'all 0.2s',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = '#d97706'}
+                                onMouseOut={e => e.currentTarget.style.background = '#f59e0b'}
+                              >
+                                Create Reminder
+                              </button>
+
+                              <div style={{
+                                padding: '16px',
+                                border: '1px dashed #fef3c7',
+                                borderRadius: '0px',
+                                background: '#fffdf5',
+                                textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                color: '#b45309'
+                              }}>
+                                <Bell size={14} />
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Next reminder: Call with Rohan in 2h</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <form onSubmit={handleSubmit} style={{ display: hoveredSchedule ? 'none' : 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
                         {/* Desktop Step Indicator */}
                         {!isMobile && (
                           <div style={{
@@ -3225,6 +3547,7 @@ Looking forward to connecting!`;
                           )}
                         </AnimatePresence>
                       </form>
+                    )}
                     </>
                   ) : activeView === 'credits' ? (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
