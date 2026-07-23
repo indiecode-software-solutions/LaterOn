@@ -1204,6 +1204,62 @@ Looking forward to connecting!`;
                   <RefreshCcw size={18} color={status === 'connected' ? '#25d366' : '#667781'} />
                 </button>
               )}
+              {showServiceSelector && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Credit Balance Badge */}
+                  <div
+                    onClick={() => { triggerLight(); setActiveView('credits'); setShowServiceSelector(false); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#f1f5f9',
+                      padding: '6px 12px',
+                      borderRadius: '100px',
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border)'
+                    }}
+                    title="View Later Credits Balance"
+                  >
+                    <Coins size={14} color="var(--primary)" />
+                    <span>{credits.total_balance}</span>
+                  </div>
+
+                  {/* Profile Photo or Initials */}
+                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                    <img
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt="User Profile"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        border: '1.5px solid var(--border)',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'var(--primary-light)',
+                      color: 'var(--primary-dark)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      border: '1.5px solid var(--border)'
+                    }}>
+                      {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </header>
 
