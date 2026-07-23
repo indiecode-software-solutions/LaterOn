@@ -6,8 +6,10 @@ const {
     fetchLatestBaileysVersion,
     makeCacheableSignalKeyStore,
     jidNormalizedUser,
-    Browsers
+    Browsers,
+    makeInMemoryStore
 } = require('@whiskeysockets/baileys');
+const { LRUCache } = require('lru-cache');
 const { useSupabaseAuthState } = require('./supabaseAuthState');
 // Stable Pairing Flow Version - c2402ba
 const express = require('express');
@@ -134,6 +136,24 @@ const connectingUsers = new Set();
 const processedMessages = new Map(); // Map<userId, Set<msgId>>
 const lastGroupFetch = {}; // Map<userId, timestamp>
 const pendingContactHistory = new Map(); // Map<userId, { contacts, chats, receivedAt }>
+
+// Per-user message store for getMessage (needed for E2EE retry/decryption by WhatsApp servers)
+const userMsgStores = {}; // Map<userId, LRUCache<msgId, proto.IWebMessageInfo>>
+const userMsgRetryCache = {}; // Map<userId, LRUCache> for msgRetryCounterCache
+
+function getMsgStore(userId) {
+    if (!userMsgStores[userId]) {
+        userMsgStores[userId] = new LRUCache({ max: 500 });
+    }
+    return userMsgStores[userId];
+}
+
+function getMsgRetryCache(userId) {
+    if (!userMsgRetryCache[userId]) {
+        userMsgRetryCache[userId] = new LRUCache({ max: 100 });
+    }
+    return userMsgRetryCache[userId];
+}
 
 function normalizePairingPhone(phone, defaultCountryCode = '91') {
     const rawPhone = String(phone || '').trim();
@@ -423,6 +443,9 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
         try { userSockets[userId].ev.removeAllListeners(); } catch (e) { }
     }
 
+    const msgStore = getMsgStore(userId);
+    const msgRetryCache = getMsgRetryCache(userId);
+
     const sock = makeWASocket({
         version,
         auth: {
@@ -435,6 +458,12 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
         countryCode: "IN",
         connectTimeoutMs: 60000,
         keepAliveIntervalMs: 15000,
+        msgRetryCounterCache: msgRetryCache,
+        getMessage: async (key) => {
+            const stored = msgStore.get(key.id);
+            if (stored) return stored.message || undefined;
+            return { conversation: '' };
+        },
     });
 
     userSockets[userId] = sock;
@@ -567,6 +596,14 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
     });
 
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
+        // Always cache all messages for getMessage (E2EE re-send support)
+        const msgStore = getMsgStore(userId);
+        for (const msg of messages) {
+            if (msg.key?.id) {
+                msgStore.set(msg.key.id, msg);
+            }
+        }
+
         if (type !== 'notify') return;
         
         if (!processedMessages.has(userId)) processedMessages.set(userId, new Set());
