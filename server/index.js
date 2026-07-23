@@ -448,12 +448,9 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
 
     const sock = makeWASocket({
         version,
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' })),
-        },
+        auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'debug' })) },
         printQRInTerminal: false,
-        logger: pino({ level: 'silent' }),
+        logger: pino({ level: 'debug' }),
         browser: Browsers.ubuntu("Chrome"),
         countryCode: "IN",
         connectTimeoutMs: 60000,
@@ -1728,6 +1725,11 @@ app.get('/api/status', verifyToken, async (req, res) => {
     let status = sock
         ? (sock.user && isOpen ? 'connected' : (connectionState?.status || 'connecting'))
         : 'disconnected';
+
+    // Safeguard: If the status is evaluated as 'connected' but the socket is actually closed, override to 'connecting'
+    if (status === 'connected' && !isOpen) {
+        status = 'connecting';
+    }
 
     if (!sock && connectingUsers.has(req.userId)) {
         status = 'connecting';

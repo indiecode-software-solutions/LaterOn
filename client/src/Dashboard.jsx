@@ -119,7 +119,11 @@ const CONNECTION_STATUS_RANK = {
 };
 
 const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
-  if (nextStatus === 'disconnected') return false;
+  // If currently connected, always accept any state change (since it means we lost connection)
+  if (currentStatus === 'connected') return false;
+  // Always accept disconnected, connecting, or qr states to ensure the UI updates instantly
+  if (nextStatus === 'disconnected' || nextStatus === 'connecting' || nextStatus === 'qr') return false;
+  
   const currentRank = CONNECTION_STATUS_RANK[currentStatus] ?? 0;
   const nextRank = CONNECTION_STATUS_RANK[nextStatus] ?? 0;
   return currentRank >= CONNECTION_STATUS_RANK['qr-scanned'] && nextRank < currentRank;
