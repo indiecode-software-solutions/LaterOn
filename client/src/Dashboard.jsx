@@ -4382,26 +4382,9 @@ Looking forward to connecting!`;
                       {credits.total_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Available to use across all automations</span>
-                  </div>
-
-                  {/* Free Balance & Refill Card */}
-                  <div style={{
-                    background: 'white',
-                    border: '1px solid var(--border)',
-                    padding: '28px',
-                    borderRadius: '0px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
-                  }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Monthly Free Credits</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
-                      {credits.free_balance} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 600 }}>/ 500 remaining</span>
-                    </span>
                     {credits.next_refill_date && (
-                      <span style={{ fontSize: '0.85rem', color: '#1a73e8', fontWeight: 700 }}>
-                        Next refill on: {new Date(credits.next_refill_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                      <span style={{ fontSize: '0.8rem', opacity: 0.75, marginTop: '8px', fontWeight: 600 }}>
+                        🔄 Next free refill: {new Date(credits.next_refill_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                       </span>
                     )}
                   </div>
