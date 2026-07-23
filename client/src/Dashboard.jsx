@@ -184,6 +184,7 @@ function Dashboard() {
   const [formStep, setFormStep] = useState(1);
   const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
   const [credits, setCredits] = useState({ free_balance: 0, purchased_balance: 0, total_balance: 0, next_refill_date: null, transactions: [] });
+  const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
   const [isAiUsed, setIsAiUsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [is24Hour, setIs24Hour] = useState(false);
@@ -4477,7 +4478,7 @@ Looking forward to connecting!`;
                         <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-dark)' }}>{pkg.price}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', flex: 1 }}>{pkg.desc}</span>
 
-                        <button
+                        <motion.button
                          onClick={async () => {
                             if (pkg.name === 'Enterprise') {
                               alert('Please email support at sales@indiecode.in to configure high volume enterprise custom pricing.');
@@ -4526,7 +4527,8 @@ Looking forward to connecting!`;
                                   });
                                   const result = await verifyRes.json();
                                   if (verifyRes.ok) {
-                                    alert(`✅ Payment successful! ${result.credits_added} credits added to your account.`);
+                                    triggerSuccess();
+                                    setPaymentSuccessModal({ credits: result.credits_added, packageName: pkg.name });
                                     fetchCredits();
                                   } else {
                                     alert('⚠️ Payment received but credit update failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
@@ -4553,7 +4555,6 @@ Looking forward to connecting!`;
                                   }
                                 } catch (nativeErr) {
                                   const errMsg = (nativeErr?.message || '').toLowerCase();
-                                  // Ignore user cancellation or sheet dismissal
                                   if (!errMsg.includes('cancel') && !errMsg.includes('closed') && !errMsg.includes('back')) {
                                     console.error('[Native Razorpay Error]', nativeErr);
                                   }
@@ -4586,22 +4587,24 @@ Looking forward to connecting!`;
                               console.error('[Purchase Error]', err);
                             }
                           }}
+                          whileHover={{ scale: 1.03, backgroundColor: pkg.popular ? 'var(--primary-dark)' : '#f0f7ff', boxShadow: '0 4px 14px rgba(26, 115, 232, 0.2)' }}
+                          whileTap={{ scale: 0.96 }}
                           style={{
                             marginTop: '20px',
                             width: '100%',
-                            padding: '10px',
+                            padding: '12px',
                             background: pkg.popular ? 'var(--primary)' : 'white',
                             color: pkg.popular ? 'white' : 'var(--primary)',
-                            border: pkg.popular ? 'none' : '1px solid var(--primary)',
-                            fontWeight: 700,
+                            border: pkg.popular ? 'none' : '2px solid var(--primary)',
+                            fontWeight: 800,
                             fontSize: '0.85rem',
                             cursor: 'pointer',
                             borderRadius: '0px',
-                            transition: 'all 0.2s'
+                            transition: 'background-color 0.2s, border-color 0.2s'
                           }}
                         >
                           {pkg.name === 'Enterprise' ? 'Contact Sales' : 'Purchase Pack'}
-                        </button>
+                        </motion.button>
                       </div>
                     ))}
                   </div>
@@ -4623,12 +4626,25 @@ Looking forward to connecting!`;
                             <th style={{ padding: '12px 8px' }}>Date</th>
                             <th style={{ padding: '12px 8px' }}>Transaction Details</th>
                             <th style={{ padding: '12px 8px' }}>Type</th>
-                            <th style={{ padding: '12px 8px', textAlign: 'right' }}>Amount</th>
+                            <th style={{ padding: '12px 8px', textAlign: 'right' }}>Credits</th>
+                            <th style={{ padding: '12px 8px', textAlign: 'right' }}>Amount Paid</th>
                           </tr>
                         </thead>
                         <tbody>
                           {credits.transactions.map(tx => {
                             const isPositive = tx.amount > 0;
+                            let amountPaidText = '—';
+                            if (tx.type === 'purchase') {
+                              if ((tx.description || '').includes('Mini')) amountPaidText = '₹1';
+                              else if ((tx.description || '').includes('Starter')) amountPaidText = '₹49';
+                              else if ((tx.description || '').includes('Popular')) amountPaidText = '₹99';
+                              else if ((tx.description || '').includes('Pro')) amountPaidText = '₹199';
+                              else if ((tx.description || '').includes('Business')) amountPaidText = '₹499';
+                              else amountPaidText = 'Paid';
+                            } else if (tx.type === 'monthly_refill') {
+                              amountPaidText = 'Free';
+                            }
+
                             return (
                               <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>
@@ -4655,7 +4671,15 @@ Looking forward to connecting!`;
                                   fontWeight: 800,
                                   color: isPositive ? '#2e7d32' : '#ea4335'
                                 }}>
-                                  {isPositive ? `+${tx.amount}` : tx.amount}
+                                  {isPositive ? `+${tx.amount} credits` : `${tx.amount} credits`}
+                                </td>
+                                <td style={{
+                                  padding: '12px 8px',
+                                  textAlign: 'right',
+                                  fontWeight: 700,
+                                  color: tx.type === 'purchase' ? 'var(--primary-dark)' : 'var(--text-muted)'
+                                }}>
+                                  {amountPaidText}
                                 </td>
                               </tr>
                             );
@@ -6568,6 +6592,113 @@ Join Link: [Auto-generated after scheduling]`}
                     </button>
                   </div>
                 </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── PAYMENT SUCCESS MODAL ────────────────────────────────────── */}
+        <AnimatePresence>
+          {paymentSuccessModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 99999,
+                background: 'rgba(0, 0, 0, 0.65)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px'
+              }}
+              onClick={() => setPaymentSuccessModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.85, opacity: 0, y: 20 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: 'white',
+                  borderRadius: '0px',
+                  padding: '36px 30px',
+                  maxWidth: '420px',
+                  width: '100%',
+                  textAlign: 'center',
+                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
+                  border: '1px solid var(--border)',
+                  position: 'relative'
+                }}
+              >
+                {/* Animated green check badge */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -45 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', damping: 14, stiffness: 220, delay: 0.1 }}
+                  style={{
+                    width: '76px',
+                    height: '76px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #2e7d32, #4caf50)',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 20px auto',
+                    boxShadow: '0 10px 25px rgba(46, 125, 50, 0.35)'
+                  }}
+                >
+                  <CheckCircle2 size={44} />
+                </motion.div>
+
+                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 800, margin: '0 0 8px 0', color: 'var(--text)' }}>
+                  Payment Successful! 🎉
+                </h3>
+
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 24px 0', lineHeight: 1.5 }}>
+                  Your payment was verified. <strong>{(paymentSuccessModal.credits || 0).toLocaleString()} credits</strong> have been added to your account.
+                </p>
+
+                <div style={{
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  padding: '16px 20px',
+                  borderRadius: '0px',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>Credits Added</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
+                    +{(paymentSuccessModal.credits || 0).toLocaleString()}
+                  </span>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02, backgroundColor: 'var(--primary-dark)' }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => { triggerLight(); setPaymentSuccessModal(null); }}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: 'var(--primary)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    cursor: 'pointer',
+                    borderRadius: '0px',
+                    boxShadow: '0 4px 14px rgba(26, 115, 232, 0.25)'
+                  }}
+                >
+                  Got It, Continue →
+                </motion.button>
               </motion.div>
             </motion.div>
           )}

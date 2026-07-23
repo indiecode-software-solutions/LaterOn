@@ -67,17 +67,16 @@ async function getUserCredits(supabaseAdmin, userId) {
  */
 async function maybeRefillCredits(supabaseAdmin, userId, creditRecord) {
   const now = new Date();
-  const nextRefill = new Date(creditRecord.next_refill_date);
+  const currentNextRefill = new Date(creditRecord.next_refill_date);
+  const targetFirstOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
 
-  if (now >= nextRefill) {
-    const newNextRefill = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
-
+  if (now >= currentNextRefill) {
     await supabaseAdmin
       .from('user_credits')
       .update({
         free_balance: 500,
         last_refill_date: now.toISOString(),
-        next_refill_date: newNextRefill.toISOString(),
+        next_refill_date: targetFirstOfNextMonth.toISOString(),
         updated_at: now.toISOString()
       })
       .eq('user_id', userId);
@@ -91,7 +90,14 @@ async function maybeRefillCredits(supabaseAdmin, userId, creditRecord) {
     });
 
     creditRecord.free_balance = 500;
-    creditRecord.next_refill_date = newNextRefill.toISOString();
+    creditRecord.next_refill_date = targetFirstOfNextMonth.toISOString();
+  } else if (currentNextRefill.getDate() !== 1) {
+    // Legacy normalization: align to 1st of next month
+    await supabaseAdmin
+      .from('user_credits')
+      .update({ next_refill_date: targetFirstOfNextMonth.toISOString() })
+      .eq('user_id', userId);
+    creditRecord.next_refill_date = targetFirstOfNextMonth.toISOString();
   }
 }
 
