@@ -11,7 +11,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
 
 const ProtectedRoute = ({ children, loading, session }) => {
-  if (loading) return (
+  // If the URL has hash parameters (e.g. from Google OAuth redirect), wait for Supabase to parse it
+  const hasAuthHash = window.location.hash && (
+    window.location.hash.includes('access_token=') || 
+    window.location.hash.includes('error=')
+  );
+
+  if (loading || hasAuthHash) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
       <div className="loader"></div>
     </div>
