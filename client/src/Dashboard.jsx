@@ -1163,6 +1163,7 @@ Looking forward to connecting!`;
                     triggerLight();
                     setShowServiceSelector(true);
                     setSidebarStep(1);
+                    setActiveView('scheduler');
                   }}
                   title="Switch Service / Channel"
                 >
@@ -1456,7 +1457,7 @@ Looking forward to connecting!`;
                 </div>
 
                 <button
-                  onClick={() => { triggerMedium(); setShowServiceSelector(false); }}
+                  onClick={() => { triggerMedium(); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   className="btn-primary"
                   style={{
                     width: '100%',
