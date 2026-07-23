@@ -24,6 +24,7 @@ const axios = require('axios');
 const { addDays, addWeeks, addMonths, addYears } = require('date-fns');
 const { sendScheduleEmail } = require('./services/emailService');
 const { calculateCredits, getUserCredits, maybeRefillCredits, deductCredits, refundCredits } = require('./services/creditService');
+const { normalizeWhatsAppJid, isSocketReadyForMessaging } = require('./services/whatsappScheduler');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -1826,14 +1827,20 @@ async function checkAndSendMessages() {
 
         const sock = await ensureSocketReady(userId);
 
-        if (!sock || !sock.user) {
-            console.log(`[Scheduler] No socket available for ${userId} — skipping schedule ${schedule.id} this tick.`);
+        if (!isSocketReadyForMessaging(sock)) {
+            console.log(`[Scheduler] WhatsApp socket is not ready for ${userId} — skipping schedule ${schedule.id} this tick.`);
             continue;
         }
 
-        const jid = schedule.phone.includes('@g.us')
-            ? schedule.phone
-            : `${schedule.phone.replace(/\D/g, '')}@s.whatsapp.net`;
+        const jid = normalizeWhatsAppJid(schedule.phone);
+        if (!jid) {
+            console.warn(`[Scheduler] Invalid recipient for schedule ${schedule.id}: ${schedule.phone}`);
+            await supabaseAdmin
+                .from('schedules')
+                .update({ status: 'failed' })
+                .eq('id', schedule.id);
+            continue;
+        }
 
         try {
             let sentMsg;
