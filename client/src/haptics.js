@@ -1,59 +1,33 @@
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
-import { Capacitor } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
 
-// Check at call-time (not at module load) to avoid race conditions
+// Our custom native plugin - direct Android Vibrator calls
+const NativeVibration = registerPlugin('NativeVibration');
+
 const isNative = () => Capacitor.isNativePlatform();
 
-export const triggerLight = async () => {
+const vibrate = async (duration) => {
   if (!isNative()) return;
   try {
-    await Haptics.impact({ style: ImpactStyle.Light });
+    await NativeVibration.vibrate({ duration });
   } catch (e) {
-    try { await Haptics.vibrate({ duration: 50 }); } catch (_) {}
+    console.warn('[Haptics] vibrate failed', e);
   }
 };
 
-export const triggerMedium = async () => {
-  if (!isNative()) return;
-  try {
-    await Haptics.impact({ style: ImpactStyle.Medium });
-  } catch (e) {
-    try { await Haptics.vibrate({ duration: 100 }); } catch (_) {}
-  }
-};
+// Light tap - navigation, small buttons
+export const triggerLight = () => vibrate(80);
 
-export const triggerHeavy = async () => {
-  if (!isNative()) return;
-  try {
-    await Haptics.impact({ style: ImpactStyle.Heavy });
-  } catch (e) {
-    try { await Haptics.vibrate({ duration: 200 }); } catch (_) {}
-  }
-};
+// Medium tap - standard button presses
+export const triggerMedium = () => vibrate(150);
 
-export const triggerSuccess = async () => {
-  if (!isNative()) return;
-  try {
-    await Haptics.notification({ type: NotificationType.Success });
-  } catch (e) {
-    try { await Haptics.vibrate({ duration: 150 }); } catch (_) {}
-  }
-};
+// Heavy - major actions
+export const triggerHeavy = () => vibrate(300);
 
-export const triggerError = async () => {
-  if (!isNative()) return;
-  try {
-    await Haptics.notification({ type: NotificationType.Error });
-  } catch (e) {
-    try { await Haptics.vibrate({ duration: 300 }); } catch (_) {}
-  }
-};
+// Success - double short pulses feel like success
+export const triggerSuccess = () => vibrate(120);
 
-export const triggerSelection = async () => {
-  if (!isNative()) return;
-  try {
-    await Haptics.selectionChanged();
-  } catch (e) {
-    try { await Haptics.vibrate({ duration: 30 }); } catch (_) {}
-  }
-};
+// Error - longer buzz feels like an error
+export const triggerError = () => vibrate(250);
+
+// Selection - very short tick
+export const triggerSelection = () => vibrate(40);
