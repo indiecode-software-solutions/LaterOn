@@ -158,6 +158,13 @@ function Dashboard() {
   const [isVoiceNote, setIsVoiceNote] = useState(false);
   const [activeView, setActiveView] = useState('scheduler'); // 'scheduler' or 'business'
   const [currentBusinessTool, setCurrentBusinessTool] = useState(null); // null, 'auto-reply', 'drip'
+  const getDefaultCountryCode = () => {
+    const wsPhone = userInfo?.id || user?.phone;
+    if (wsPhone && wsPhone.length > 10) {
+      return wsPhone.slice(0, wsPhone.length - 10);
+    }
+    return '91';
+  };
 
   const [autoReplies, setAutoReplies] = useState([]);
   const [replyFormData, setReplyFormData] = useState({ keyword: '', reply: '' });
@@ -522,7 +529,7 @@ function Dashboard() {
 
     let clean = formData.phone.replace(/\D/g, '');
     if (!formData.phone.includes('@g.us')) {
-      if (clean.length === 10) clean = `91${clean}`;
+      if (clean.length === 10) clean = `${getDefaultCountryCode()}${clean}`;
     } else {
       clean = formData.phone; // Group ID
     }
@@ -793,8 +800,9 @@ Looking forward to connecting!`;
       let finalPhone = cleanPhone;
 
       if (!formData.phone.includes('@g.us')) {
-        if (cleanPhone.length === 10) finalPhone = `91${cleanPhone}`;
-        else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) finalPhone = cleanPhone;
+        const countryCode = getDefaultCountryCode();
+        if (cleanPhone.length === 10) finalPhone = `${countryCode}${cleanPhone}`;
+        else if (cleanPhone.length === (10 + countryCode.length) && cleanPhone.startsWith(countryCode)) finalPhone = cleanPhone;
       } else {
         finalPhone = formData.phone;
       }
@@ -805,7 +813,7 @@ Looking forward to connecting!`;
       if (formData.phone.trim()) {
         let clean = formData.phone.replace(/\D/g, '');
         if (!formData.phone.includes('@g.us')) {
-          if (clean.length === 10) clean = `91${clean}`;
+          if (clean.length === 10) clean = `${getDefaultCountryCode()}${clean}`;
         }
         if (!recipientsToProcess.includes(clean)) recipientsToProcess.push(clean);
       }
@@ -5192,7 +5200,7 @@ Looking forward to connecting!`;
 
                             // Clean and prefix phone number
                             let cleanPhone = phone.replace(/\D/g, '');
-                            if (cleanPhone.length === 10) cleanPhone = `91${cleanPhone}`;
+                            if (cleanPhone.length === 10) cleanPhone = `${getDefaultCountryCode()}${cleanPhone}`;
 
                             try {
                               const response = await fetch(`${API_URL}/api/drip/enroll`, {

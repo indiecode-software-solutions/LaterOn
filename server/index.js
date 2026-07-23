@@ -746,10 +746,12 @@ async function connectToWhatsApp(userId, pairingPhone = null, forceRestart = fal
         for (const update of updates) {
             const { key, update: msgUpdate } = update;
             if (!key.fromMe || !msgUpdate.status) continue;
-
             let newStatus = null;
-            if (msgUpdate.status === 4) newStatus = 'read';
-            else if (msgUpdate.status === 3) newStatus = 'delivered';
+            if (msgUpdate.status === 3 || msgUpdate.status === 4) {
+                newStatus = 'read';
+            } else if (msgUpdate.status === 2) {
+                newStatus = 'delivered';
+            }
 
             if (newStatus) {
                 await supabaseAdmin
@@ -1676,8 +1678,9 @@ app.post('/api/drip/enroll', verifyToken, async (req, res) => {
 app.get('/api/status', verifyToken, async (req, res) => {
     const sock = userSockets[req.userId];
     const connectionState = userConnectionStates[req.userId];
+    const isOpen = socketConnectionStatus[req.userId] === 'open';
     let status = sock
-        ? (sock.user ? 'connected' : (connectionState?.status || 'connecting'))
+        ? (sock.user && isOpen ? 'connected' : (connectionState?.status || 'connecting'))
         : 'disconnected';
 
     if (!sock && connectingUsers.has(req.userId)) {
