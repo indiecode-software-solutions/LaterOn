@@ -1411,9 +1411,6 @@ Looking forward to connecting!`;
               </div>
             ) : showServiceSelector ? (
               <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ marginBottom: '24px' }}>
-                </div>
-
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
                   {/* WhatsApp Card */}
                   <div style={{
