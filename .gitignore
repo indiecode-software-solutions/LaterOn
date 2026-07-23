@@ -30,6 +30,3 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
-
-# Large Android Binaries
-client/public/LaterOn.apk
