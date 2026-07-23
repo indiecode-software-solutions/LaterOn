@@ -48,12 +48,14 @@ import {
   Link as LinkIcon,
   ArrowLeft,
   ArrowRight,
-  Home
+  Home,
+  Smile
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CalendarView from './CalendarView';
 import { formatPhone, getContactDisplayName, isPlaceholderContactName } from './contactUtils';
 import { supabase } from './supabaseClient';
+import EmojiPicker from './EmojiPicker';
 
 const WABusinessIcon = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -175,6 +177,7 @@ function Dashboard() {
   const [contactSyncMessage, setContactSyncMessage] = useState('');
   const [showMobileForm, setShowMobileForm] = useState(false);
   const [formStep, setFormStep] = useState(1);
+  const [activeEmojiPicker, setActiveEmojiPicker] = useState(null); // null, 'meeting_desktop', 'schedule_desktop', 'meeting_mobile', 'schedule_mobile'
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [is24Hour, setIs24Hour] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -1061,6 +1064,13 @@ Looking forward to connecting!`;
     } catch (err) {
       alert('Failed to delete auto-reply');
     }
+  };
+
+  const insertEmoji = (emoji) => {
+    setFormData(prev => ({
+      ...prev,
+      message: (prev.message || '') + emoji
+    }));
   };
 
   return (
@@ -2716,22 +2726,51 @@ Looking forward to connecting!`;
 
                                   <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                     <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: '#1a73e8', letterSpacing: '0.5px', marginBottom: '8px' }}>INVITATION PREVIEW</label>
-                                    <textarea
-                                      value={formData.message}
-                                      onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                      rows={5}
-                                      style={{
-                                        width: '100%',
-                                        flex: 1,
-                                        padding: '12px',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '0px',
-                                        outline: 'none',
-                                        fontSize: '0.88rem',
-                                        lineHeight: '1.5',
-                                        resize: 'none'
-                                      }}
-                                    />
+                                    <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                      <textarea
+                                        value={formData.message}
+                                        onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                        rows={5}
+                                        style={{
+                                          width: '100%',
+                                          flex: 1,
+                                          padding: '12px',
+                                          paddingBottom: '40px',
+                                          border: '1px solid var(--border)',
+                                          borderRadius: '0px',
+                                          outline: 'none',
+                                          fontSize: '0.88rem',
+                                          lineHeight: '1.5',
+                                          resize: 'none'
+                                        }}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_desktop' ? null : 'meeting_desktop'); }}
+                                        style={{
+                                          position: 'absolute',
+                                          bottom: '10px',
+                                          right: '10px',
+                                          background: 'transparent',
+                                          border: 'none',
+                                          cursor: 'pointer',
+                                          color: 'var(--text-muted)',
+                                          padding: '4px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          zIndex: 5
+                                        }}
+                                      >
+                                        <Smile size={18} />
+                                      </button>
+                                      {activeEmojiPicker === 'meeting_desktop' && (
+                                        <EmojiPicker
+                                          onSelect={insertEmoji}
+                                          onClose={() => setActiveEmojiPicker(null)}
+                                        />
+                                      )}
+                                    </div>
                                   </div>
 
                                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -2880,12 +2919,39 @@ Looking forward to connecting!`;
                                           width: '100%',
                                           border: 'none',
                                           padding: '15px',
+                                          paddingBottom: '45px',
                                           fontSize: '0.95rem',
                                           outline: 'none',
                                           resize: 'none',
                                           background: 'transparent'
                                         }}
                                       />
+                                      <button
+                                        type="button"
+                                        onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_desktop' ? null : 'schedule_desktop'); }}
+                                        style={{
+                                          position: 'absolute',
+                                          bottom: '10px',
+                                          right: '10px',
+                                          background: 'transparent',
+                                          border: 'none',
+                                          cursor: 'pointer',
+                                          color: 'var(--text-muted)',
+                                          padding: '4px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          zIndex: 5
+                                        }}
+                                      >
+                                        <Smile size={18} />
+                                      </button>
+                                      {activeEmojiPicker === 'schedule_desktop' && (
+                                        <EmojiPicker
+                                          onSelect={insertEmoji}
+                                          onClose={() => setActiveEmojiPicker(null)}
+                                        />
+                                      )}
                                     </div>
                                   </div>
 
@@ -5639,12 +5705,40 @@ Looking forward to connecting!`;
                             </div>
                             <div className="input-group">
                               <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>ADDITIONAL NOTES / CUSTOM MESSAGE</label>
-                              <textarea
-                                placeholder="Type any custom meeting details..."
-                                value={formData.message}
-                                onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                style={{ width: '100%', border: '1px solid var(--border)', padding: '16px', fontSize: '1rem', minHeight: '120px', outline: 'none', resize: 'none', background: 'white' }}
-                              />
+                              <div style={{ position: 'relative', width: '100%' }}>
+                                <textarea
+                                  placeholder="Type any custom meeting details..."
+                                  value={formData.message}
+                                  onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                  style={{ width: '100%', border: '1px solid var(--border)', padding: '16px', paddingBottom: '45px', fontSize: '1rem', minHeight: '120px', outline: 'none', resize: 'none', background: 'white' }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_mobile' ? null : 'meeting_mobile'); }}
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '10px',
+                                    right: '10px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: 'var(--text-muted)',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 5
+                                  }}
+                                >
+                                  <Smile size={18} />
+                                </button>
+                                {activeEmojiPicker === 'meeting_mobile' && (
+                                  <EmojiPicker
+                                    onSelect={insertEmoji}
+                                    onClose={() => setActiveEmojiPicker(null)}
+                                  />
+                                )}
+                              </div>
                             </div>
                             <div style={{ background: '#f8fafc', padding: '16px', border: '1px solid var(--border)', fontSize: '0.85rem', color: '#111b21', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
                               <strong>Invitation Preview:</strong>
@@ -5761,6 +5855,7 @@ Join Link: [Auto-generated after scheduling]`}
                                     width: '100%',
                                     border: 'none',
                                     padding: '16px',
+                                    paddingBottom: '45px',
                                     fontSize: '1.05rem',
                                     minHeight: '180px',
                                     outline: 'none',
@@ -5768,6 +5863,32 @@ Join Link: [Auto-generated after scheduling]`}
                                     resize: 'none'
                                   }}
                                 />
+                                <button
+                                  type="button"
+                                  onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_mobile' ? null : 'schedule_mobile'); }}
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '10px',
+                                    right: '10px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: 'var(--text-muted)',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 5
+                                  }}
+                                >
+                                  <Smile size={18} />
+                                </button>
+                                {activeEmojiPicker === 'schedule_mobile' && (
+                                  <EmojiPicker
+                                    onSelect={insertEmoji}
+                                    onClose={() => setActiveEmojiPicker(null)}
+                                  />
+                                )}
                               </div>
                             </div>
 
