@@ -4493,7 +4493,7 @@ Looking forward to connecting!`;
                               const { data: { session } } = await supabase.auth.getSession();
                               const token = session?.access_token || '';
 
-                              const orderRes = await fetch('/api/credits/order', {
+                              const orderRes = await fetch(`${API_URL}/api/credits/order`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ amount: amountPaise, credits: pkg.credits, packageName: pkg.name })
@@ -4502,7 +4502,7 @@ Looking forward to connecting!`;
                               if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
 
                               const verifyPayment = async (response) => {
-                                const verifyRes = await fetch('/api/credits/verify', {
+                                const verifyRes = await fetch(`${API_URL}/api/credits/verify`, {
                                   method: 'POST',
                                   headers: {
                                     'Content-Type': 'application/json',
