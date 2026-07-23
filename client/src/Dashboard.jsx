@@ -1526,7 +1526,7 @@ Looking forward to connecting!`;
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#005f9e' }}>Telegram</h4>
                         <p style={{ fontSize: '0.75rem', color: '#0088cc', margin: 0 }}>
-                          Schedule and automate Telegram messages
+                          Coming Soon!
                         </p>
                       </div>
                       <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1554,7 +1554,7 @@ Looking forward to connecting!`;
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#a81c4e' }}>Instagram</h4>
                         <p style={{ fontSize: '0.75rem', color: '#e1306c', margin: 0 }}>
-                          Automate Instagram messages and workflows
+                          Coming Soon!
                         </p>
                       </div>
                       <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1582,7 +1582,7 @@ Looking forward to connecting!`;
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#b45309' }}>Personal Reminders</h4>
                         <p style={{ fontSize: '0.75rem', color: '#d97706', margin: 0 }}>
-                          Create reminders for yourself and never forget anything
+                          Coming Soon!
                         </p>
                       </div>
                       <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
