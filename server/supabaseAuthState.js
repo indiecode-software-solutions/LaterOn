@@ -18,67 +18,158 @@ function getSessionCache(userId) {
 /**
  * Custom Auth State for Baileys using Supabase
  */
+// Global in-memory cache maps to track the aggregated auth state packages
+const packageCaches = new Map();
+const packageSaveTimeouts = new Map();
+
+/**
+ * Custom Auth State for Baileys using Supabase
+ */
 const useSupabaseAuthState = async (supabase, userId) => {
-    const cache = getSessionCache(userId);
-    
-    const writeData = async (data, fileId, retries = 3) => {
-        // Update in-memory cache immediately
-        cache.set(fileId, data);
+    // Load or initialize the in-memory cache for this user
+    if (!packageCaches.has(userId)) {
+        packageCaches.set(userId, new Map());
+    }
+    const cache = packageCaches.get(userId);
 
-        for (let attempt = 1; attempt <= retries; attempt++) {
-            const { error } = await supabase
-                .from('whatsapp_sessions')
-                .upsert({
-                    user_id: userId,
-                    file_id: fileId,
-                    data: JSON.parse(JSON.stringify(data, BufferJSON.replacer))
-                }, { onConflict: 'user_id,file_id' });
-            
-            if (!error) return;
-            if (attempt < retries) {
-                await new Promise(r => setTimeout(r, 200 * attempt));
-            } else {
-                console.error(`[Auth] Error writing ${fileId} after ${retries} attempts:`, error.message);
-            }
-        }
-    };
-
-    const readData = async (fileId) => {
-        // Serve from memory cache if available
-        if (cache.has(fileId)) {
-            return cache.get(fileId);
-        }
-
+    // Initial load: fetch the consolidated package from Supabase
+    let packageLoaded = cache.size > 0;
+    if (!packageLoaded) {
         try {
             const { data, error } = await supabase
                 .from('whatsapp_sessions')
                 .select('data')
                 .eq('user_id', userId)
-                .eq('file_id', fileId)
-                .single();
+                .eq('file_id', 'auth-state-package')
+                .maybeSingle();
 
-            if (error || !data) {
-                cache.set(fileId, null);
-                return null;
+            if (!error && data && data.data) {
+                const parsed = JSON.parse(JSON.stringify(data.data), BufferJSON.reviver);
+                for (const [k, v] of Object.entries(parsed)) {
+                    cache.set(k, v);
+                }
+                packageLoaded = true;
+                console.log(`[Auth] Loaded consolidated auth-state-package for ${userId} (${cache.size} keys)`);
             }
-
-            const parsed = JSON.parse(JSON.stringify(data.data), BufferJSON.reviver);
-            cache.set(fileId, parsed);
-            return parsed;
-        } catch (error) {
-            return null;
+        } catch (err) {
+            console.error('[Auth] Failed to load consolidated auth state:', err.message);
         }
+
+        // Fallback: If no consolidated package exists, load any existing individual rows (legacy migration)
+        if (!packageLoaded) {
+            try {
+                const { data, error } = await supabase
+                    .from('whatsapp_sessions')
+                    .select('file_id, data')
+                    .eq('user_id', userId)
+                    .neq('file_id', 'workspace-phone');
+
+                if (!error && data && data.length > 0) {
+                    data.forEach(row => {
+                        const parsed = JSON.parse(JSON.stringify(row.data), BufferJSON.reviver);
+                        cache.set(row.file_id, parsed);
+                    });
+                    console.log(`[Auth] Migrated ${data.length} legacy session rows to memory for ${userId}`);
+                }
+            } catch (err) {
+                console.error('[Auth] Legacy migration error:', err.message);
+            }
+        }
+    }
+
+    // Debounced function to persist the package back to Supabase
+    const scheduleSave = () => {
+        if (packageSaveTimeouts.has(userId)) {
+            clearTimeout(packageSaveTimeouts.get(userId));
+        }
+
+        const timeout = setTimeout(async () => {
+            packageSaveTimeouts.delete(userId);
+            try {
+                const packageObj = {};
+                for (const [k, v] of cache.entries()) {
+                    // Do not save temporary workspace metadata or creds in the package (creds are saved separately)
+                    if (k !== 'creds' && k !== 'workspace-phone') {
+                        packageObj[k] = v;
+                    }
+                }
+
+                await supabase
+                    .from('whatsapp_sessions')
+                    .upsert({
+                        user_id: userId,
+                        file_id: 'auth-state-package',
+                        data: JSON.parse(JSON.stringify(packageObj, BufferJSON.replacer))
+                    }, { onConflict: 'user_id,file_id' });
+            } catch (err) {
+                console.error('[Auth] Failed to auto-save consolidated package:', err.message);
+            }
+        }, 1500); // 1.5 second debounce
+
+        packageSaveTimeouts.set(userId, timeout);
+    };
+
+    const writeData = async (data, fileId) => {
+        cache.set(fileId, data);
+        
+        // Critical: write 'creds' immediately since they track login/credentials
+        if (fileId === 'creds') {
+            try {
+                await supabase
+                    .from('whatsapp_sessions')
+                    .upsert({
+                        user_id: userId,
+                        file_id: 'creds',
+                        data: JSON.parse(JSON.stringify(data, BufferJSON.replacer))
+                    }, { onConflict: 'user_id,file_id' });
+            } catch (err) {
+                console.error(`[Auth] Failed to write critical creds:`, err.message);
+            }
+        } else {
+            // Queue debounced save for non-creds keys
+            scheduleSave();
+        }
+    };
+
+    const readData = async (fileId) => {
+        // Read directly from the consolidated memory cache
+        if (cache.has(fileId)) {
+            return cache.get(fileId);
+        }
+        
+        // Secondary fallback for creds
+        if (fileId === 'creds') {
+            try {
+                const { data, error } = await supabase
+                    .from('whatsapp_sessions')
+                    .select('data')
+                    .eq('user_id', userId)
+                    .eq('file_id', 'creds')
+                    .maybeSingle();
+
+                if (!error && data && data.data) {
+                    const parsed = JSON.parse(JSON.stringify(data.data), BufferJSON.reviver);
+                    cache.set('creds', parsed);
+                    return parsed;
+                }
+            } catch (e) {}
+        }
+        return null;
     };
 
     const removeData = async (fileId) => {
         cache.delete(fileId);
-        const { error } = await supabase
-            .from('whatsapp_sessions')
-            .delete()
-            .eq('user_id', userId)
-            .eq('file_id', fileId);
-        
-        if (error) console.error(`[Auth] Error removing ${fileId}:`, error.message);
+        if (fileId === 'creds') {
+            try {
+                await supabase
+                    .from('whatsapp_sessions')
+                    .delete()
+                    .eq('user_id', userId)
+                    .eq('file_id', 'creds');
+            } catch (e) {}
+        } else {
+            scheduleSave();
+        }
     };
 
     const creds = await readData('creds') || initAuthCreds();
@@ -89,37 +180,29 @@ const useSupabaseAuthState = async (supabase, userId) => {
             keys: {
                 get: async (type, ids) => {
                     const data = {};
-                    await Promise.all(
-                        ids.map(async (id) => {
-                            let value = await readData(`${type}-${id}`);
-                            if (type === 'app-state-sync-key' && value) {
-                                value = proto.Message.AppStateSyncKeyData.fromObject(value);
-                            }
-                            data[id] = value;
-                        })
-                    );
+                    ids.forEach((id) => {
+                        const fileId = `${type}-${id}`;
+                        let value = cache.get(fileId) || null;
+                        if (type === 'app-state-sync-key' && value) {
+                            value = proto.Message.AppStateSyncKeyData.fromObject(value);
+                        }
+                        data[id] = value;
+                    });
                     return data;
                 },
                 set: async (data) => {
-                    const tasks = [];
                     for (const category in data) {
                         for (const id in data[category]) {
                             const value = data[category][id];
                             const fileId = `${category}-${id}`;
-                            tasks.push({ fileId, value });
+                            if (value) {
+                                cache.set(fileId, value);
+                            } else {
+                                cache.delete(fileId);
+                            }
                         }
                     }
-
-                    // Execute in batches of 5 to avoid overwhelming Supabase connection pool
-                    const BATCH_SIZE = 5;
-                    for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
-                        const batch = tasks.slice(i, i + BATCH_SIZE);
-                        await Promise.all(
-                            batch.map(({ fileId, value }) =>
-                                value ? writeData(value, fileId) : removeData(fileId)
-                            )
-                        );
-                    }
+                    scheduleSave();
                 }
             }
         },
