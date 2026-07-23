@@ -276,7 +276,7 @@ function Dashboard() {
   };
 
   // Drip Campaign States
-  const [channel, setChannel] = useState('whatsapp');
+  const [channel, setChannel] = useState('');
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [integrations, setIntegrations] = useState([]);
