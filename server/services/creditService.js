@@ -37,10 +37,9 @@ async function getUserCredits(supabaseAdmin, userId) {
     .single();
 
   if (error && error.code === 'PGRST116') {
-    // Row not found — create one
+    // Row not found — create one with next_refill_date fixed to 1st of next month
     const now = new Date();
-    const nextRefill = new Date(now);
-    nextRefill.setMonth(nextRefill.getMonth() + 1);
+    const nextRefill = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
 
     const { data: created, error: createErr } = await supabaseAdmin
       .from('user_credits')
@@ -71,8 +70,7 @@ async function maybeRefillCredits(supabaseAdmin, userId, creditRecord) {
   const nextRefill = new Date(creditRecord.next_refill_date);
 
   if (now >= nextRefill) {
-    const newNextRefill = new Date(nextRefill);
-    newNextRefill.setMonth(newNextRefill.getMonth() + 1);
+    const newNextRefill = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
 
     await supabaseAdmin
       .from('user_credits')

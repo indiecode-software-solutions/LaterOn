@@ -4426,7 +4426,7 @@ Looking forward to connecting!`;
                     gap: '20px'
                   }}>
                     {[
-                      { name: 'Mini', credits: 250, price: '₹19', desc: 'Perfect for quick testing' },
+                      { name: 'Mini', credits: 250, price: '₹1', desc: 'Perfect for quick testing' },
                       { name: 'Starter', credits: 750, price: '₹49', desc: 'Casual users setup' },
                       { name: 'Popular', credits: 1800, price: '₹99', desc: 'Most cost-effective pack', popular: true },
                       { name: 'Pro', credits: 4000, price: '₹199', desc: 'Growing businesses' },
@@ -4484,58 +4484,80 @@ Looking forward to connecting!`;
                               return;
                             }
 
-                            // Parse price to paise (₹19 → 1900)
+                            // Parse price to paise (₹1 → 100)
                             const priceStr = pkg.price.replace('₹', '').replace(',', '');
-                            const amountPaise = parseInt(priceStr, 10) * 100;
+                            const amountPaise = Math.max(100, parseInt(priceStr, 10) * 100);
 
                             try {
                               // 1. Get auth token from existing supabase session
                               const { data: { session } } = await supabase.auth.getSession();
                               const token = session?.access_token || '';
 
-                              const orderRes = await fetch(`${API_URL}/api/credits/order`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ amount: amountPaise, credits: pkg.credits, packageName: pkg.name })
-                              });
-                              const order = await orderRes.json();
-                              if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
+                              let order;
+                              try {
+                                const orderRes = await fetch(`${API_URL}/api/credits/order`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ amount: amountPaise, credits: pkg.credits, packageName: pkg.name })
+                                });
+                                order = await orderRes.json();
+                                if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
+                              } catch (orderErr) {
+                                console.error('[Order Error]', orderErr);
+                                alert('Could not initiate payment order. Please check network connection.');
+                                return;
+                              }
 
                               const verifyPayment = async (response) => {
-                                const verifyRes = await fetch(`${API_URL}/api/credits/verify`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                  },
-                                  body: JSON.stringify({
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_signature: response.razorpay_signature,
-                                    credits: pkg.credits,
-                                    packageName: pkg.name
-                                  })
-                                });
-                                const result = await verifyRes.json();
-                                if (verifyRes.ok) {
-                                  alert(`✅ Payment successful! ${result.credits_added} credits added to your account.`);
-                                  fetchCredits();
-                                } else {
-                                  alert('⚠️ Payment received but credit update failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
+                                try {
+                                  const verifyRes = await fetch(`${API_URL}/api/credits/verify`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({
+                                      razorpay_order_id: response.razorpay_order_id,
+                                      razorpay_payment_id: response.razorpay_payment_id,
+                                      razorpay_signature: response.razorpay_signature,
+                                      credits: pkg.credits,
+                                      packageName: pkg.name
+                                    })
+                                  });
+                                  const result = await verifyRes.json();
+                                  if (verifyRes.ok) {
+                                    alert(`✅ Payment successful! ${result.credits_added} credits added to your account.`);
+                                    fetchCredits();
+                                  } else {
+                                    alert('⚠️ Payment received but credit update failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
+                                  }
+                                } catch (vErr) {
+                                  console.error('[Verify Error]', vErr);
+                                  alert('⚠️ Payment processed but verification connection failed. Your credits will update shortly.');
                                 }
                               };
 
                               if (Capacitor.isNativePlatform()) {
                                 // ── ANDROID: use native Razorpay SDK ──────────
-                                const response = await RazorpayNative.openCheckout({
-                                  orderId: order.orderId,
-                                  key: order.key,
-                                  amount: order.amount,
-                                  currency: order.currency,
-                                  name: 'LaterOn',
-                                  description: `${pkg.name} — ${pkg.credits} credits`
-                                });
-                                await verifyPayment(response);
+                                try {
+                                  const response = await RazorpayNative.openCheckout({
+                                    orderId: order.orderId,
+                                    key: order.key,
+                                    amount: order.amount,
+                                    currency: order.currency,
+                                    name: 'LaterOn',
+                                    description: `${pkg.name} — ${pkg.credits} credits`
+                                  });
+                                  if (response && response.razorpay_payment_id) {
+                                    await verifyPayment(response);
+                                  }
+                                } catch (nativeErr) {
+                                  const errMsg = (nativeErr?.message || '').toLowerCase();
+                                  // Ignore user cancellation or sheet dismissal
+                                  if (!errMsg.includes('cancel') && !errMsg.includes('closed') && !errMsg.includes('back')) {
+                                    console.error('[Native Razorpay Error]', nativeErr);
+                                  }
+                                }
                               } else {
                                 // ── WEB: load checkout.js and open modal ──────
                                 if (!window.Razorpay) {
@@ -4561,8 +4583,7 @@ Looking forward to connecting!`;
                                 rzp.open();
                               }
                             } catch (err) {
-                              console.error('[Purchase]', err);
-                              alert('Payment initiation failed. Please try again or contact support@indiecode.in');
+                              console.error('[Purchase Error]', err);
                             }
                           }}
                           style={{
