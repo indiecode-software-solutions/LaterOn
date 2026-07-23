@@ -5,9 +5,26 @@ const { randomBytes } = require('crypto');
 /**
  * Custom Auth State for Baileys using Supabase
  */
+// Global in-memory cache to avoid redundant Supabase network requests during E2EE key reads
+const sessionCaches = new Map();
+
+function getSessionCache(userId) {
+    if (!sessionCaches.has(userId)) {
+        sessionCaches.set(userId, new Map());
+    }
+    return sessionCaches.get(userId);
+}
+
+/**
+ * Custom Auth State for Baileys using Supabase
+ */
 const useSupabaseAuthState = async (supabase, userId) => {
+    const cache = getSessionCache(userId);
     
     const writeData = async (data, fileId, retries = 3) => {
+        // Update in-memory cache immediately
+        cache.set(fileId, data);
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             const { error } = await supabase
                 .from('whatsapp_sessions')
@@ -19,7 +36,6 @@ const useSupabaseAuthState = async (supabase, userId) => {
             
             if (!error) return;
             if (attempt < retries) {
-                // Exponential backoff: 200ms, 400ms
                 await new Promise(r => setTimeout(r, 200 * attempt));
             } else {
                 console.error(`[Auth] Error writing ${fileId} after ${retries} attempts:`, error.message);
@@ -28,6 +44,11 @@ const useSupabaseAuthState = async (supabase, userId) => {
     };
 
     const readData = async (fileId) => {
+        // Serve from memory cache if available
+        if (cache.has(fileId)) {
+            return cache.get(fileId);
+        }
+
         try {
             const { data, error } = await supabase
                 .from('whatsapp_sessions')
@@ -36,14 +57,21 @@ const useSupabaseAuthState = async (supabase, userId) => {
                 .eq('file_id', fileId)
                 .single();
 
-            if (error || !data) return null;
-            return JSON.parse(JSON.stringify(data.data), BufferJSON.reviver);
+            if (error || !data) {
+                cache.set(fileId, null);
+                return null;
+            }
+
+            const parsed = JSON.parse(JSON.stringify(data.data), BufferJSON.reviver);
+            cache.set(fileId, parsed);
+            return parsed;
         } catch (error) {
             return null;
         }
     };
 
     const removeData = async (fileId) => {
+        cache.delete(fileId);
         const { error } = await supabase
             .from('whatsapp_sessions')
             .delete()
@@ -73,7 +101,6 @@ const useSupabaseAuthState = async (supabase, userId) => {
                     return data;
                 },
                 set: async (data) => {
-                    // Build flat list of write/delete tasks
                     const tasks = [];
                     for (const category in data) {
                         for (const id in data[category]) {
