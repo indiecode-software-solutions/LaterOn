@@ -49,7 +49,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Home,
-  Smile
+  Smile,
+  Coins
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CalendarView from './CalendarView';
@@ -71,9 +72,9 @@ const WhatsAppIcon = ({ size = 18, color = '#25D366' }) => (
 );
 
 
-const API_URL = import.meta.env.VITE_API_URL || 
+const API_URL = import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !navigator.userAgent.includes('Android') && !navigator.userAgent.includes('iPhone')
-    ? 'http://localhost:3001' 
+    ? 'http://localhost:3001'
     : 'https://lateron.indiecode.in');
 const socket = io(API_URL);
 const GOOGLE_MEET_PENDING_TEXT = 'Google Meet link will be generated after saving';
@@ -177,7 +178,9 @@ function Dashboard() {
   const [contactSyncMessage, setContactSyncMessage] = useState('');
   const [showMobileForm, setShowMobileForm] = useState(false);
   const [formStep, setFormStep] = useState(1);
-  const [activeEmojiPicker, setActiveEmojiPicker] = useState(null); // null, 'meeting_desktop', 'schedule_desktop', 'meeting_mobile', 'schedule_mobile'
+  const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
+  const [credits, setCredits] = useState({ free_balance: 0, purchased_balance: 0, total_balance: 0, next_refill_date: null, transactions: [] });
+  const [isAiUsed, setIsAiUsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [is24Hour, setIs24Hour] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -296,6 +299,7 @@ function Dashboard() {
   useEffect(() => {
     fetchStatus();
     fetchSchedules();
+    fetchCredits();
     fetchContacts();
     fetchGroups();
     fetchReplies();
@@ -546,6 +550,15 @@ function Dashboard() {
     }
   };
 
+  const fetchCredits = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/credits`);
+      setCredits(res.data);
+    } catch (err) {
+      console.error('Failed to fetch credits:', err.message);
+    }
+  };
+
   const handleGenerateAiMessage = async (customPrompt) => {
     const promptToUse = customPrompt || aiPrompt;
     if (!promptToUse.trim() && !formData.message.trim()) return;
@@ -557,6 +570,7 @@ function Dashboard() {
         context: formData.message
       });
       setFormData({ ...formData, message: res.data.text });
+      setIsAiUsed(true); // mark that AI was used for credit calculation
       setShowAiPrompt(false);
       setAiPrompt('');
     } catch (err) {
@@ -689,7 +703,8 @@ Looking forward to connecting!`;
           scheduledAt: startTime.toISOString(),
           recurrence: 'none',
           channel: 'calendar',
-          metadata
+          metadata,
+          usedAi: isAiUsed
         };
         if (editingId) {
           await axios.put(`${API_URL}/api/schedules/${editingId}`, scheduleData);
@@ -697,6 +712,7 @@ Looking forward to connecting!`;
         } else {
           await axios.post(`${API_URL}/api/schedules`, scheduleData);
         }
+        setIsAiUsed(false);
         setMeetingTitle('');
         setMeetingPlatform('google_meet');
         setMeetingDuration(30);
@@ -709,6 +725,7 @@ Looking forward to connecting!`;
         setFilePreview(null);
         setSidebarStep(1);
         fetchSchedules();
+        fetchCredits();
         setLoading(false);
         triggerSuccess();
         return;
@@ -730,7 +747,8 @@ Looking forward to connecting!`;
           recurrence: finalRecurrence,
           channel: 'email',
           emailTo: targetEmail,
-          emailSubject: targetSubject
+          emailSubject: targetSubject,
+          usedAi: isAiUsed
         };
 
         if (editingId) {
@@ -748,6 +766,7 @@ Looking forward to connecting!`;
           await axios.post(`${API_URL}/api/schedules`, scheduleData);
         }
 
+        setIsAiUsed(false);
         setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
         setSelectedRecipients([]);
         setEmailTo('');
@@ -757,6 +776,7 @@ Looking forward to connecting!`;
         setFilePreview(null);
         setSidebarStep(1);
         fetchSchedules();
+        fetchCredits();
         setLoading(false);
         triggerSuccess();
         return;
@@ -798,11 +818,11 @@ Looking forward to connecting!`;
         mediaUrl: mediaUrl,
         mediaType: mediaType || (selectedFile ? selectedFile.type : null),
         isVoiceNote: isVoiceNote,
-        channel: 'whatsapp'
+        channel: 'whatsapp',
+        usedAi: isAiUsed
       };
 
       if (editingId) {
-        // Editing still handles single record for now
         await axios.put(`${API_URL}/api/schedules/${editingId}`, {
           phone: recipientsToProcess[0],
           message: formData.message,
@@ -818,6 +838,7 @@ Looking forward to connecting!`;
         await axios.post(`${API_URL}/api/schedules`, scheduleData);
       }
 
+      setIsAiUsed(false);
       setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
       setSelectedRecipients([]);
       setScheduledDate(new Date());
@@ -826,10 +847,16 @@ Looking forward to connecting!`;
       setIsVoiceNote(false);
       setSidebarStep(1);
       fetchSchedules();
+      fetchCredits();
       triggerSuccess();
     } catch (err) {
       triggerError();
-      alert('Failed to save message: ' + (err.response?.data?.error || err.message));
+      if (err.response?.status === 402) {
+        const d = err.response.data;
+        alert(`⚠️ Not enough Later Credits!\n\nYou need ${d.credits_required} credits but have ${d.credits_available}.\n\nPlease purchase more credits from the Credits section.`);
+      } else {
+        alert('Failed to save message: ' + (err.response?.data?.error || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -1073,6 +1100,13 @@ Looking forward to connecting!`;
     }));
   };
 
+  const getEstimatedCredits = () => {
+    const hasAttachment = !!(selectedFile || filePreview);
+    const base = hasAttachment ? 7 : 5;
+    const aiCost = isAiUsed ? 3 : 0;
+    return base + aiCost;
+  };
+
   return (
     <div className={`dashboard-container channel-${channel}`}>
       <div className="right-channel-dock">
@@ -1133,6 +1167,21 @@ Looking forward to connecting!`;
                   title="Switch Service / Channel"
                 >
                   <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
+                </button>
+              )}
+              {!showServiceSelector && (
+                <button
+                  className={`btn-icon ${activeView === 'credits' ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerLight();
+                    setActiveView(activeView === 'credits' ? 'scheduler' : 'credits');
+                  }}
+                  style={{
+                    background: activeView === 'credits' ? 'rgba(26, 115, 232, 0.1)' : 'transparent'
+                  }}
+                  title="Later Credits Balance & Pricing"
+                >
+                  <Coins size={18} color="var(--primary)" />
                 </button>
               )}
               {!showServiceSelector && channel === 'whatsapp' && (
@@ -1260,7 +1309,7 @@ Looking forward to connecting!`;
                   {/* WhatsApp Card */}
                   <div style={{
                     padding: '20px',
-                    border: channel === 'whatsapp' ? '2px solid #25d366' : '1px solid var(--border)',
+                    border: channel === 'whatsapp' ? '2px solid #25d366' : '2px solid var(--border)',
                     background: channel === 'whatsapp' ? '#f0fff4' : 'white',
                     cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -1292,7 +1341,7 @@ Looking forward to connecting!`;
                   {/* Email Card */}
                   <div style={{
                     padding: '20px',
-                    border: channel === 'email' ? '2px solid #ea4335' : '1px solid var(--border)',
+                    border: channel === 'email' ? '2px solid #ea4335' : '2px solid var(--border)',
                     background: channel === 'email' ? '#fdf2f2' : 'white',
                     cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -1320,7 +1369,7 @@ Looking forward to connecting!`;
                   {/* Google Calendar Card */}
                   <div style={{
                     padding: '20px',
-                    border: channel === 'calendar' ? '2px solid #1a73e8' : '1px solid var(--border)',
+                    border: channel === 'calendar' ? '2px solid #1a73e8' : '2px solid var(--border)',
                     background: channel === 'calendar' ? '#e8f0fe' : 'white',
                     cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -3001,50 +3050,85 @@ Looking forward to connecting!`;
                               )}
 
                               {channel !== 'calendar' && (
-                                <div style={{ display: 'flex', gap: '12px', marginTop: 'auto', paddingTop: '20px' }}>
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    onClick={() => { triggerLight(); setSidebarStep(1); }}
-                                    style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
-                                  >
-                                    Back
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    className="btn"
-                                    style={{
-                                      flex: 1,
-                                      opacity: ((channel === 'whatsapp' ? status === 'connected' : true) && !loading) ? 1 : 0.5,
-                                      cursor: ((channel === 'whatsapp' ? status === 'connected' : true) && !loading) ? 'pointer' : 'not-allowed',
-                                      background: editingId ? '#0057b7' : (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')),
-                                      color: 'white',
-                                      fontWeight: 800,
-                                      border: 'none',
-                                      height: '42px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '8px',
-                                      borderRadius: '0px'
-                                    }}
-                                    disabled={(channel === 'whatsapp' && status !== 'connected') || loading}
-                                  >
-                                    {loading ? (
-                                      <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                                        style={{ display: 'flex', alignItems: 'center' }}
-                                      >
-                                        <RefreshCcw size={18} />
-                                      </motion.div>
-                                    ) : (
-                                      <>
-                                        {editingId ? <Edit2 size={18} /> : <Calendar size={18} />}
-                                        {editingId ? 'Update Meeting' : (channel === 'calendar' ? 'Create Meeting' : 'Schedule Now')}
-                                      </>
-                                    )}
-                                  </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '20px' }}>
+                                  {/* Credit Balance & Requirement Badge */}
+                                  <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    background: '#f8fafc',
+                                    padding: '8px 12px',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700
+                                  }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>
+                                      Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
+                                    </span>
+                                    <span style={{ color: credits.total_balance < getEstimatedCredits() ? '#ea4335' : '#2e7d32' }}>
+                                      Your Balance: {credits.total_balance}
+                                    </span>
+                                  </div>
+
+                                  {credits.total_balance < getEstimatedCredits() && (
+                                    <div style={{
+                                      fontSize: '0.75rem',
+                                      color: '#ea4335',
+                                      fontWeight: 600,
+                                      textAlign: 'center',
+                                      background: '#fdf2f2',
+                                      padding: '6px',
+                                      border: '1px solid #f9d5d3'
+                                    }}>
+                                      ⚠️ Insufficient credits. Please recharge your account.
+                                    </div>
+                                  )}
+
+                                  <div style={{ display: 'flex', gap: '12px' }}>
+                                    <button
+                                      type="button"
+                                      className="btn"
+                                      onClick={() => { triggerLight(); setSidebarStep(1); }}
+                                      style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
+                                    >
+                                      Back
+                                    </button>
+                                    <button
+                                      type="submit"
+                                      className="btn"
+                                      style={{
+                                        flex: 1,
+                                        opacity: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 1 : 0.5),
+                                        cursor: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 'pointer' : 'not-allowed'),
+                                        background: editingId ? '#0057b7' : (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')),
+                                        color: 'white',
+                                        fontWeight: 800,
+                                        border: 'none',
+                                        height: '42px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        borderRadius: '0px'
+                                      }}
+                                      disabled={(channel === 'whatsapp' && status !== 'connected') || loading || credits.total_balance < getEstimatedCredits()}
+                                    >
+                                      {loading ? (
+                                        <motion.div
+                                          animate={{ rotate: 360 }}
+                                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                          style={{ display: 'flex', alignItems: 'center' }}
+                                        >
+                                          <RefreshCcw size={18} />
+                                        </motion.div>
+                                      ) : (
+                                        <>
+                                          {editingId ? <Edit2 size={18} /> : <Calendar size={18} />}
+                                          {editingId ? 'Update Meeting' : (channel === 'calendar' ? 'Create Meeting' : 'Schedule Now')}
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
                                 </div>
                               )}
                               {editingId && (
@@ -4161,7 +4245,236 @@ Looking forward to connecting!`;
 
 
           <div style={{ flex: 1, overflowY: 'auto', padding: queueTab === 'calendar' ? '0' : '30px 5%' }}>
-            {activeView === 'scheduler' ? (
+            {activeView === 'credits' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', flex: 1, paddingBottom: '40px' }}>
+                {/* Balance Cards Header */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                  
+                  {/* Total Balance Card */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, var(--primary-dark), #0057b7)',
+                    color: 'white',
+                    padding: '28px',
+                    borderRadius: '0px',
+                    boxShadow: '0 8px 30px rgba(26, 115, 232, 0.15)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      right: '-20px',
+                      bottom: '-20px',
+                      opacity: 0.12,
+                      transform: 'rotate(-15deg)'
+                    }}>
+                      <Coins size={140} color="white" />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85 }}>Total Later Credits</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '3rem', fontWeight: 800, margin: '8px 0' }}>
+                      {credits.total_balance}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Available to use across all automations</span>
+                  </div>
+
+                  {/* Free Balance & Refill Card */}
+                  <div style={{
+                    background: 'white',
+                    border: '1px solid var(--border)',
+                    padding: '28px',
+                    borderRadius: '0px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+                  }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Monthly Free Credits</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
+                      {credits.free_balance} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 600 }}>/ 500 remaining</span>
+                    </span>
+                    {credits.next_refill_date && (
+                      <span style={{ fontSize: '0.85rem', color: '#1a73e8', fontWeight: 700 }}>
+                        Next refill on: {new Date(credits.next_refill_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Purchased Credits Card */}
+                  <div style={{
+                    background: 'white',
+                    border: '1px solid var(--border)',
+                    padding: '28px',
+                    borderRadius: '0px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+                  }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Purchased Credits</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
+                      {credits.purchased_balance}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 700 }}>
+                      ✓ Never expires
+                    </span>
+                  </div>
+
+                </div>
+
+                {/* Pricing / Recharge Packs Section */}
+                <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
+                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }}>Recharge Later Credits</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 24px 0' }}>Need more automations? Purchase high-speed credit packs that never expire.</p>
+
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '20px'
+                  }}>
+                    {[
+                      { name: 'Mini', credits: 250, price: '₹19', desc: 'Perfect for quick testing' },
+                      { name: 'Starter', credits: 750, price: '₹49', desc: 'Casual users setup' },
+                      { name: 'Popular', credits: 1800, price: '₹99', desc: 'Most cost-effective pack', popular: true },
+                      { name: 'Pro', credits: 4000, price: '₹199', desc: 'Growing businesses' },
+                      { name: 'Business', credits: 12000, price: '₹499', desc: 'Power automation suite' },
+                      { name: 'Enterprise', credits: '30,000+', price: 'Custom', desc: 'Custom volume options' }
+                    ].map(pkg => (
+                      <div
+                        key={pkg.name}
+                        style={{
+                          border: pkg.popular ? '2px solid var(--primary)' : '1px solid var(--border)',
+                          borderRadius: '0px',
+                          padding: '24px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          position: 'relative',
+                          background: pkg.popular ? '#fbfdff' : 'white',
+                          boxShadow: pkg.popular ? '0 4px 20px rgba(26, 115, 232, 0.08)' : 'none'
+                        }}
+                      >
+                        {pkg.popular && (
+                          <span style={{
+                            position: 'absolute',
+                            top: '-12px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: 'var(--primary)',
+                            color: 'white',
+                            padding: '4px 12px',
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            borderRadius: '0px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>
+                            Best Value
+                          </span>
+                        )}
+
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{pkg.name}</span>
+                        
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '12px 0 6px 0' }}>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>
+                            {pkg.credits.toLocaleString()}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>credits</span>
+                        </div>
+
+                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-dark)' }}>{pkg.price}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', flex: 1 }}>{pkg.desc}</span>
+
+                        <button
+                          onClick={() => {
+                            if (pkg.name === 'Enterprise') {
+                              alert('Please email support at sales@indiecode.in to configure high volume enterprise custom pricing.');
+                            } else {
+                              alert(`Payment integration is coming soon. To purchase the ${pkg.name} pack manually, contact sales@indiecode.in.`);
+                            }
+                          }}
+                          style={{
+                            marginTop: '20px',
+                            width: '100%',
+                            padding: '10px',
+                            background: pkg.popular ? 'var(--primary)' : 'white',
+                            color: pkg.popular ? 'white' : 'var(--primary)',
+                            border: pkg.popular ? 'none' : '1px solid var(--primary)',
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            borderRadius: '0px',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {pkg.name === 'Enterprise' ? 'Contact Sales' : 'Purchase Pack'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Transaction History Section */}
+                <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
+                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: '0 0 16px 0', color: 'var(--text)' }}>Usage & Transaction History</h3>
+                  
+                  {credits.transactions.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                      No credit transactions recorded yet.
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-muted)', textAlign: 'left', fontWeight: 700 }}>
+                            <th style={{ padding: '12px 8px' }}>Date</th>
+                            <th style={{ padding: '12px 8px' }}>Transaction Details</th>
+                            <th style={{ padding: '12px 8px' }}>Type</th>
+                            <th style={{ padding: '12px 8px', textAlign: 'right' }}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {credits.transactions.map(tx => {
+                            const isPositive = tx.amount > 0;
+                            return (
+                              <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>
+                                  {new Date(tx.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </td>
+                                <td style={{ padding: '12px 8px', fontWeight: 600, color: 'var(--text)' }}>
+                                  {tx.description || 'Automation Transaction'}
+                                </td>
+                                <td style={{ padding: '12px 8px' }}>
+                                  <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    textTransform: 'uppercase',
+                                    padding: '2px 8px',
+                                    background: tx.type === 'deduction' ? '#fbf3f2' : tx.type === 'refund' ? '#e2f4e3' : '#eaf2ff',
+                                    color: tx.type === 'deduction' ? '#ea4335' : tx.type === 'refund' ? '#2e7d32' : '#1a73e8'
+                                  }}>
+                                    {tx.type}
+                                  </span>
+                                </td>
+                                <td style={{
+                                  padding: '12px 8px',
+                                  textAlign: 'right',
+                                  fontWeight: 800,
+                                  color: isPositive ? '#2e7d32' : '#ea4335'
+                                }}>
+                                  {isPositive ? `+${tx.amount}` : tx.amount}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            ) : activeView === 'scheduler' ? (
               queueTab === 'calendar' ? (
                 <CalendarView
                   schedules={schedules}
@@ -5947,82 +6260,120 @@ Join Link: [Auto-generated after scheduling]`}
                 </div>
 
                 {/* Wizard Footer */}
-                <div className="wizard-footer">
-                  {formStep > 1 && (
-                    <button
-                      onClick={() => { triggerLight(); setFormStep(prev => prev - 1); }}
-                      className="btn-secondary"
-                      style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 800 }}
-                    >
-                      Back
-                    </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: '#f8fafc', borderTop: '1px solid var(--border)' }}>
+                  {/* Credit Balance & Requirement Badge */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.8rem',
+                    fontWeight: 700
+                  }}>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
+                    </span>
+                    <span style={{ color: credits.total_balance < getEstimatedCredits() ? '#ea4335' : '#2e7d32' }}>
+                      Your Balance: {credits.total_balance}
+                    </span>
+                  </div>
+
+                  {credits.total_balance < getEstimatedCredits() && (
+                    <div style={{
+                      fontSize: '0.75rem',
+                      color: '#ea4335',
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      background: '#fdf2f2',
+                      padding: '6px',
+                      border: '1px solid #f9d5d3'
+                    }}>
+                      ⚠️ Insufficient credits. Please recharge your account.
+                    </div>
                   )}
-                  <button
-                    onClick={async () => {
-                      triggerLight();
-                      if (formStep === 1) {
-                        if (channel === 'whatsapp' && !formData.phone.trim()) {
-                          triggerError();
-                          alert('Please enter a phone number');
-                          return;
+
+                  <div className="wizard-footer" style={{ borderTop: 'none', padding: 0, marginTop: '8px' }}>
+                    {formStep > 1 && (
+                      <button
+                        onClick={() => { triggerLight(); setFormStep(prev => prev - 1); }}
+                        className="btn-secondary"
+                        style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 800 }}
+                      >
+                        Back
+                      </button>
+                    )}
+                    <button
+                      onClick={async () => {
+                        triggerLight();
+                        if (formStep === 1) {
+                          if (channel === 'whatsapp' && !formData.phone.trim()) {
+                            triggerError();
+                            alert('Please enter a phone number');
+                            return;
+                          }
+                          if (channel === 'email' && !(formData.emailTo || '').trim()) {
+                            triggerError();
+                            alert('Please enter recipient email');
+                            return;
+                          }
+                          if (channel === 'email' && !(formData.emailSubject || '').trim()) {
+                            triggerError();
+                            alert('Please enter subject line');
+                            return;
+                          }
+                          if (channel === 'calendar' && !formData.phone.trim()) {
+                            triggerError();
+                            alert('Please enter recipient phone number');
+                            return;
+                          }
+                          setFormStep(2);
+                        } else if (formStep === 2) {
+                          if (channel === 'calendar' && !meetingTitle.trim()) {
+                            triggerError();
+                            alert('Please enter meeting title');
+                            return;
+                          }
+                          setFormStep(3);
+                        } else {
+                          // Validate final step inputs
+                          if (channel === 'whatsapp' && !formData.phone.trim()) {
+                            triggerError();
+                            alert('Please enter a phone number');
+                            return;
+                          }
+                          if (channel === 'email' && (!(formData.emailTo || '').trim() || !(formData.emailSubject || '').trim())) {
+                            triggerError();
+                            alert('Please fill in email recipient and subject');
+                            return;
+                          }
+                          if (channel === 'calendar' && !meetingTitle.trim()) {
+                            triggerError();
+                            alert('Please fill in meeting title');
+                            return;
+                          }
+                          if (credits.total_balance < getEstimatedCredits()) {
+                            alert('⚠️ Insufficient credits to schedule this automation.');
+                            return;
+                          }
+                          await handleSubmit({ preventDefault: () => { } });
+                          setShowMobileForm(false);
                         }
-                        if (channel === 'email' && !(formData.emailTo || '').trim()) {
-                          triggerError();
-                          alert('Please enter recipient email');
-                          return;
-                        }
-                        if (channel === 'email' && !(formData.emailSubject || '').trim()) {
-                          triggerError();
-                          alert('Please enter subject line');
-                          return;
-                        }
-                        if (channel === 'calendar' && !formData.phone.trim()) {
-                          triggerError();
-                          alert('Please enter recipient phone number');
-                          return;
-                        }
-                        setFormStep(2);
-                      } else if (formStep === 2) {
-                        if (channel === 'calendar' && !meetingTitle.trim()) {
-                          triggerError();
-                          alert('Please enter meeting title');
-                          return;
-                        }
-                        setFormStep(3);
-                      } else {
-                        // Validate final step inputs
-                        if (channel === 'whatsapp' && !formData.phone.trim()) {
-                          triggerError();
-                          alert('Please enter a phone number');
-                          return;
-                        }
-                        if (channel === 'email' && (!(formData.emailTo || '').trim() || !(formData.emailSubject || '').trim())) {
-                          triggerError();
-                          alert('Please fill in email recipient and subject');
-                          return;
-                        }
-                        if (channel === 'calendar' && !meetingTitle.trim()) {
-                          triggerError();
-                          alert('Please fill in meeting title');
-                          return;
-                        }
-                        await handleSubmit({ preventDefault: () => { } });
-                        setShowMobileForm(false);
-                      }
-                    }}
-                    className="btn-primary"
-                    style={{
-                      flex: 2,
-                      padding: '16px',
-                      borderRadius: '0px',
-                      fontWeight: 800,
-                      background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
-                      color: 'white',
-                      border: 'none'
-                    }}
-                  >
-                    {formStep === 3 ? 'Schedule Now' : 'Next Step'}
-                  </button>
+                      }}
+                      className="btn-primary"
+                      style={{
+                        flex: 2,
+                        padding: '16px',
+                        borderRadius: '0px',
+                        fontWeight: 800,
+                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
+                        color: 'white',
+                        border: 'none',
+                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 ? 0.5 : 1
+                      }}
+                      disabled={credits.total_balance < getEstimatedCredits() && formStep === 3}
+                    >
+                      {formStep === 3 ? 'Schedule Now' : 'Next Step'}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

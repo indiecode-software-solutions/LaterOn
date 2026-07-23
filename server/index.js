@@ -23,6 +23,7 @@ const multer = require('multer');
 const axios = require('axios');
 const { addDays, addWeeks, addMonths, addYears } = require('date-fns');
 const { sendScheduleEmail } = require('./services/emailService');
+const { calculateCredits, getUserCredits, maybeRefillCredits, deductCredits, refundCredits } = require('./services/creditService');
 
 const app = express();
 app.use(cors());
@@ -1264,12 +1265,56 @@ async function createGoogleMeetEvent(userId, { title, startTimeStr, durationMinu
     }
 }
 
+// GET /api/credits — return user credit balance and recent transactions
+app.get('/api/credits', verifyToken, async (req, res) => {
+    const { userId } = req;
+    try {
+        const { data: credits, error: credErr } = await getUserCredits(supabaseAdmin, userId);
+        if (credErr) return res.status(500).json({ error: credErr.message });
+
+        // Check for monthly refill
+        await maybeRefillCredits(supabaseAdmin, userId, credits);
+
+        const { data: transactions } = await supabaseAdmin
+            .from('credit_transactions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        res.json({
+            free_balance: credits.free_balance,
+            purchased_balance: credits.purchased_balance,
+            total_balance: credits.free_balance + credits.purchased_balance,
+            next_refill_date: credits.next_refill_date,
+            transactions: transactions || []
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/schedules', verifyToken, async (req, res) => {
     const { userId } = req;
-    let { phone, phones, message, scheduledAt, recurrence, mediaUrl, mediaType, isVoiceNote, channel, emailTo, emailSubject, metadata } = req.body;
+    let { phone, phones, message, scheduledAt, recurrence, mediaUrl, mediaType, isVoiceNote, channel, emailTo, emailSubject, metadata, usedAi } = req.body;
     emailTo = emailTo || req.body.email_to || null;
     emailSubject = emailSubject || req.body.email_subject || null;
     metadata = metadata || {};
+
+    // --- CREDIT CHECK ---
+    const creditsRequired = calculateCredits({ mediaUrl: mediaUrl || null, usedAi: !!usedAi });
+    const { data: creditRecord, error: creditFetchErr } = await getUserCredits(supabaseAdmin, userId);
+    if (creditFetchErr) return res.status(500).json({ error: 'Could not verify credit balance.' });
+    await maybeRefillCredits(supabaseAdmin, userId, creditRecord);
+    const totalBalance = creditRecord.free_balance + creditRecord.purchased_balance;
+    if (totalBalance < creditsRequired) {
+        return res.status(402).json({
+            error: 'insufficient_credits',
+            message: `You need ${creditsRequired} credits to schedule this, but you only have ${totalBalance}.`,
+            credits_required: creditsRequired,
+            credits_available: totalBalance
+        });
+    }
 
     // Handle Google Meet automatic event creation
     if (channel === 'calendar' && metadata?.platform === 'google_meet') {
@@ -1317,7 +1362,8 @@ app.post('/api/schedules', verifyToken, async (req, res) => {
         channel: channel || 'whatsapp',
         email_to: emailTo || null,
         email_subject: emailSubject || null,
-        metadata
+        metadata,
+        credits_charged: creditsRequired
     }));
 
     const { data, error } = await supabaseAdmin
@@ -1327,7 +1373,18 @@ app.post('/api/schedules', verifyToken, async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
 
-    checkAndSendMessages(); 
+    // --- DEDUCT CREDITS (after successful schedule insert) ---
+    const scheduleIds = data.map(s => s.id).join(', ');
+    const channelLabel = channel === 'email' ? 'Email' : channel === 'calendar' ? 'Meeting' : 'WhatsApp';
+    await deductCredits(
+        supabaseAdmin,
+        userId,
+        creditsRequired,
+        `Scheduled ${channelLabel} message${mediaUrl ? ' with attachment' : ''}${usedAi ? ' + AI' : ''}`,
+        data[0]?.id || null
+    );
+
+    checkAndSendMessages();
     res.json(data);
 });
 
@@ -1705,6 +1762,11 @@ async function checkAndSendMessages() {
                     .from('schedules')
                     .update({ status: 'failed' })
                     .eq('id', schedule.id);
+                // Refund credits for failed delivery
+                if (schedule.credits_charged > 0) {
+                    await refundCredits(supabaseAdmin, schedule.user_id, schedule.credits_charged, schedule.id);
+                    console.log(`[Credits] Refunded ${schedule.credits_charged} credits to user ${schedule.user_id} for failed email #${schedule.id}`);
+                }
             }
             continue;
         }
@@ -1774,6 +1836,11 @@ async function checkAndSendMessages() {
                 .from('schedules')
                 .update({ status: 'failed' })
                 .eq('id', schedule.id);
+            // Refund credits for failed delivery
+            if (schedule.credits_charged > 0) {
+                await refundCredits(supabaseAdmin, schedule.user_id, schedule.credits_charged, schedule.id);
+                console.log(`[Credits] Refunded ${schedule.credits_charged} credits to user ${schedule.user_id} for failed WA #${schedule.id}`);
+            }
         }
     }
 
