@@ -27,8 +27,7 @@ function normalizeWhatsAppJid(rawValue, defaultCountryCode = '91') {
 }
 
 function isSocketReadyForMessaging(sock) {
-  if (!sock || !sock.user) return false;
-  if (!sock.ws || sock.ws.readyState !== 1) return false;
+  if (!sock || !sock.user || !sock.user.id) return false;
   return true;
 }
 
