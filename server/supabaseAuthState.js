@@ -7,16 +7,24 @@ const { randomBytes } = require('crypto');
  */
 const useSupabaseAuthState = async (supabase, userId) => {
     
-    const writeData = async (data, fileId) => {
-        const { error } = await supabase
-            .from('whatsapp_sessions')
-            .upsert({
-                user_id: userId,
-                file_id: fileId,
-                data: JSON.parse(JSON.stringify(data, BufferJSON.replacer))
-            }, { onConflict: 'user_id,file_id' });
-        
-        if (error) console.error(`[Auth] Error writing ${fileId}:`, error.message);
+    const writeData = async (data, fileId, retries = 3) => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            const { error } = await supabase
+                .from('whatsapp_sessions')
+                .upsert({
+                    user_id: userId,
+                    file_id: fileId,
+                    data: JSON.parse(JSON.stringify(data, BufferJSON.replacer))
+                }, { onConflict: 'user_id,file_id' });
+            
+            if (!error) return;
+            if (attempt < retries) {
+                // Exponential backoff: 200ms, 400ms
+                await new Promise(r => setTimeout(r, 200 * attempt));
+            } else {
+                console.error(`[Auth] Error writing ${fileId} after ${retries} attempts:`, error.message);
+            }
+        }
     };
 
     const readData = async (fileId) => {
@@ -65,15 +73,26 @@ const useSupabaseAuthState = async (supabase, userId) => {
                     return data;
                 },
                 set: async (data) => {
+                    // Build flat list of write/delete tasks
                     const tasks = [];
                     for (const category in data) {
                         for (const id in data[category]) {
                             const value = data[category][id];
                             const fileId = `${category}-${id}`;
-                            tasks.push(value ? writeData(value, fileId) : removeData(fileId));
+                            tasks.push({ fileId, value });
                         }
                     }
-                    await Promise.all(tasks);
+
+                    // Execute in batches of 5 to avoid overwhelming Supabase connection pool
+                    const BATCH_SIZE = 5;
+                    for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
+                        const batch = tasks.slice(i, i + BATCH_SIZE);
+                        await Promise.all(
+                            batch.map(({ fileId, value }) =>
+                                value ? writeData(value, fileId) : removeData(fileId)
+                            )
+                        );
+                    }
                 }
             }
         },
