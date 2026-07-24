@@ -443,12 +443,10 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (channel !== 'reminders') return;
     fetchReminders();
   }, [channel]);
 
   useEffect(() => {
-    if (channel !== 'reminders') return;
     const triggered = new Set();
     const interval = setInterval(() => {
       const now = Date.now();
@@ -466,7 +464,7 @@ function Dashboard() {
       });
     }, 30000);
     return () => clearInterval(interval);
-  }, [channel, reminders]);
+  }, [reminders]);
 
   const isRealPhoneNumber = (waId) => {
     const value = String(waId || '');
@@ -760,7 +758,7 @@ function Dashboard() {
   };
 
   const showBrowserNotification = (reminder) => {
-    if (reminderNotifPermission !== 'granted') return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
       const n = new Notification('LaterOn Reminder', {
         body: reminder.title,
@@ -1273,6 +1271,7 @@ Looking forward to connecting!`;
   };
 
   const getEstimatedCredits = () => {
+    if (channel === 'reminders') return 0;
     const hasAttachment = !!(selectedFile || filePreview);
     const base = hasAttachment ? 7 : 5;
     const aiCost = isAiUsed ? 3 : 0;
@@ -6443,8 +6442,8 @@ Looking forward to connecting!`;
             whileTap={{ scale: 0.9 }}
             className="fab"
             style={{
-              background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
-              boxShadow: channel === 'email' ? '0 6px 20px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 6px 20px rgba(26, 115, 230, 0.4)' : '0 6px 20px rgba(37, 211, 102, 0.4)')
+              background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
+              boxShadow: channel === 'email' ? '0 6px 20px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 6px 20px rgba(26, 115, 230, 0.4)' : (channel === 'reminders' ? '0 6px 20px rgba(245, 158, 11, 0.4)' : '0 6px 20px rgba(37, 211, 102, 0.4)'))
             }}
             onClick={() => {
               triggerLight();
@@ -6478,14 +6477,14 @@ Looking forward to connecting!`;
                 <div className="wizard-header">
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
-                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : 'Schedule Message')}
+                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : (channel === 'reminders' ? 'Create Reminder' : 'Schedule Message'))}
                     </h2>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of 3</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of {channel === 'reminders' ? 2 : 3}</span>
                   </div>
                   <div className="wizard-step-indicator">
                     <div className={`step-dot ${formStep >= 1 ? 'active' : ''}`} />
                     <div className={`step-dot ${formStep >= 2 ? 'active' : ''}`} />
-                    <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />
+                    {channel !== 'reminders' && <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />}
                   </div>
                   <button
                     onClick={() => setShowMobileForm(false)}
@@ -6561,6 +6560,33 @@ Looking forward to connecting!`;
                                 value={formData.emailTo || ''}
                                 onChange={e => setFormData({ ...formData, emailTo: e.target.value })}
                                 style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                              />
+                            </div>
+                          </>
+                        ) : channel === 'reminders' ? (
+                          <>
+                            <div>
+                              <h3 className="stage-title">What's your reminder?</h3>
+                              <p className="stage-desc">Give your reminder a title and optional description.</p>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>REMINDER TITLE</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Buy groceries"
+                                value={reminderForm.title}
+                                onChange={e => setReminderForm({ ...reminderForm, title: e.target.value })}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none' }}
+                              />
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>DESCRIPTION (OPTIONAL)</label>
+                              <textarea
+                                placeholder="Add details..."
+                                value={reminderForm.description}
+                                onChange={e => setReminderForm({ ...reminderForm, description: e.target.value })}
+                                rows={3}
+                                style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', resize: 'vertical' }}
                               />
                             </div>
                           </>
@@ -7052,34 +7078,38 @@ Join Link: [Auto-generated after scheduling]`}
 
                 {/* Wizard Footer */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: '#f8fafc', borderTop: '1px solid var(--border)' }}>
-                  {/* Credit Balance & Requirement Badge */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 700
-                  }}>
-                    <span style={{ color: 'var(--text-muted)' }}>
-                      Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
-                    </span>
-                    <span style={{ color: credits.total_balance < getEstimatedCredits() ? '#ea4335' : '#2e7d32' }}>
-                      Your Balance: {credits.total_balance}
-                    </span>
-                  </div>
+                  {/* Credit Balance & Requirement Badge — hidden for reminders (free) */}
+                  {channel !== 'reminders' && (
+                    <>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '0.8rem',
+                        fontWeight: 700
+                      }}>
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
+                        </span>
+                        <span style={{ color: credits.total_balance < getEstimatedCredits() ? '#ea4335' : '#2e7d32' }}>
+                          Your Balance: {credits.total_balance}
+                        </span>
+                      </div>
 
-                  {credits.total_balance < getEstimatedCredits() && (
-                    <div style={{
-                      fontSize: '0.75rem',
-                      color: '#ea4335',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      background: '#fdf2f2',
-                      padding: '6px',
-                      border: '1px solid #f9d5d3'
-                    }}>
-                      ⚠️ Insufficient credits. Please recharge your account.
-                    </div>
+                      {credits.total_balance < getEstimatedCredits() && (
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: '#ea4335',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          background: '#fdf2f2',
+                          padding: '6px',
+                          border: '1px solid #f9d5d3'
+                        }}>
+                          ⚠️ Insufficient credits. Please recharge your account.
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div className="wizard-footer" style={{ borderTop: 'none', padding: 0, marginTop: '8px' }}>
@@ -7096,6 +7126,11 @@ Join Link: [Auto-generated after scheduling]`}
                       onClick={async () => {
                         triggerLight();
                         if (formStep === 1) {
+                          if (channel === 'reminders' && !reminderForm.title.trim()) {
+                            triggerError();
+                            alert('Please enter a reminder title');
+                            return;
+                          }
                           if (channel === 'whatsapp' && !formData.phone.trim()) {
                             triggerError();
                             alert('Please enter a phone number');
@@ -7121,6 +7156,16 @@ Join Link: [Auto-generated after scheduling]`}
                           if (channel === 'calendar' && !meetingTitle.trim()) {
                             triggerError();
                             alert('Please enter meeting title');
+                            return;
+                          }
+                          if (channel === 'reminders') {
+                            if (!reminderForm.title.trim()) {
+                              triggerError();
+                              alert('Please enter a reminder title');
+                              return;
+                            }
+                            await handleCreateReminder({ preventDefault: () => {} });
+                            setShowMobileForm(false);
                             return;
                           }
                           setFormStep(3);
@@ -7155,14 +7200,14 @@ Join Link: [Auto-generated after scheduling]`}
                         padding: '16px',
                         borderRadius: '0px',
                         fontWeight: 800,
-                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
+                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
                         color: 'white',
                         border: 'none',
-                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 ? 0.5 : 1
+                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders' ? 0.5 : 1
                       }}
-                      disabled={credits.total_balance < getEstimatedCredits() && formStep === 3}
+                      disabled={credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders'}
                     >
-                      {formStep === 3 ? 'Schedule Now' : 'Next Step'}
+                      {channel === 'reminders' ? (formStep === 1 ? 'Next Step' : 'Create Reminder') : (formStep === 3 ? 'Schedule Now' : 'Next Step')}
                     </button>
                   </div>
                 </div>
