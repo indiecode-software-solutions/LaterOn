@@ -2377,30 +2377,31 @@ Looking forward to connecting!`;
 
                           {channel === 'reminders' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
-                              <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                background: 'white',
-                                border: '1px solid var(--border)',
-                                padding: '16px'
-                              }}>
-                                <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Create Reminder</h5>
-                                <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                              <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TITLE</label>
                                   <input
                                     type="text"
                                     placeholder="Reminder title"
                                     value={reminderForm.title}
                                     onChange={e => setReminderForm({ ...reminderForm, title: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem' }}
+                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem' }}
                                   />
+                                </div>
+                                
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DESCRIPTION (OPTIONAL)</label>
                                   <textarea
-                                    placeholder="Description (optional)"
+                                    placeholder="What is this reminder about?"
                                     value={reminderForm.description}
                                     onChange={e => setReminderForm({ ...reminderForm, description: e.target.value })}
-                                    rows={2}
-                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+                                    rows={3}
+                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
                                   />
+                                </div>
+
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SCHEDULE FOR</label>
                                   <DatePicker
                                     selected={reminderForm.scheduled_at}
                                     onChange={(date) => setReminderForm({ ...reminderForm, scheduled_at: date })}
@@ -2412,30 +2413,36 @@ Looking forward to connecting!`;
                                     customInput={<CustomDateInput />}
                                     minDate={new Date()}
                                   />
+                                </div>
+
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>REPEAT CYCLE</label>
                                   <select
                                     value={reminderForm.recurrence}
                                     onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                                   >
                                     <option value="none">Does not repeat</option>
                                     <option value="daily">Every day</option>
                                     <option value="weekly">Every week</option>
                                     <option value="monthly">Every month</option>
                                   </select>
+                                </div>
+
+                                <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
                                   <button
                                     type="submit"
                                     disabled={isSubmittingReminder}
                                     style={{
                                       width: '100%',
-                                      padding: '12px',
+                                      padding: '16px',
                                       background: isSubmittingReminder ? '#d97706' : '#f59e0b',
                                       color: 'white',
                                       fontWeight: 800,
-                                      fontSize: '0.9rem',
+                                      fontSize: '1rem',
                                       border: 'none',
                                       borderRadius: '0px',
                                       cursor: isSubmittingReminder ? 'not-allowed' : 'pointer',
-                                      boxShadow: '0 4px 12px rgba(245,158,11,0.2)',
                                       transition: 'all 0.2s',
                                       textTransform: 'uppercase',
                                       letterSpacing: '0.5px',
@@ -2446,9 +2453,8 @@ Looking forward to connecting!`;
                                   >
                                     {isSubmittingReminder ? 'Scheduling...' : 'Create Reminder'}
                                   </button>
-                                </form>
-                              </div>
-
+                                </div>
+                              </form>
 
                               {reminderNotifPermission === 'default' && (
                                 <div style={{
