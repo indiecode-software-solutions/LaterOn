@@ -4485,7 +4485,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      Upcoming ({schedules.filter(s => s.channel === channel && (s.status === 'pending' || s.status === 'failed')).length})
+                      Upcoming ({schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'failed')).length})
                     </div>
                     <div
                       onClick={() => { triggerSelection(); setQueueTab('history'); }}
@@ -4500,7 +4500,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      History ({schedules.filter(s => s.channel === channel && s.status !== 'pending' && s.status !== 'failed').length})
+                      {showServiceSelector ? 'All History' : 'History'} ({schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length})
                     </div>
                   </>
                 ) : (
@@ -5059,7 +5059,7 @@ Looking forward to connecting!`;
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <AnimatePresence>
                     {schedules.filter(s => {
-                      if (s.channel !== channel) return false;
+                      if (!showServiceSelector && s.channel !== channel) return false;
                       const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         getContactName(s.phone.split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
@@ -5108,7 +5108,7 @@ Looking forward to connecting!`;
                         </motion.div>
 
                         {/* Recent Activity Mini-Section */}
-                        {queueTab === 'upcoming' && !searchQuery && schedules.filter(s => s.channel === channel && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
+                        {queueTab === 'upcoming' && !searchQuery && schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -5118,7 +5118,7 @@ Looking forward to connecting!`;
                             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                               {schedules
-                                .filter(s => s.channel === channel && s.status !== 'pending' && s.status !== 'failed')
+                                .filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed')
                                 .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
                                 .slice(0, 3)
                                 .map(msg => (
@@ -5167,6 +5167,7 @@ Looking forward to connecting!`;
                     ) : (
                       schedules
                         .filter(s => {
+                          if (!showServiceSelector && s.channel !== channel) return false;
                           const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             getContactName(s.phone.split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
