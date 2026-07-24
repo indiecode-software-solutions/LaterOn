@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { triggerLight, triggerMedium, triggerSuccess, triggerError, triggerSelection } from './haptics';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 // Native Razorpay plugin — only available on Android
 const RazorpayNative = registerPlugin('RazorpayPlugin');
@@ -343,6 +344,7 @@ function Dashboard() {
     fetchIntegrations();
     fetchReminders();
     requestNotifPermission();
+    registerPushNotifications();
 
     socket.on('status', (newStatus) => {
       const appliedStatus = applyConnectionStatus(newStatus);
@@ -684,6 +686,79 @@ function Dashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch reminders:', err.message);
+    }
+  };
+
+  const registerPushNotifications = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+        if (permStatus.receive !== 'granted') {
+          console.warn('[Push] Push notifications permission was denied');
+          return;
+        }
+
+        await PushNotifications.register();
+
+        PushNotifications.addListener('registration', async (token) => {
+          console.log('[Push] Native device registered, token:', token.value);
+          try {
+            await axios.post(`${API_URL}/api/devices/register`, {
+              device_token: token.value,
+              device_type: Capacitor.getPlatform()
+            });
+          } catch (err) {
+            console.error('[Push] Failed to register native device token with backend:', err.message);
+          }
+        });
+
+        PushNotifications.addListener('registrationError', (err) => {
+          console.error('[Push] Native registration error:', err.error);
+        });
+
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          console.log('[Push] Notification received in foreground:', notification);
+        });
+
+        PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+          console.log('[Push] Notification action performed:', notification);
+        });
+      } catch (err) {
+        console.error('[Push] Failed to initialize native push notifications:', err.message);
+      }
+    } else {
+      try {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          const registration = await navigator.serviceWorker.ready;
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            console.warn('[Push] Browser notifications permission was denied');
+            return;
+          }
+
+          let subscription = await registration.pushManager.getSubscription();
+          if (!subscription) {
+            const mockToken = `web_${localStorage.getItem('token')?.slice(-30)}_${navigator.userAgent.replace(/\s+/g, '')}`;
+            await axios.post(`${API_URL}/api/devices/register`, {
+              device_token: mockToken,
+              device_type: 'web'
+            });
+            console.log('[Push] Browser device registered, mock token:', mockToken);
+          } else {
+            const tokenStr = JSON.stringify(subscription);
+            await axios.post(`${API_URL}/api/devices/register`, {
+              device_token: tokenStr,
+              device_type: 'web'
+            });
+            console.log('[Push] Browser device registered, token:', tokenStr);
+          }
+        }
+      } catch (err) {
+        console.error('[Push] Failed to initialize browser push notifications:', err.message);
+      }
     }
   };
 

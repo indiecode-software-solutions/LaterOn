@@ -30,6 +30,25 @@ const { normalizeWhatsAppJid, isSocketReadyForMessaging } = require('./services/
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
+// Initialize Firebase Admin SDK for Cloud Push Notifications (FCM)
+let fcmMessaging = null;
+const serviceAccountPath = path.join(__dirname, 'service-account.json');
+if (fs.existsSync(serviceAccountPath)) {
+    try {
+        const admin = require('firebase-admin');
+        const serviceAccount = require(serviceAccountPath);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        fcmMessaging = admin.messaging();
+        console.log('[FCM] Firebase Admin SDK initialized successfully.');
+    } catch (err) {
+        console.error('[FCM] Failed to initialize Firebase Admin SDK:', err);
+    }
+} else {
+    console.warn('[FCM] Warning: service-account.json not found. Push notifications will be bypassed.');
+}
+
 const razorpay = new Razorpay({
     key_id: process.env.Razorpay_live,
     key_secret: process.env.Razorpay_secret,
@@ -2112,6 +2131,116 @@ async function processDripCampaigns() {
 cron.schedule('*/10 * * * * *', checkAndSendMessages);
 cron.schedule('*/30 * * * * *', processDripCampaigns); // Every 30 seconds for snappier drip triggers
 
+let isRemindersProcessing = false;
+async function checkAndSendReminders() {
+    if (isRemindersProcessing) return;
+    isRemindersProcessing = true;
+    try {
+        const now = new Date().toISOString();
+        // Query pending reminders that should be triggered
+        const { data: triggeredReminders, error: fetchErr } = await supabaseAdmin
+            .from('reminders')
+            .select('*')
+            .eq('status', 'pending')
+            .lte('scheduled_at', now);
+
+        if (fetchErr) {
+            console.error('[Reminders Worker] Error fetching pending reminders:', fetchErr.message);
+            return;
+        }
+
+        if (!triggeredReminders || triggeredReminders.length === 0) return;
+
+        console.log(`[Reminders Worker] Found ${triggeredReminders.length} reminders to trigger.`);
+
+        for (const reminder of triggeredReminders) {
+            try {
+                // Fetch registered devices for this user
+                const { data: devices, error: devErr } = await supabaseAdmin
+                    .from('user_devices')
+                    .select('device_token')
+                    .eq('user_id', reminder.user_id);
+
+                if (devErr) {
+                    console.error(`[Reminders Worker] Error fetching devices for user ${reminder.user_id}:`, devErr.message);
+                    continue;
+                }
+
+                if (devices && devices.length > 0) {
+                    const tokens = devices.map(d => d.device_token);
+                    
+                    // Dispatch notifications via Firebase Cloud Messaging if initialized
+                    if (fcmMessaging) {
+                        const messagePayload = {
+                            notification: {
+                                title: '🔔 LaterOn Reminder',
+                                body: reminder.title,
+                            },
+                            data: {
+                                reminderId: reminder.id,
+                                description: reminder.description || ''
+                            }
+                        };
+                        
+                        console.log(`[Reminders Worker] Dispatching push to ${tokens.length} devices for user ${reminder.user_id}`);
+                        
+                        // Send multicast to all tokens
+                        const response = await fcmMessaging.sendEachForMulticast({
+                            tokens: tokens,
+                            notification: messagePayload.notification,
+                            data: messagePayload.data
+                        });
+                        console.log(`[Reminders Worker] FCM Multicast success count: ${response.successCount}, failure count: ${response.failureCount}`);
+                    } else {
+                        console.log(`[Reminders Worker] FCM not initialized. Bypassing push send for user ${reminder.user_id}.`);
+                    }
+                } else {
+                    console.log(`[Reminders Worker] No devices registered for user ${reminder.user_id}.`);
+                }
+
+                // Handle status update and recurrence rules
+                let nextStatus = 'triggered';
+                let nextScheduledAt = null;
+
+                if (reminder.recurrence && reminder.recurrence !== 'none') {
+                    const currentSched = new Date(reminder.scheduled_at);
+                    if (reminder.recurrence === 'daily') {
+                        nextScheduledAt = addDays(currentSched, 1).toISOString();
+                    } else if (reminder.recurrence === 'weekly') {
+                        nextScheduledAt = addWeeks(currentSched, 1).toISOString();
+                    } else if (reminder.recurrence === 'monthly') {
+                        nextScheduledAt = addMonths(currentSched, 1).toISOString();
+                    }
+                    nextStatus = 'pending'; // Remain pending for next trigger
+                }
+
+                const updatePayload = { status: nextStatus };
+                if (nextScheduledAt) {
+                    updatePayload.scheduled_at = nextScheduledAt;
+                }
+
+                const { error: updateErr } = await supabaseAdmin
+                    .from('reminders')
+                    .update(updatePayload)
+                    .eq('id', reminder.id);
+
+                if (updateErr) {
+                    console.error(`[Reminders Worker] Failed to update reminder status:`, updateErr.message);
+                }
+            } catch (err) {
+                console.error(`[Reminders Worker] Failed to process reminder ${reminder.id}:`, err.message);
+            }
+        }
+    } catch (err) {
+        console.error('[Reminders Worker] Global error:', err.message);
+    } finally {
+        isRemindersProcessing = false;
+    }
+}
+
+cron.schedule('*/30 * * * * *', checkAndSendReminders);
+
+
 
 // ── Reminders API Endpoints ───────────────────────────────────────────────
 
@@ -2183,6 +2312,29 @@ app.delete('/api/reminders/:id', verifyToken, async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
 });
+
+// Device Registration API for Push Notifications
+app.post('/api/devices/register', verifyToken, async (req, res) => {
+    const { device_token, device_type } = req.body;
+    if (!device_token || !device_type) {
+        return res.status(400).json({ error: 'device_token and device_type are required' });
+    }
+
+    const { data, error } = await supabaseAdmin
+        .from('user_devices')
+        .upsert({
+            user_id: req.userId,
+            device_token,
+            device_type,
+            last_active: new Date().toISOString()
+        }, { onConflict: 'device_token' })
+        .select()
+        .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
 
 // ── Razorpay: Create Order ───────────────────────────────────────────────────
 app.post('/api/credits/order', async (req, res) => {
