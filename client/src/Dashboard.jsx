@@ -2345,9 +2345,20 @@ Looking forward to connecting!`;
                                       1. Connect Bot Token
                                     </h4>
                                     <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                                      <li style={{ marginBottom: '4px' }}>Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.</li>
-                                      <li style={{ marginBottom: '4px' }}>Send <code>/newbot</code> to create your bot and copy the API Token.</li>
-                                      <li>Paste your API Token below:</li>
+                                      <li style={{ marginBottom: '4px' }}>
+                                        Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.
+                                        <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden', maxWidth: '100%' }}>
+                                          <img 
+                                            src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png" 
+                                            alt="Search BotFather on Telegram" 
+                                            style={{ width: '100%', height: 'auto', display: 'block' }}
+                                          />
+                                        </div>
+                                      </li>
+                                      <li style={{ marginBottom: '4px' }}>Send the command <strong style={{ color: 'var(--text-main)', background: '#e2e8f0', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace', fontSize: '0.8rem' }}>/newbot</strong> to start creating your bot.</li>
+                                      <li style={{ marginBottom: '4px' }}>Choose a display name for your bot (e.g. <code>LaterOn Companion</code>).</li>
+                                      <li style={{ marginBottom: '4px' }}>Choose a unique username for your bot ending in <code>bot</code> (e.g. <code>MyLaterOnBot</code>).</li>
+                                      <li>Copy the <strong style={{ color: 'var(--text-main)', background: '#e2e8f0', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace', fontSize: '0.8rem' }}>HTTP API Token</strong> provided by BotFather and paste it below:</li>
                                     </ol>
 
                                     <input
@@ -6985,14 +6996,14 @@ Looking forward to connecting!`;
                 <div className="wizard-header">
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
-                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : (channel === 'reminders' ? 'Create Reminder' : 'Schedule Message'))}
+                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : (channel === 'reminders' ? 'Create Reminder' : (channel === 'telegram' ? 'Schedule Telegram Message' : 'Schedule Message')))}
                     </h2>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of {channel === 'reminders' ? 2 : 3}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of {['reminders', 'telegram'].includes(channel) ? 2 : 3}</span>
                   </div>
                   <div className="wizard-step-indicator">
                     <div className={`step-dot ${formStep >= 1 ? 'active' : ''}`} />
                     <div className={`step-dot ${formStep >= 2 ? 'active' : ''}`} />
-                    {channel !== 'reminders' && <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />}
+                    {!['reminders', 'telegram'].includes(channel) && <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />}
                   </div>
                   <button
                     onClick={() => setShowMobileForm(false)}
@@ -7097,6 +7108,222 @@ Looking forward to connecting!`;
                                 style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', resize: 'vertical' }}
                               />
                             </div>
+                          </>
+                        ) : channel === 'telegram' ? (
+                          <>
+                            {isTelegramStatusLoading ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: '12px' }}>
+                                <RefreshCcw size={24} className="spin" color="#0088cc" />
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>Loading bot details...</p>
+                              </div>
+                            ) : telegramStatus.status !== 'connected' ? (
+                              <div style={{ background: '#f8fafc', padding: '16px', border: '1px solid var(--border)' }}>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>1. Connect Bot Token</h4>
+                                <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                                  <li style={{ marginBottom: '4px' }}>
+                                    Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.
+                                    <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden' }}>
+                                      <img src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png" alt="BotFather Guide" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                                    </div>
+                                  </li>
+                                  <li style={{ marginBottom: '4px' }}>Send the command <strong style={{ color: 'var(--text-main)', background: '#e2e8f0', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace' }}>/newbot</strong> to start.</li>
+                                  <li style={{ marginBottom: '4px' }}>Name and select a username ending in <code>bot</code>.</li>
+                                  <li>Copy the <strong style={{ color: 'var(--text-main)', background: '#e2e8f0', padding: '1px 5px', borderRadius: '3px', fontFamily: 'monospace' }}>HTTP API Token</strong> and paste below:</li>
+                                </ol>
+                                <input
+                                  type="password"
+                                  placeholder="e.g. 123456789:ABCdef..."
+                                  value={customTelegramToken}
+                                  onChange={e => setCustomTelegramToken(e.target.value)}
+                                  style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', fontSize: '0.9rem', marginBottom: '8px', boxSizing: 'border-box' }}
+                                />
+                                {telegramTestBotResult && (
+                                  <div style={{ padding: '8px 12px', marginBottom: '8px', background: telegramTestBotResult.success ? '#f0fdf4' : '#fef2f2', border: telegramTestBotResult.success ? '1px solid #bbf7d0' : '1px solid #fecaca', fontSize: '0.75rem', color: telegramTestBotResult.success ? '#166534' : '#991b1b' }}>
+                                    {telegramTestBotResult.success ? `✓ Connected: @${telegramTestBotResult.username}` : `✗ Error: ${telegramTestBotResult.error}`}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!customTelegramToken.trim()) return alert('Please enter your bot API token');
+                                    setIsTestingTelegramBot(true);
+                                    setTelegramTestBotResult(null);
+                                    try {
+                                      const testRes = await axios.post(`${API_URL}/api/telegram/test-custom-bot`, { customBotToken: customTelegramToken });
+                                      if (testRes.data.success) {
+                                        setTelegramTestBotResult({ success: true, username: testRes.data.username });
+                                        await axios.post(`${API_URL}/api/telegram/config`, { customBotToken: customTelegramToken, botUsername: testRes.data.username });
+                                        await fetchTelegramStatus();
+                                      }
+                                    } catch (err) {
+                                      setTelegramTestBotResult({ success: false, error: err.response?.data?.error || err.message });
+                                    } finally {
+                                      setIsTestingTelegramBot(false);
+                                    }
+                                  }}
+                                  disabled={isTestingTelegramBot}
+                                  style={{ width: '100%', padding: '12px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
+                                >
+                                  {isTestingTelegramBot ? 'Connecting Bot...' : 'Verify & Save Bot'}
+                                </button>
+                              </div>
+                            ) : !telegramStatus.config?.chats || telegramStatus.config.chats.length === 0 ? (
+                              <div style={{ background: '#f8fafc', padding: '16px', border: '1px solid var(--border)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                  <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>2. Connect Chat target</h4>
+                                  <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 800 }}>✓ Bot Online</span>
+                                </div>
+                                <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                                  <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username || 'your_bot_username'}</span> to your chat or group.</li>
+                                  <li style={{ marginBottom: '4px' }}>Get your chat ID (e.g. forward any message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@userinfobot</a>).</li>
+                                  <li>Enter chat parameters below:</li>
+                                </ol>
+                                <div className="input-group" style={{ marginBottom: '8px' }}>
+                                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>TELEGRAM CHAT ID</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. 5625755071 or -1001234567"
+                                    value={telegramNewChatId}
+                                    onChange={e => setTelegramNewChatId(e.target.value)}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                                <div className="input-group" style={{ marginBottom: '12px' }}>
+                                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>CHAT NAME / LABEL</label>
+                                  <input
+                                    type="text"
+                                    placeholder="e.g. My Personal Chat or Dev Group"
+                                    value={telegramNewChatTitle}
+                                    onChange={e => setTelegramNewChatTitle(e.target.value)}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (!telegramNewChatId.trim() || !telegramNewChatTitle.trim()) return alert('Please fill in Chat ID and Name');
+                                      setIsSavingTelegramChat(true);
+                                      try {
+                                        await axios.post(`${API_URL}/api/telegram/chats`, { chatId: telegramNewChatId.trim(), chatTitle: telegramNewChatTitle.trim() });
+                                        setTelegramNewChatId('');
+                                        setTelegramNewChatTitle('');
+                                        await fetchTelegramStatus();
+                                      } catch (err) {
+                                        alert('Failed to register chat target');
+                                      } finally {
+                                        setIsSavingTelegramChat(false);
+                                      }
+                                    }}
+                                    disabled={isSavingTelegramChat}
+                                    style={{ flex: 2, padding: '12px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
+                                  >
+                                    {isSavingTelegramChat ? 'Adding Chat...' : 'Add Chat target'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (window.confirm('Disconnect this Telegram bot?')) {
+                                        await axios.delete(`${API_URL}/api/integrations/telegram`);
+                                        await fetchTelegramStatus();
+                                      }
+                                    }}
+                                    style={{ flex: 1, padding: '12px', background: 'none', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
+                                  >
+                                    Reset
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <h3 className="stage-title">Configure Telegram Message</h3>
+                                  <p className="stage-desc">Write your scheduled message and select target chat.</p>
+                                </div>
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', marginBottom: '8px', display: 'block' }}>TARGET CHAT</label>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <select
+                                      value={selectedTelegramChat}
+                                      onChange={e => setSelectedTelegramChat(e.target.value)}
+                                      style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '1rem' }}
+                                    >
+                                      {telegramStatus.config.chats.map(c => (
+                                        <option key={c.id} value={c.id}>{c.title}</option>
+                                      ))}
+                                    </select>
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowTelegramAddChat(!showTelegramAddChat)}
+                                      style={{ padding: '10px 14px', background: 'white', border: '1px solid var(--border)', color: '#0088cc', fontWeight: 800, cursor: 'pointer' }}
+                                    >
+                                      {showTelegramAddChat ? '✕' : '+ Chat'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        if (window.confirm('Disconnect this bot?')) {
+                                          await axios.delete(`${API_URL}/api/integrations/telegram`);
+                                          await fetchTelegramStatus();
+                                        }
+                                      }}
+                                      style={{ padding: '10px 14px', background: 'white', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 800, cursor: 'pointer' }}
+                                    >
+                                      Reset
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {showTelegramAddChat && (
+                                  <div style={{ background: '#f8fafc', padding: '12px', border: '1px solid var(--border)', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <input
+                                      type="text"
+                                      placeholder="Chat ID (e.g. 5625755071)"
+                                      value={telegramNewChatId}
+                                      onChange={e => setTelegramNewChatId(e.target.value)}
+                                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', fontSize: '0.85rem' }}
+                                    />
+                                    <input
+                                      type="text"
+                                      placeholder="Friendly Name (e.g. My Personal Chat)"
+                                      value={telegramNewChatTitle}
+                                      onChange={e => setTelegramNewChatTitle(e.target.value)}
+                                      style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', fontSize: '0.85rem' }}
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        if (!telegramNewChatId.trim() || !telegramNewChatTitle.trim()) return alert('Please enter ID and label');
+                                        try {
+                                          await axios.post(`${API_URL}/api/telegram/chats`, { chatId: telegramNewChatId.trim(), chatTitle: telegramNewChatTitle.trim() });
+                                          setTelegramNewChatId('');
+                                          setTelegramNewChatTitle('');
+                                          setShowTelegramAddChat(false);
+                                          await fetchTelegramStatus();
+                                        } catch (err) {
+                                          alert('Failed to register chat target');
+                                        }
+                                      }}
+                                      style={{ padding: '8px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                                    >
+                                      Save Chat
+                                    </button>
+                                  </div>
+                                )}
+
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', marginBottom: '8px', display: 'block' }}>MESSAGE</label>
+                                  <textarea
+                                    placeholder="Write your telegram message here..."
+                                    value={formData.message}
+                                    onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                    rows={4}
+                                    style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', resize: 'vertical' }}
+                                    required
+                                  />
+                                </div>
+                              </>
+                            )}
                           </>
                         ) : (
                           <>
@@ -7648,8 +7875,8 @@ Join Link: [Auto-generated after scheduling]`}
 
                 {/* Wizard Footer */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: '#f8fafc', borderTop: '1px solid var(--border)' }}>
-                  {/* Credit Balance & Requirement Badge — hidden for reminders (free) */}
-                  {channel !== 'reminders' && (
+                  {/* Credit Balance & Requirement Badge — hidden for reminders and telegram (free) */}
+                  {channel !== 'reminders' && channel !== 'telegram' && (
                     <>
                       <div style={{
                         display: 'flex',
@@ -7721,6 +7948,23 @@ Join Link: [Auto-generated after scheduling]`}
                             alert('Please enter recipient phone number');
                             return;
                           }
+                          if (channel === 'telegram') {
+                            if (telegramStatus.status !== 'connected') {
+                              triggerError();
+                              alert('Please connect your Telegram Bot first');
+                              return;
+                            }
+                            if (!telegramStatus.config?.chats?.length) {
+                              triggerError();
+                              alert('Please add at least one chat target first');
+                              return;
+                            }
+                            if (!formData.message.trim()) {
+                              triggerError();
+                              alert('Please write your message');
+                              return;
+                            }
+                          }
                           setFormStep(2);
                         } else if (formStep === 2) {
                           if (channel === 'calendar' && !meetingTitle.trim()) {
@@ -7735,6 +7979,15 @@ Join Link: [Auto-generated after scheduling]`}
                               return;
                             }
                             await handleCreateReminder({ preventDefault: () => { } });
+                            setShowMobileForm(false);
+                            return;
+                          }
+                          if (channel === 'telegram') {
+                            if (credits.total_balance < getEstimatedCredits()) {
+                              alert('⚠️ Insufficient credits to schedule this automation.');
+                              return;
+                            }
+                            await handleSubmit({ preventDefault: () => { } });
                             setShowMobileForm(false);
                             return;
                           }
@@ -7770,16 +8023,18 @@ Join Link: [Auto-generated after scheduling]`}
                         padding: '16px',
                         borderRadius: '0px',
                         fontWeight: 800,
-                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
+                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : (channel === 'telegram' ? '#0088cc' : 'var(--primary)'))),
                         color: 'white',
                         border: 'none',
-                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders' ? 0.5 : 1
+                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 && !['reminders', 'telegram'].includes(channel) ? 0.5 : 1
                       }}
-                      disabled={isSubmittingReminder || (credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders')}
+                      disabled={isSubmittingReminder || (credits.total_balance < getEstimatedCredits() && formStep === 3 && !['reminders', 'telegram'].includes(channel))}
                     >
                       {isSubmittingReminder
                         ? 'Scheduling...'
-                        : (channel === 'reminders' ? (formStep === 1 ? 'Next Step' : 'Create Reminder') : (formStep === 3 ? 'Schedule Now' : 'Next Step'))}
+                        : (['reminders', 'telegram'].includes(channel)
+                          ? (formStep === 1 ? 'Next Step' : (channel === 'telegram' ? 'Schedule Message' : 'Create Reminder'))
+                          : (formStep === 3 ? 'Schedule Now' : 'Next Step'))}
                     </button>
                   </div>
                 </div>

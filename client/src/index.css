@@ -57,8 +57,8 @@ body {
 }
 
 .dashboard-container.channel-email {
-  --primary: #a52a2a;
-  --primary-dark: #801f1f;
+  --primary: #ea4335;
+  --primary-dark: #b91c1c;
   --primary-light: #fdf2f2;
 }
 
@@ -66,6 +66,18 @@ body {
   --primary: #1a73e8;
   --primary-dark: #1557b0;
   --primary-light: #e8f0fe;
+}
+
+.dashboard-container.channel-telegram {
+  --primary: #0088cc;
+  --primary-dark: #0077b5;
+  --primary-light: #e0f2fe;
+}
+
+.dashboard-container.channel-reminders {
+  --primary: #f59e0b;
+  --primary-dark: #d97706;
+  --primary-light: #fef3c7;
 }
 
 .dashboard-container::before {
@@ -81,11 +93,19 @@ body {
 }
 
 .dashboard-container.channel-email::before {
-  background-color: #a52a2a !important;
+  background-color: #b91c1c !important;
 }
 
 .dashboard-container.channel-calendar::before {
-  background-color: #1a73e8 !important;
+  background-color: #1557b0 !important;
+}
+
+.dashboard-container.channel-telegram::before {
+  background-color: #0077b5 !important;
+}
+
+.dashboard-container.channel-reminders::before {
+  background-color: #d97706 !important;
 }
 
 .dashboard-container.channel-email .datepicker-custom-input svg {
