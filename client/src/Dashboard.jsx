@@ -2376,8 +2376,8 @@ Looking forward to connecting!`;
                           )}
 
                           {channel === 'reminders' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
-                              <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                              <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div className="input-group">
                                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TITLE</label>
                                   <input
@@ -2429,7 +2429,7 @@ Looking forward to connecting!`;
                                   </select>
                                 </div>
 
-                                <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+                                <div style={{ paddingTop: '10px' }}>
                                   <button
                                     type="submit"
                                     disabled={isSubmittingReminder}
