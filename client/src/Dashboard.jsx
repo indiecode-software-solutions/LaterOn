@@ -753,7 +753,7 @@ function Dashboard() {
           apiKey: 'AIzaSyDjrsBB0wLBh3NyUFHwMPD3fpgntHiWuYI',
           projectId: 'lateron-63dee',
           messagingSenderId: '648957702030',
-          appId: '1:648957702030:web:lateron_web'
+          appId: '1:648957702030:web:a89199756655681ccf7edf'
         };
 
         const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];

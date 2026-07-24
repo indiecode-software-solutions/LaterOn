@@ -8,8 +8,7 @@ firebase.initializeApp({
   apiKey: 'AIzaSyDjrsBB0wLBh3NyUFHwMPD3fpgntHiWuYI',
   projectId: 'lateron-63dee',
   messagingSenderId: '648957702030',
-  // Web App ID from Firebase Console → Project Settings → Your apps → Web app
-  appId: '__REPLACE_WITH_WEB_APP_ID__'
+  appId: '1:648957702030:web:a89199756655681ccf7edf'
 });
 
 const messaging = firebase.messaging();
