@@ -241,9 +241,11 @@ function Dashboard() {
   const [telegramNewChatTitle, setTelegramNewChatTitle] = useState('');
   const [isSavingTelegramChat, setIsSavingTelegramChat] = useState(false);
   const [showTelegramAddChat, setShowTelegramAddChat] = useState(false);
+  const [isTelegramStatusLoading, setIsTelegramStatusLoading] = useState(true);
 
   const fetchTelegramStatus = async () => {
     try {
+      setIsTelegramStatusLoading(true);
       const res = await axios.get(`${API_URL}/api/telegram/status`);
       setTelegramStatus(res.data);
       if (res.data.api_key) {
@@ -256,6 +258,8 @@ function Dashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch Telegram status:', err.message);
+    } finally {
+      setIsTelegramStatusLoading(false);
     }
   };
 
@@ -2324,7 +2328,12 @@ Looking forward to connecting!`;
                         <>
                           {channel === 'telegram' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%' }}>
-                              {telegramStatus.status !== 'connected' ? (
+                              {isTelegramStatusLoading ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '200px', gap: '12px' }}>
+                                  <RefreshCcw size={24} className="spin" color="#0088cc" />
+                                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Loading bot details...</p>
+                                </div>
+                              ) : telegramStatus.status !== 'connected' ? (
                                 <>
                                   {/* Step 1: Connect Bot Token */}
                                   <div style={{
