@@ -2385,7 +2385,7 @@ Looking forward to connecting!`;
                                     onChange={(date) => setReminderForm({ ...reminderForm, scheduled_at: date })}
                                     showTimeSelect
                                     timeFormat="h:mm aa"
-                                    timeIntervals={5}
+                                    timeIntervals={1}
                                     timeCaption="Time"
                                     dateFormat="MMMM d, yyyy h:mm aa"
                                     customInput={<CustomDateInput />}
