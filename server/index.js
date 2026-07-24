@@ -1886,6 +1886,84 @@ async function checkAndSendMessages() {
     for (const schedule of pendingSchedules) {
         const userId = schedule.user_id;
 
+        // Telegram channel handling
+        if (schedule.channel === 'telegram') {
+            try {
+                // Fetch user's telegram integration details
+                const { data: userIntegration } = await supabaseAdmin
+                    .from('user_integrations')
+                    .select('*')
+                    .eq('user_id', schedule.user_id)
+                    .eq('provider', 'telegram')
+                    .single();
+
+                if (!userIntegration) {
+                    throw new Error('Telegram integration not configured for user');
+                }
+
+                const customToken = userIntegration.api_key;
+                const botToken = customToken || process.env.TELEGRAM_BOT_TOKEN;
+                const chatId = userIntegration.config?.chat_id;
+
+                if (!botToken || !chatId) {
+                    throw new Error('Telegram bot token or chat ID is missing');
+                }
+
+                let text = schedule.message;
+                // Prepend user name if using the default bot
+                if (!customToken) {
+                    const { data: user } = await supabaseAdmin
+                        .from('users')
+                        .select('name')
+                        .eq('id', schedule.user_id)
+                        .single();
+                    const senderName = user?.name || 'LaterOn User';
+                    text = `📢 *Message from ${senderName}:*\n\n${text}`;
+                }
+
+                // Call Telegram API to send message
+                await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                    chat_id: chatId,
+                    text: text,
+                    parse_mode: 'Markdown'
+                });
+
+                await supabaseAdmin
+                    .from('schedules')
+                    .update({ status: 'sent' })
+                    .eq('id', schedule.id);
+
+                console.log(`[Telegram Sent] Schedule #${schedule.id} delivered to chat ${chatId}`);
+
+                // Handle Recurrence
+                if (schedule.recurrence && schedule.recurrence !== 'none') {
+                    const nextDate = getNextOccurrence(schedule.scheduled_at, schedule.recurrence);
+                    if (nextDate) {
+                        await supabaseAdmin.from('schedules').insert({
+                            ...schedule,
+                            id: undefined, // Let Supabase generate new UUID
+                            scheduled_at: nextDate,
+                            status: 'pending',
+                            wa_message_id: null,
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error(`[Telegram Failed] Schedule #${schedule.id}:`, err.message);
+                await supabaseAdmin
+                    .from('schedules')
+                    .update({ status: 'failed' })
+                    .eq('id', schedule.id);
+                // Refund credits for failed delivery
+                if (schedule.credits_charged > 0) {
+                    await refundCredits(supabaseAdmin, schedule.user_id, schedule.credits_charged, schedule.id);
+                    console.log(`[Credits] Refunded ${schedule.credits_charged} credits to user ${schedule.user_id} for failed telegram #${schedule.id}`);
+                }
+            }
+            continue;
+        }
+
         // Email channel handling
         if (schedule.channel === 'email') {
             try {
@@ -2422,6 +2500,152 @@ app.post('/api/devices/register', verifyToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// ── Telegram: Integration Endpoints and Webhooks ─────────────────────────────
+// Webhook for BotFather updates
+app.post('/api/telegram/webhook', async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message || !message.text) {
+            return res.json({ ok: true });
+        }
+
+        const text = message.text.trim();
+        const chatId = message.chat.id.toString();
+        const chatTitle = message.chat.type === 'private' ? 'Personal Chat' : (message.chat.title || 'Telegram Group');
+
+        // Check if starts with /start command
+        if (text.startsWith('/start')) {
+            const startParam = text.split(' ')[1]; // Extract user_id parameter: /start <userId>
+            if (!startParam) {
+                // Send general welcome message
+                await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    chat_id: chatId,
+                    text: '👋 Welcome to *LaterOn Companion*!\n\nTo connect your account, please log in to LaterOn, go to your dashboard, and click the Telegram Connect link.',
+                    parse_mode: 'Markdown'
+                });
+                return res.json({ ok: true });
+            }
+
+            const userId = startParam;
+            console.log(`[Telegram Webhook] Connecting user ${userId} to chat ${chatId} (${chatTitle})`);
+
+            // Save connection to database
+            const { data: existing } = await supabaseAdmin
+                .from('user_integrations')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('provider', 'telegram')
+                .single();
+
+            // Store details in config JSONB column
+            const config = existing?.config || {};
+            config.chat_id = chatId;
+            config.chat_title = chatTitle;
+
+            const { error } = await supabaseAdmin
+                .from('user_integrations')
+                .upsert({
+                    user_id: userId,
+                    provider: 'telegram',
+                    api_key: existing?.api_key || null, // Preserve custom token if exists
+                    config: config,
+                    status: 'connected'
+                }, { onConflict: 'user_id,provider' });
+
+            if (error) {
+                console.error(`[Telegram Webhook] DB Upsert error:`, error.message);
+                throw error;
+            }
+
+            // Send success message to user
+            await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                chat_id: chatId,
+                text: `🎉 *LaterOn Companion Connected!*\n\nI am now connected to your account. You can schedule messages to be delivered directly here.`,
+                parse_mode: 'Markdown'
+            });
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[Telegram Webhook] Error:', err.message);
+        res.status(200).json({ error: err.message }); // Keep webhook returning 200 so Telegram doesn't retry spamming us
+    }
+});
+
+// Save custom bot configurations
+app.post('/api/telegram/config', verifyToken, async (req, res) => {
+    const { customBotToken, botUsername } = req.body;
+
+    try {
+        const { data: existing } = await supabaseAdmin
+            .from('user_integrations')
+            .select('*')
+            .eq('user_id', req.userId)
+            .eq('provider', 'telegram')
+            .single();
+
+        const config = existing?.config || {};
+        if (botUsername) config.bot_username = botUsername;
+
+        const { data, error } = await supabaseAdmin
+            .from('user_integrations')
+            .upsert({
+                user_id: req.userId,
+                provider: 'telegram',
+                api_key: customBotToken || null, // Token acts as api_key field
+                config: config,
+                status: existing?.status || 'disconnected'
+            }, { onConflict: 'user_id,provider' })
+            .select()
+            .single();
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Test custom bot token
+app.post('/api/telegram/test-custom-bot', verifyToken, async (req, res) => {
+    const { customBotToken } = req.body;
+    if (!customBotToken) return res.status(400).json({ error: 'customBotToken is required' });
+
+    try {
+        const response = await axios.get(`https://api.telegram.org/bot${customBotToken}/getMe`);
+        if (response.data.ok && response.data.result) {
+            return res.json({
+                success: true,
+                username: response.data.result.username,
+                firstName: response.data.result.first_name
+            });
+        }
+        res.status(400).json({ error: 'Invalid bot token' });
+    } catch (err) {
+        res.status(400).json({ error: err.response?.data?.description || err.message });
+    }
+});
+
+// Fetch current user integration status
+app.get('/api/telegram/status', verifyToken, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('user_integrations')
+            .select('*')
+            .eq('user_id', req.userId)
+            .eq('provider', 'telegram')
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // Ignore PGRST116 (No rows found)
+            return res.status(500).json({ error: error.message });
+        }
+
+        res.json(data || { provider: 'telegram', status: 'disconnected', config: {} });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 
 // ── Razorpay: Create Order ───────────────────────────────────────────────────

@@ -57,7 +57,8 @@ import {
   Home,
   Smile,
   Coins,
-  Bell
+  Bell,
+  Settings
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CalendarView from './CalendarView';
@@ -229,6 +230,25 @@ function Dashboard() {
   const [reminderNotifPermission, setReminderNotifPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default');
   const [isSubmittingReminder, setIsSubmittingReminder] = useState(false);
 
+  // Telegram Integration States
+  const [telegramStatus, setTelegramStatus] = useState({ provider: 'telegram', status: 'disconnected', config: {} });
+  const [showTelegramConfig, setShowTelegramConfig] = useState(false);
+  const [customTelegramToken, setCustomTelegramToken] = useState('');
+  const [isTestingTelegramBot, setIsTestingTelegramBot] = useState(false);
+  const [telegramTestBotResult, setTelegramTestBotResult] = useState(null);
+
+  const fetchTelegramStatus = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/telegram/status`);
+      setTelegramStatus(res.data);
+      if (res.data.api_key) {
+        setCustomTelegramToken(res.data.api_key);
+      }
+    } catch (err) {
+      console.error('Failed to fetch Telegram status:', err.message);
+    }
+  };
+
   const fetchIntegrations = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/integrations`);
@@ -238,8 +258,7 @@ function Dashboard() {
         setEmailApiKey(hasResend.api_key || '');
         setEmailFromAddress(hasResend.email_address || '');
       }
-      // Keep showServiceSelector true by default so it shows the three cards on first glance
-      // setShowServiceSelector(!res.data || res.data.length === 0);
+      await fetchTelegramStatus();
     } catch (err) {
       console.error('Failed to fetch integrations:', err.message);
     }
@@ -461,7 +480,7 @@ function Dashboard() {
           triggered.add(r.id);
           showBrowserNotification(r);
           scheduleCapacitorNotification(r);
-          axios.put(`${API_URL}/api/reminders/${r.id}`, { status: 'triggered' }).catch(() => {});
+          axios.put(`${API_URL}/api/reminders/${r.id}`, { status: 'triggered' }).catch(() => { });
           setReminders(prev => prev.map(p => p.id === r.id ? { ...p, status: 'triggered' } : p));
         }
       });
@@ -760,9 +779,13 @@ function Dashboard() {
         const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
         const messaging = getMessaging(app);
 
+        // Explicitly register the service worker
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('[Push] Service worker registered successfully:', registration);
+
         const token = await getToken(messaging, {
-          vapidKey: process.env.VITE_FIREBASE_VAPID_KEY,
-          serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+          vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+          serviceWorkerRegistration: registration
         });
 
         if (token) {
@@ -1036,6 +1059,43 @@ Looking forward to connecting!`;
         setSelectedRecipients([]);
         setEmailTo('');
         setEmailSubject('');
+        setScheduledDate(new Date());
+        setSelectedFile(null);
+        setFilePreview(null);
+        setSidebarStep(1);
+        fetchSchedules();
+        fetchCredits();
+        setLoading(false);
+        triggerSuccess();
+        return;
+      }
+
+      if (channel === 'telegram') {
+        const scheduleData = {
+          phones: ['telegram_chat'],
+          phone: 'telegram_chat',
+          message: formData.message,
+          scheduledAt,
+          recurrence: finalRecurrence,
+          channel: 'telegram',
+          usedAi: isAiUsed
+        };
+
+        if (editingId) {
+          await axios.put(`${API_URL}/api/schedules/${editingId}`, {
+            phone: 'telegram_chat',
+            message: formData.message,
+            scheduledAt,
+            recurrence: finalRecurrence,
+            channel: 'telegram'
+          });
+          setEditingId(null);
+        } else {
+          await axios.post(`${API_URL}/api/schedules`, scheduleData);
+        }
+
+        setIsAiUsed(false);
+        setFormData({ phone: '', message: '', recurrence: 'none', customDays: [] });
         setScheduledDate(new Date());
         setSelectedFile(null);
         setFilePreview(null);
@@ -1812,11 +1872,11 @@ Looking forward to connecting!`;
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#b45309' }}>Personal Reminders</h4>
                         <p style={{ fontSize: '0.75rem', color: '#d97706', margin: 0 }}>
-                          Coming Soon!
+                          Never Forget
                         </p>
                       </div>
                       <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Plus size={20} color="#94a3b8" />
+                        <Check size={20} color="#d97706" />
                       </div>
                     </div>
                   </div>
@@ -2086,7 +2146,7 @@ Looking forward to connecting!`;
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <p style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {channel === 'email' ? (user?.name || 'Email Service') : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram' : (channel === 'instagram' ? 'Instagram' : (channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'Active Account')))))}
+                      {channel === 'email' ? (user?.name || 'Email Service') : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram Companion' : (channel === 'instagram' ? 'Instagram' : (channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'Active Account')))))}
                     </p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {channel === 'email'
@@ -2094,7 +2154,7 @@ Looking forward to connecting!`;
                         : channel === 'calendar'
                           ? 'Event Sync Active'
                           : channel === 'telegram'
-                            ? 'Ready to Connect'
+                            ? (telegramStatus.status === 'connected' ? (telegramStatus.config?.chat_title || 'Connected') : 'Ready to Connect')
                             : channel === 'instagram'
                               ? 'Ready to Connect'
                               : channel === 'reminders'
@@ -2123,6 +2183,29 @@ Looking forward to connecting!`;
                       }}
                     >
                       <Mail size={14} />
+                      Settings
+                    </button>
+                  ) : channel === 'telegram' ? (
+                    <button
+                      onClick={() => setShowTelegramConfig(true)}
+                      style={{
+                        height: '32px',
+                        padding: '0 10px',
+                        border: '1px solid #cbd5e1',
+                        background: 'white',
+                        color: '#0088cc',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        borderRadius: '0px'
+                      }}
+                    >
+                      <Settings size={14} />
                       Settings
                     </button>
                   ) : status === 'connected' && channel === 'whatsapp' && (
@@ -2252,64 +2335,139 @@ Looking forward to connecting!`;
                       {['telegram', 'instagram', 'reminders'].includes(channel) ? (
                         <>
                           {channel === 'telegram' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
-                              <div style={{
-                                padding: '24px 20px',
-                                border: '1px dashed #cbd5e1',
-                                borderRadius: '0px',
-                                background: '#f8fafc',
-                                textAlign: 'center',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '12px'
-                              }}>
-                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e6f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0088cc' }}>
-                                  <TelegramIcon size={20} color="#0088cc" />
-                                </div>
-                                <div>
-                                  <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 2px 0', textTransform: 'uppercase' }}>Connection State</p>
-                                  <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>No Telegram Account Connected</p>
-                                </div>
-                              </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', height: '100%' }}>
+                              {telegramStatus.status !== 'connected' ? (
+                                <>
+                                  {/* Step Indicator */}
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    background: '#fef2f2',
+                                    padding: '12px 16px',
+                                    border: '1px solid #fee2e2',
+                                    marginBottom: '16px'
+                                  }}>
+                                    <div>
+                                      <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b91c1c', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>1. Connection Required</p>
+                                      <p style={{ fontSize: '0.7rem', color: '#ef4444', margin: '2px 0 0' }}>Start bot conversation to link chat</p>
+                                    </div>
+                                  </div>
 
-                              <button
-                                onClick={() => alert('Telegram integration coming soon!')}
-                                style={{
-                                  width: '100%',
-                                  padding: '14px',
-                                  background: '#0088cc',
-                                  color: 'white',
-                                  fontWeight: 800,
-                                  fontSize: '0.9rem',
-                                  border: 'none',
-                                  borderRadius: '0px',
-                                  cursor: 'pointer',
-                                  boxShadow: '0 4px 12px rgba(0,136,204,0.2)',
-                                  transition: 'all 0.2s',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px'
-                                }}
-                                onMouseOver={e => e.currentTarget.style.background = '#0077b3'}
-                                onMouseOut={e => e.currentTarget.style.background = '#0088cc'}
-                              >
-                                Connect Telegram
-                              </button>
+                                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '12px' }}>
+                                    Connect LaterOn to your Telegram personal chat or group chat. Click the button below to message the companion bot and get started.
+                                  </p>
 
-                              <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '12px'
-                              }}>
-                                <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', textAlign: 'center' }}>
-                                  <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 4px 0', textTransform: 'uppercase' }}>Automations</p>
-                                  <p style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0088cc', margin: 0 }}>0</p>
-                                </div>
-                                <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', textAlign: 'center' }}>
-                                  <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', margin: '0 0 4px 0', textTransform: 'uppercase' }}>Status</p>
-                                  <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10b981', margin: '6px 0 0 0', textTransform: 'uppercase' }}>Available</p>
-                                </div>
-                              </div>
+                                  <a
+                                    href={`https://t.me/IndieCode_LaterOnBot?start=${user.id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      width: '100%',
+                                      padding: '14px',
+                                      background: '#0088cc',
+                                      color: 'white',
+                                      fontWeight: 800,
+                                      fontSize: '0.9rem',
+                                      border: 'none',
+                                      borderRadius: '0px',
+                                      textAlign: 'center',
+                                      cursor: 'pointer',
+                                      textDecoration: 'none',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.5px',
+                                      boxSizing: 'border-box',
+                                      display: 'block'
+                                    }}
+                                  >
+                                    Connect Bot on Telegram
+                                  </a>
+                                </>
+                              ) : (
+                                <>
+                                  {/* Step Indicator */}
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    background: '#f8fafc',
+                                    padding: '12px 16px',
+                                    border: '1px solid var(--border)',
+                                    marginBottom: '16px'
+                                  }}>
+                                    <div>
+                                      <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0088cc', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>1. SCHEDULING</p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '3px' }}>
+                                      <div style={{ width: '20px', height: '4px', background: '#0088cc' }} />
+                                      <div style={{ width: '20px', height: '4px', background: '#e2e8f0' }} />
+                                    </div>
+                                  </div>
+
+                                  {/* Active Scheduler Wizard step for Telegram */}
+                                  <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div className="input-group" style={{ marginBottom: '8px' }}>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TARGET CHAT</label>
+                                      <input
+                                        type="text"
+                                        value={telegramStatus.config?.chat_title || 'Personal Chat'}
+                                        disabled
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: '#f8fafc', fontSize: '0.85rem', outline: 'none', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                                      />
+                                    </div>
+
+                                    <div className="input-group" style={{ marginBottom: '8px' }}>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>SCHEDULE FOR</label>
+                                      <DatePicker
+                                        selected={scheduledDate}
+                                        onChange={(date) => setScheduledDate(date)}
+                                        showTimeSelect
+                                        timeFormat="h:mm aa"
+                                        timeIntervals={1}
+                                        timeCaption="Time"
+                                        dateFormat="MMMM d, yyyy h:mm aa"
+                                        customInput={<CustomDateInput />}
+                                        minDate={new Date()}
+                                      />
+                                    </div>
+
+                                    <div className="input-group" style={{ marginBottom: '8px' }}>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>REPEAT CYCLE</label>
+                                      <select
+                                        value={formData.recurrence}
+                                        onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                      >
+                                        <option value="none">Does not repeat</option>
+                                        <option value="daily">Every day</option>
+                                        <option value="weekly">Every week</option>
+                                        <option value="monthly">Every month</option>
+                                      </select>
+                                    </div>
+
+                                    <button
+                                      type="submit"
+                                      disabled={loading}
+                                      style={{
+                                        width: '100%',
+                                        padding: '14px',
+                                        background: '#0088cc',
+                                        color: 'white',
+                                        fontWeight: 800,
+                                        fontSize: '0.9rem',
+                                        border: 'none',
+                                        borderRadius: '0px',
+                                        cursor: loading ? 'not-allowed' : 'pointer',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px',
+                                        marginTop: '12px'
+                                      }}
+                                    >
+                                      {loading ? 'Scheduling...' : 'Next: Message Content ➔'}
+                                    </button>
+                                  </form>
+                                </>
+                              )}
                             </div>
                           )}
 
@@ -2376,32 +2534,32 @@ Looking forward to connecting!`;
                           )}
 
                           {channel === 'reminders' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                              <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TITLE</label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div className="input-group" style={{ marginBottom: '8px' }}>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TITLE</label>
                                   <input
                                     type="text"
                                     placeholder="Reminder title"
                                     value={reminderForm.title}
                                     onChange={e => setReminderForm({ ...reminderForm, title: e.target.value })}
-                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem' }}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem' }}
                                   />
                                 </div>
-                                
-                                <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DESCRIPTION (OPTIONAL)</label>
+
+                                <div className="input-group" style={{ marginBottom: '8px' }}>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>DESCRIPTION (OPTIONAL)</label>
                                   <textarea
                                     placeholder="What is this reminder about?"
                                     value={reminderForm.description}
                                     onChange={e => setReminderForm({ ...reminderForm, description: e.target.value })}
-                                    rows={3}
-                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+                                    rows={2}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
                                   />
                                 </div>
 
-                                <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SCHEDULE FOR</label>
+                                <div className="input-group" style={{ marginBottom: '8px' }}>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>SCHEDULE FOR</label>
                                   <DatePicker
                                     selected={reminderForm.scheduled_at}
                                     onChange={(date) => setReminderForm({ ...reminderForm, scheduled_at: date })}
@@ -2415,12 +2573,12 @@ Looking forward to connecting!`;
                                   />
                                 </div>
 
-                                <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>REPEAT CYCLE</label>
+                                <div className="input-group" style={{ marginBottom: '8px' }}>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>REPEAT CYCLE</label>
                                   <select
                                     value={reminderForm.recurrence}
                                     onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
-                                    style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                                   >
                                     <option value="none">Does not repeat</option>
                                     <option value="daily">Every day</option>
@@ -2429,7 +2587,7 @@ Looking forward to connecting!`;
                                   </select>
                                 </div>
 
-                                <div style={{ paddingTop: '10px' }}>
+                                <div style={{ paddingTop: '5px' }}>
                                   <button
                                     type="submit"
                                     disabled={isSubmittingReminder}
@@ -6253,6 +6411,189 @@ Looking forward to connecting!`;
           )}
         </AnimatePresence>
 
+        {/* Telegram Configuration Modal */}
+        <AnimatePresence>
+          {showTelegramConfig && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(11, 20, 26, 0.85)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 2000, backdropFilter: 'blur(4px)', padding: '20px'
+            }}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                style={{
+                  background: 'white', padding: '32px', borderRadius: '0px',
+                  width: '100%', maxWidth: '440px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#0088cc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <TelegramIcon size={20} color="white" />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0088cc' }}>Telegram Integration</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Configure your bot or connection</p>
+                  </div>
+                </div>
+
+                {/* Connection Status Detail */}
+                <div style={{
+                  padding: '16px', marginBottom: '16px',
+                  border: telegramStatus.status === 'connected' ? '2px solid #16a34a' : '1px dashed #cbd5e1',
+                  background: telegramStatus.status === 'connected' ? '#f0fdf4' : '#f8fafc',
+                  borderRadius: '0px'
+                }}>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 800, color: telegramStatus.status === 'connected' ? '#166534' : 'var(--text-main)', margin: 0 }}>
+                    Status: {telegramStatus.status === 'connected' ? 'Connected' : 'Disconnected'}
+                  </p>
+                  {telegramStatus.status === 'connected' && (
+                    <p style={{ fontSize: '0.75rem', color: '#16a34a', margin: '4px 0 0' }}>
+                      Target: <b>{telegramStatus.config?.chat_title || 'Personal Chat'}</b> (ID: {telegramStatus.config?.chat_id})
+                    </p>
+                  )}
+                  {telegramStatus.status !== 'connected' && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                      Connect by starting a conversation with `@LaterOnCompanionBot`
+                    </p>
+                  )}
+                </div>
+
+                {/* White-Label Custom Bot Settings */}
+                <div style={{
+                  padding: '16px', marginBottom: '20px',
+                  border: '1px solid var(--border)', background: 'white',
+                  borderRadius: '0px'
+                }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>
+                    White-Label Custom Bot (Optional)
+                  </h4>
+                  <div className="input-group" style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>BOT API TOKEN</label>
+                    <input
+                      type="password"
+                      placeholder="e.g. 123456789:ABCdef..."
+                      value={customTelegramToken}
+                      onChange={e => setCustomTelegramToken(e.target.value)}
+                      style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.85rem' }}
+                    />
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.2' }}>
+                      To send messages from your own custom bot name. Create one via <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@BotFather</a>.
+                    </p>
+                  </div>
+
+                  {telegramTestBotResult && (
+                    <div style={{
+                      padding: '8px 12px', marginBottom: '12px',
+                      background: telegramTestBotResult.success ? '#f0fdf4' : '#fef2f2',
+                      border: telegramTestBotResult.success ? '1px solid #bbf7d0' : '1px solid #fecaca',
+                      fontSize: '0.75rem', color: telegramTestBotResult.success ? '#166534' : '#991b1b'
+                    }}>
+                      {telegramTestBotResult.success 
+                        ? `✓ Valid Bot: @${telegramTestBotResult.username} (${telegramTestBotResult.firstName})`
+                        : `✗ Verification failed: ${telegramTestBotResult.error}`}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={async () => {
+                        if (!customTelegramToken.trim()) return alert('Please enter a bot token first');
+                        setIsTestingTelegramBot(true);
+                        setTelegramTestBotResult(null);
+                        try {
+                          // Test token validity
+                          const testRes = await axios.post(`${API_URL}/api/telegram/test-custom-bot`, { customBotToken: customTelegramToken });
+                          if (testRes.data.success) {
+                            setTelegramTestBotResult({ success: true, username: testRes.data.username, firstName: testRes.data.firstName });
+                            // Save configuration
+                            await axios.post(`${API_URL}/api/telegram/config`, {
+                              customBotToken: customTelegramToken,
+                              botUsername: testRes.data.username
+                            });
+                            await fetchTelegramStatus();
+                            alert('Custom Telegram Bot successfully connected!');
+                          }
+                        } catch (err) {
+                          setTelegramTestBotResult({ success: false, error: err.response?.data?.error || err.message });
+                        } finally {
+                          setIsTestingTelegramBot(false);
+                        }
+                      }}
+                      disabled={isTestingTelegramBot}
+                      style={{
+                        flex: 1, padding: '10px', background: '#0088cc', color: 'white', border: 'none',
+                        fontWeight: 700, fontSize: '0.8rem', cursor: isTestingTelegramBot ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {isTestingTelegramBot ? 'Testing...' : 'Test & Save Bot'}
+                    </button>
+
+                    {telegramStatus.api_key && (
+                      <button
+                        onClick={async () => {
+                          if (window.confirm('Switch back to default LaterOn Companion Bot?')) {
+                            try {
+                              await axios.post(`${API_URL}/api/telegram/config`, { customBotToken: null, botUsername: null });
+                              setCustomTelegramToken('');
+                              setTelegramTestBotResult(null);
+                              await fetchTelegramStatus();
+                              alert('Switched back to Default Bot.');
+                            } catch (err) {
+                              alert('Failed to reset configuration.');
+                            }
+                          }
+                        }}
+                        style={{
+                          padding: '10px', background: 'white', border: '1px solid #ef4444', color: '#ef4444',
+                          fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer'
+                        }}
+                      >
+                        Reset to Default
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setShowTelegramConfig(false)}
+                    className="btn"
+                    style={{ flex: 1, background: '#f0f2f5', color: 'var(--text)', borderRadius: '0px', padding: '12px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+                  >
+                    Done
+                  </button>
+                  {telegramStatus.status === 'connected' && (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to disconnect Telegram entirely?')) {
+                          try {
+                            await axios.delete(`${API_URL}/api/integrations/telegram`);
+                            await fetchTelegramStatus();
+                            setShowTelegramConfig(false);
+                            alert('Telegram integration disconnected.');
+                          } catch (err) {
+                            alert('Failed to disconnect.');
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: '12px', background: '#fef2f2', border: '1px solid #ef4444', color: '#ef4444',
+                        fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer'
+                      }}
+                    >
+                      Disconnect Chat
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Custom Save Contact Modal */}
         <AnimatePresence>
           {showSaveModal && (
@@ -6936,16 +7277,16 @@ Looking forward to connecting!`;
                                     type="date"
                                     value={reminderForm.scheduled_at ? (() => {
                                       const d = new Date(reminderForm.scheduled_at);
-                                      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                                      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                     })() : ''}
                                     min={(() => {
                                       const t = new Date();
-                                      return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+                                      return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
                                     })()}
                                     onChange={e => {
                                       const [y, m, d] = e.target.value.split('-');
                                       const prev = reminderForm.scheduled_at ? new Date(reminderForm.scheduled_at) : new Date();
-                                      prev.setFullYear(Number(y), Number(m)-1, Number(d));
+                                      prev.setFullYear(Number(y), Number(m) - 1, Number(d));
                                       setReminderForm({ ...reminderForm, scheduled_at: new Date(prev) });
                                     }}
                                     style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
@@ -6954,7 +7295,7 @@ Looking forward to connecting!`;
                                     type="time"
                                     value={reminderForm.scheduled_at ? (() => {
                                       const d = new Date(reminderForm.scheduled_at);
-                                      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                                      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
                                     })() : ''}
                                     onChange={e => {
                                       const [h, min] = e.target.value.split(':');
@@ -6971,16 +7312,16 @@ Looking forward to connecting!`;
                                     type="date"
                                     value={scheduledDate ? (() => {
                                       const d = new Date(scheduledDate);
-                                      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                                      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                     })() : ''}
                                     min={(() => {
                                       const t = new Date();
-                                      return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+                                      return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
                                     })()}
                                     onChange={e => {
                                       const [y, m, d] = e.target.value.split('-');
                                       const prev = scheduledDate ? new Date(scheduledDate) : new Date();
-                                      prev.setFullYear(Number(y), Number(m)-1, Number(d));
+                                      prev.setFullYear(Number(y), Number(m) - 1, Number(d));
                                       setScheduledDate(new Date(prev));
                                     }}
                                     style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
@@ -6989,7 +7330,7 @@ Looking forward to connecting!`;
                                     type="time"
                                     value={scheduledDate ? (() => {
                                       const d = new Date(scheduledDate);
-                                      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                                      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
                                     })() : ''}
                                     onChange={e => {
                                       const [h, min] = e.target.value.split(':');
@@ -7384,7 +7725,7 @@ Join Link: [Auto-generated after scheduling]`}
                               alert('Please enter a reminder title');
                               return;
                             }
-                            await handleCreateReminder({ preventDefault: () => {} });
+                            await handleCreateReminder({ preventDefault: () => { } });
                             setShowMobileForm(false);
                             return;
                           }
@@ -7427,8 +7768,8 @@ Join Link: [Auto-generated after scheduling]`}
                       }}
                       disabled={isSubmittingReminder || (credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders')}
                     >
-                      {isSubmittingReminder 
-                        ? 'Scheduling...' 
+                      {isSubmittingReminder
+                        ? 'Scheduling...'
                         : (channel === 'reminders' ? (formStep === 1 ? 'Next Step' : 'Create Reminder') : (formStep === 3 ? 'Schedule Now' : 'Next Step'))}
                     </button>
                   </div>
