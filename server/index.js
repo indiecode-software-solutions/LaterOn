@@ -2113,6 +2113,77 @@ cron.schedule('*/10 * * * * *', checkAndSendMessages);
 cron.schedule('*/30 * * * * *', processDripCampaigns); // Every 30 seconds for snappier drip triggers
 
 
+// ── Reminders API Endpoints ───────────────────────────────────────────────
+
+app.get('/api/reminders', verifyToken, async (req, res) => {
+    const { data, error } = await supabaseAdmin
+        .from('reminders')
+        .select('*')
+        .eq('user_id', req.userId)
+        .order('scheduled_at', { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+});
+
+app.post('/api/reminders', verifyToken, async (req, res) => {
+    const { title, description, scheduled_at, recurrence } = req.body;
+    if (!title || !scheduled_at) {
+        return res.status(400).json({ error: 'Title and scheduled time are required' });
+    }
+
+    const { data, error } = await supabaseAdmin
+        .from('reminders')
+        .insert({
+            user_id: req.userId,
+            title,
+            description: description || null,
+            scheduled_at,
+            recurrence: recurrence || 'none',
+            status: 'pending'
+        })
+        .select()
+        .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.put('/api/reminders/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { title, description, scheduled_at, recurrence, status } = req.body;
+
+    const update = {};
+    if (title !== undefined) update.title = title;
+    if (description !== undefined) update.description = description;
+    if (scheduled_at !== undefined) update.scheduled_at = scheduled_at;
+    if (recurrence !== undefined) update.recurrence = recurrence;
+    if (status !== undefined) update.status = status;
+
+    const { data, error } = await supabaseAdmin
+        .from('reminders')
+        .update(update)
+        .eq('id', id)
+        .eq('user_id', req.userId)
+        .select()
+        .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.delete('/api/reminders/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabaseAdmin
+        .from('reminders')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', req.userId);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+});
+
 // ── Razorpay: Create Order ───────────────────────────────────────────────────
 app.post('/api/credits/order', async (req, res) => {
     const { amount, credits, packageName } = req.body; // amount in paise

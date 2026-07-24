@@ -7,6 +7,11 @@
       "scopes": ["profile", "email"],
       "serverClientId": "861000551892-emlf5q1qtciqf2o5m1b3g8crd7hop343.apps.googleusercontent.com",
       "forceCodeForRefreshToken": true
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#f59e0b",
+      "sound": "beep.wav"
     }
   }
 }

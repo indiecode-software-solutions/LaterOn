@@ -4,6 +4,7 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { triggerLight, triggerMedium, triggerSuccess, triggerError, triggerSelection } from './haptics';
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 // Native Razorpay plugin — only available on Android
 const RazorpayNative = registerPlugin('RazorpayPlugin');
@@ -222,6 +223,9 @@ function Dashboard() {
   const [hoveredSchedule, setHoveredSchedule] = useState(null);
   const [editingSequenceId, setEditingSequenceId] = useState(null);
   const [aiContext, setAiContext] = useState('');
+  const [reminders, setReminders] = useState([]);
+  const [reminderForm, setReminderForm] = useState({ title: '', description: '', scheduled_at: new Date(), recurrence: 'none' });
+  const [reminderNotifPermission, setReminderNotifPermission] = useState(Notification.permission);
 
   const fetchIntegrations = async () => {
     try {
@@ -337,6 +341,8 @@ function Dashboard() {
     fetchGroups();
     fetchReplies();
     fetchIntegrations();
+    fetchReminders();
+    requestNotifPermission();
 
     socket.on('status', (newStatus) => {
       const appliedStatus = applyConnectionStatus(newStatus);
@@ -435,6 +441,32 @@ function Dashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (channel !== 'reminders') return;
+    fetchReminders();
+  }, [channel]);
+
+  useEffect(() => {
+    if (channel !== 'reminders') return;
+    const triggered = new Set();
+    const interval = setInterval(() => {
+      const now = Date.now();
+      reminders.forEach(r => {
+        if (r.status !== 'pending') return;
+        if (triggered.has(r.id)) return;
+        const scheduledAt = new Date(r.scheduled_at).getTime();
+        if (scheduledAt <= now) {
+          triggered.add(r.id);
+          showBrowserNotification(r);
+          scheduleCapacitorNotification(r);
+          axios.put(`${API_URL}/api/reminders/${r.id}`, { status: 'triggered' }).catch(() => {});
+          setReminders(prev => prev.map(p => p.id === r.id ? { ...p, status: 'triggered' } : p));
+        }
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [channel, reminders]);
 
   const isRealPhoneNumber = (waId) => {
     const value = String(waId || '');
@@ -637,6 +669,112 @@ function Dashboard() {
   const fetchAutoReplies = async () => {
     const { data, error } = await supabase.from('auto_replies').select('*');
     if (!error) setAutoReplies(data);
+  };
+
+  const fetchReminders = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/reminders`);
+      const data = res.data || [];
+      setReminders(data);
+      if (Capacitor.isNativePlatform()) {
+        const now = Date.now();
+        data.forEach(r => {
+          if (r.status === 'pending' && new Date(r.scheduled_at).getTime() > now) {
+            scheduleCapacitorNotification(r);
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch reminders:', err.message);
+    }
+  };
+
+  const requestNotifPermission = async () => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      const result = await Notification.requestPermission();
+      setReminderNotifPermission(result);
+    }
+  };
+
+  const handleCreateReminder = async (e) => {
+    e.preventDefault();
+    triggerMedium();
+    if (!reminderForm.title.trim()) {
+      triggerError();
+      alert('Please enter a reminder title');
+      return;
+    }
+    try {
+      const res = await axios.post(`${API_URL}/api/reminders`, {
+        title: reminderForm.title,
+        description: reminderForm.description,
+        scheduled_at: reminderForm.scheduled_at.toISOString(),
+        recurrence: reminderForm.recurrence
+      });
+      const newReminder = res.data;
+      setReminderForm({ title: '', description: '', scheduled_at: new Date(), recurrence: 'none' });
+      fetchReminders();
+      triggerSuccess();
+      if (newReminder && new Date(newReminder.scheduled_at).getTime() > Date.now()) {
+        scheduleCapacitorNotification(newReminder);
+      }
+    } catch (err) {
+      triggerError();
+      alert('Failed to create reminder: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleDeleteReminder = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/reminders/${id}`);
+      fetchReminders();
+      // Cancel any local scheduled notification
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const notifId = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+          await LocalNotifications.cancel({ notifications: [{ id: notifId }] });
+        } catch (e) { /* ignore */ }
+      }
+    } catch (err) {
+      alert('Failed to delete reminder');
+    }
+  };
+
+  const scheduleCapacitorNotification = async (reminder) => {
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      const notifId = reminder.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      await LocalNotifications.schedule({
+        notifications: [{
+          title: 'LaterOn Reminder',
+          body: reminder.title,
+          id: notifId,
+          schedule: { at: new Date(reminder.scheduled_at) },
+          extra: { reminderId: reminder.id }
+        }]
+      });
+    } catch (err) {
+      console.error('Failed to schedule capacitor notification:', err);
+    }
+  };
+
+  const showBrowserNotification = (reminder) => {
+    if (reminderNotifPermission !== 'granted') return;
+    try {
+      const n = new Notification('LaterOn Reminder', {
+        body: reminder.title,
+        icon: '/favicon.ico',
+        tag: reminder.id
+      });
+      n.onclick = () => {
+        window.focus();
+        n.close();
+      };
+      setTimeout(() => n.close(), 10000);
+    } catch (err) {
+      console.error('Failed to show browser notification:', err);
+    }
   };
 
   const fetchSequences = async () => {
@@ -2131,7 +2269,6 @@ Looking forward to connecting!`;
 
                           {channel === 'reminders' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
-                              {/* Reminder List Placeholder */}
                               <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -2140,79 +2277,160 @@ Looking forward to connecting!`;
                                 border: '1px solid var(--border)',
                                 padding: '16px'
                               }}>
-                                <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Reminders</h5>
-
-                                <div style={{
-                                  padding: '12px',
-                                  background: '#fffbeb',
-                                  border: '1px solid #fef3c7',
-                                  borderLeft: '4px solid #f59e0b',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center'
-                                }}>
-                                  <div>
-                                    <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400e', margin: '0 0 2px 0' }}>Call with Rohan</p>
-                                    <p style={{ fontSize: '0.7rem', color: '#b45309', margin: 0 }}>Today, 3:00 PM</p>
-                                  </div>
-                                  <span style={{ fontSize: '0.65rem', background: 'white', padding: '3px 8px', border: '1px solid #f59e0b', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Today</span>
-                                </div>
-
-                                <div style={{
-                                  padding: '12px',
-                                  background: '#fffbeb',
-                                  border: '1px solid #fef3c7',
-                                  borderLeft: '4px solid #f59e0b',
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center'
-                                }}>
-                                  <div>
-                                    <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400e', margin: '0 0 2px 0' }}>Review App Blueprint</p>
-                                    <p style={{ fontSize: '0.7rem', color: '#b45309', margin: 0 }}>Tomorrow, 10:00 AM</p>
-                                  </div>
-                                  <span style={{ fontSize: '0.65rem', background: 'white', padding: '3px 8px', border: '1px solid #f59e0b', color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Tomorrow</span>
-                                </div>
+                                <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Create Reminder</h5>
+                                <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                  <input
+                                    type="text"
+                                    placeholder="Reminder title"
+                                    value={reminderForm.title}
+                                    onChange={e => setReminderForm({ ...reminderForm, title: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem' }}
+                                  />
+                                  <textarea
+                                    placeholder="Description (optional)"
+                                    value={reminderForm.description}
+                                    onChange={e => setReminderForm({ ...reminderForm, description: e.target.value })}
+                                    rows={2}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+                                  />
+                                  <DatePicker
+                                    selected={reminderForm.scheduled_at}
+                                    onChange={(date) => setReminderForm({ ...reminderForm, scheduled_at: date })}
+                                    showTimeSelect
+                                    timeFormat="h:mm aa"
+                                    timeIntervals={5}
+                                    timeCaption="Time"
+                                    dateFormat="MMMM d, yyyy h:mm aa"
+                                    customInput={<CustomDateInput />}
+                                    minDate={new Date()}
+                                  />
+                                  <select
+                                    value={reminderForm.recurrence}
+                                    onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                  >
+                                    <option value="none">Does not repeat</option>
+                                    <option value="daily">Every day</option>
+                                    <option value="weekly">Every week</option>
+                                    <option value="monthly">Every month</option>
+                                  </select>
+                                  <button
+                                    type="submit"
+                                    style={{
+                                      width: '100%',
+                                      padding: '12px',
+                                      background: '#f59e0b',
+                                      color: 'white',
+                                      fontWeight: 800,
+                                      fontSize: '0.9rem',
+                                      border: 'none',
+                                      borderRadius: '0px',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 4px 12px rgba(245,158,11,0.2)',
+                                      transition: 'all 0.2s',
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.5px'
+                                    }}
+                                    onMouseOver={e => e.currentTarget.style.background = '#d97706'}
+                                    onMouseOut={e => e.currentTarget.style.background = '#f59e0b'}
+                                  >
+                                    Create Reminder
+                                  </button>
+                                </form>
                               </div>
-
-                              <button
-                                onClick={() => alert('Reminders coming soon!')}
-                                style={{
-                                  width: '100%',
-                                  padding: '14px',
-                                  background: '#f59e0b',
-                                  color: 'white',
-                                  fontWeight: 800,
-                                  fontSize: '0.9rem',
-                                  border: 'none',
-                                  borderRadius: '0px',
-                                  cursor: 'pointer',
-                                  boxShadow: '0 4px 12px rgba(245,158,11,0.2)',
-                                  transition: 'all 0.2s',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px'
-                                }}
-                                onMouseOver={e => e.currentTarget.style.background = '#d97706'}
-                                onMouseOut={e => e.currentTarget.style.background = '#f59e0b'}
-                              >
-                                Create Reminder
-                              </button>
 
                               <div style={{
-                                padding: '16px',
-                                border: '1px dashed #fef3c7',
-                                borderRadius: '0px',
-                                background: '#fffdf5',
-                                textAlign: 'center',
                                 display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                color: '#b45309'
+                                flexDirection: 'column',
+                                gap: '12px',
+                                background: 'white',
+                                border: '1px solid var(--border)',
+                                padding: '16px'
                               }}>
-                                <Bell size={14} />
-                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Next reminder: Call with Rohan in 2h</span>
+                                <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                  Active Reminders ({reminders.filter(r => r.status === 'pending').length})
+                                </h5>
+                                {reminders.filter(r => r.status === 'pending').length === 0 ? (
+                                  <div style={{
+                                    padding: '12px',
+                                    background: '#fffbeb',
+                                    border: '1px dashed #fef3c7',
+                                    textAlign: 'center',
+                                    color: '#b45309',
+                                    fontSize: '0.8rem'
+                                  }}>
+                                    No upcoming reminders. Create one above!
+                                  </div>
+                                ) : (
+                                  reminders.filter(r => r.status === 'pending').sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at)).map(r => {
+                                    const isOverdue = new Date(r.scheduled_at) <= new Date();
+                                    return (
+                                      <div key={r.id} style={{
+                                        padding: '12px',
+                                        background: isOverdue ? '#fef2f2' : '#fffbeb',
+                                        border: `1px solid ${isOverdue ? '#fecaca' : '#fef3c7'}`,
+                                        borderLeft: `4px solid ${isOverdue ? '#ef4444' : '#f59e0b'}`,
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'flex-start',
+                                        gap: '8px'
+                                      }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                          <p style={{ fontSize: '0.85rem', fontWeight: 800, color: isOverdue ? '#991b1b' : '#92400e', margin: '0 0 2px 0', wordBreak: 'break-word' }}>{r.title}</p>
+                                          {r.description && <p style={{ fontSize: '0.7rem', color: isOverdue ? '#b91c1c' : '#b45309', margin: '0 0 4px 0', wordBreak: 'break-word' }}>{r.description}</p>}
+                                          <p style={{ fontSize: '0.7rem', color: isOverdue ? '#dc2626' : '#d97706', margin: 0 }}>
+                                            {format(new Date(r.scheduled_at), 'MMM d, h:mm aa')}
+                                            {r.recurrence !== 'none' && ` (${r.recurrence})`}
+                                            {isOverdue && ' — Overdue'}
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteReminder(r.id)}
+                                          style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#ef4444',
+                                            padding: '4px',
+                                            flexShrink: 0
+                                          }}
+                                          title="Delete reminder"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
+                                    );
+                                  })
+                                )}
                               </div>
+
+                              {reminderNotifPermission === 'default' && (
+                                <div style={{
+                                  padding: '12px',
+                                  border: '1px dashed #f59e0b',
+                                  background: '#fffbeb',
+                                  textAlign: 'center',
+                                  fontSize: '0.75rem',
+                                  color: '#92400e'
+                                }}>
+                                  <button
+                                    type="button"
+                                    onClick={requestNotifPermission}
+                                    style={{
+                                      background: '#f59e0b',
+                                      color: 'white',
+                                      border: 'none',
+                                      padding: '8px 16px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      fontSize: '0.75rem'
+                                    }}
+                                  >
+                                    Enable Desktop Notifications
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
