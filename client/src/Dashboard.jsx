@@ -225,7 +225,7 @@ function Dashboard() {
   const [aiContext, setAiContext] = useState('');
   const [reminders, setReminders] = useState([]);
   const [reminderForm, setReminderForm] = useState({ title: '', description: '', scheduled_at: new Date(), recurrence: 'none' });
-  const [reminderNotifPermission, setReminderNotifPermission] = useState(Notification.permission);
+  const [reminderNotifPermission, setReminderNotifPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default');
 
   const fetchIntegrations = async () => {
     try {
