@@ -2250,7 +2250,7 @@ Looking forward to connecting!`;
                       ) : null}
 
                       {['telegram', 'instagram', 'reminders'].includes(channel) ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px', flex: 1, overflowY: 'auto' }}>
+                        <>
                           {channel === 'telegram' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
                               <div style={{
@@ -2484,7 +2484,7 @@ Looking forward to connecting!`;
                               )}
                             </div>
                           )}
-                        </div>
+                        </>
                       ) : (
                         <form onSubmit={handleSubmit} style={{ display: hoveredSchedule ? 'none' : 'flex', flexDirection: 'column', flex: 1, height: '100%' }}>
                           {/* Desktop Step Indicator */}
