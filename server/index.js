@@ -2170,6 +2170,19 @@ async function checkAndSendReminders() {
 
         for (const reminder of triggeredReminders) {
             try {
+                // ── CRITICAL: Mark as 'triggering' FIRST to prevent double sends ──
+                // If the cron fires again before we finish, this prevents re-processing
+                const { error: lockErr } = await supabaseAdmin
+                    .from('reminders')
+                    .update({ status: 'triggering' })
+                    .eq('id', reminder.id)
+                    .eq('status', 'pending'); // Only update if still pending (optimistic lock)
+
+                if (lockErr) {
+                    console.error(`[Reminders Worker] Failed to lock reminder ${reminder.id}, skipping:`, lockErr.message);
+                    continue;
+                }
+
                 // Fetch registered devices for this user
                 const { data: devices, error: devErr } = await supabaseAdmin
                     .from('user_devices')
@@ -2178,34 +2191,38 @@ async function checkAndSendReminders() {
 
                 if (devErr) {
                     console.error(`[Reminders Worker] Error fetching devices for user ${reminder.user_id}:`, devErr.message);
-                    continue;
                 }
 
                 if (devices && devices.length > 0) {
                     const tokens = devices.map(d => d.device_token);
-                    
+
+                    // Build notification body: title + truncated description
+                    const MAX_DESC_CHARS = 100;
+                    let notifBody = reminder.title;
+                    if (reminder.description && reminder.description.trim()) {
+                        const desc = reminder.description.trim();
+                        const truncated = desc.length > MAX_DESC_CHARS
+                            ? desc.slice(0, MAX_DESC_CHARS) + '…'
+                            : desc;
+                        notifBody = `${reminder.title}\n${truncated}`;
+                    }
+
                     // Dispatch notifications via Firebase Cloud Messaging if initialized
                     if (fcmMessaging) {
-                        const messagePayload = {
+                        console.log(`[Reminders Worker] Dispatching push to ${tokens.length} devices for user ${reminder.user_id}`);
+
+                        const response = await fcmMessaging.sendEachForMulticast({
+                            tokens: tokens,
                             notification: {
                                 title: '🔔 LaterOn Reminder',
-                                body: reminder.title,
+                                body: notifBody,
                             },
                             data: {
                                 reminderId: reminder.id,
                                 description: reminder.description || ''
                             }
-                        };
-                        
-                        console.log(`[Reminders Worker] Dispatching push to ${tokens.length} devices for user ${reminder.user_id}`);
-                        
-                        // Send multicast to all tokens
-                        const response = await fcmMessaging.sendEachForMulticast({
-                            tokens: tokens,
-                            notification: messagePayload.notification,
-                            data: messagePayload.data
                         });
-                        console.log(`[Reminders Worker] FCM Multicast success count: ${response.successCount}, failure count: ${response.failureCount}`);
+                        console.log(`[Reminders Worker] FCM result: ${response.successCount} sent, ${response.failureCount} failed`);
                     } else {
                         console.log(`[Reminders Worker] FCM not initialized. Bypassing push send for user ${reminder.user_id}.`);
                     }
@@ -2213,7 +2230,7 @@ async function checkAndSendReminders() {
                     console.log(`[Reminders Worker] No devices registered for user ${reminder.user_id}.`);
                 }
 
-                // Handle status update and recurrence rules
+                // ── Update final status and recurrence ──
                 let nextStatus = 'triggered';
                 let nextScheduledAt = null;
 
