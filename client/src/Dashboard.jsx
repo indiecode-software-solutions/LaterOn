@@ -148,7 +148,7 @@ const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
 };
 
 // ── Instagram Sidebar ── proper component to respect Rules of Hooks ──────────
-function InstagramSidebar({ session, channel }) {
+function InstagramSidebar({ token, channel }) {
   const [igStatus, setIgStatus] = React.useState(null);
   const [igTab, setIgTab] = React.useState('schedule');
   const [igPosts, setIgPosts] = React.useState([]);
@@ -159,7 +159,7 @@ function InstagramSidebar({ session, channel }) {
   const [igConnecting, setIgConnecting] = React.useState(false);
   const [igStatusLoading, setIgStatusLoading] = React.useState(true);
 
-  const authToken = session?.access_token;
+  const authToken = token;
 
   React.useEffect(() => {
     setIgStatusLoading(true);
@@ -2959,7 +2959,7 @@ Looking forward to connecting!`;
                           )}
 
                           {channel === 'instagram' && (
-                            <InstagramSidebar session={session} channel={channel} />
+                            <InstagramSidebar token={token} channel={channel} />
                           )}
 
                           {channel === 'reminders' && (
