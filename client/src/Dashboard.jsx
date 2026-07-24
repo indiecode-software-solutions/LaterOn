@@ -2385,34 +2385,17 @@ Looking forward to connecting!`;
                                 </>
                               ) : (
                                 <>
-                                  {/* Step Indicator */}
-                                  <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    background: '#f8fafc',
-                                    padding: '12px 16px',
-                                    border: '1px solid var(--border)',
-                                    marginBottom: '16px'
-                                  }}>
-                                    <div>
-                                      <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0088cc', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>1. SCHEDULING</p>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '3px' }}>
-                                      <div style={{ width: '20px', height: '4px', background: '#0088cc' }} />
-                                      <div style={{ width: '20px', height: '4px', background: '#e2e8f0' }} />
-                                    </div>
-                                  </div>
-
-                                  {/* Active Scheduler Wizard step for Telegram */}
+                                  {/* Active Scheduler for Telegram */}
                                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TARGET CHAT</label>
-                                      <input
-                                        type="text"
-                                        value={telegramStatus.config?.chat_title || 'Personal Chat'}
-                                        disabled
-                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: '#f8fafc', fontSize: '0.85rem', outline: 'none', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>MESSAGE</label>
+                                      <textarea
+                                        placeholder="Write your telegram message here..."
+                                        value={formData.message}
+                                        onChange={e => setFormData({ ...formData, message: e.target.value })}
+                                        rows={4}
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+                                        required
                                       />
                                     </div>
 
@@ -2463,7 +2446,7 @@ Looking forward to connecting!`;
                                         marginTop: '12px'
                                       }}
                                     >
-                                      {loading ? 'Scheduling...' : 'Next: Message Content ➔'}
+                                      {loading ? 'Scheduling...' : 'Schedule Telegram Message'}
                                     </button>
                                   </form>
                                 </>
