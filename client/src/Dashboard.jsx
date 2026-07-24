@@ -227,6 +227,7 @@ function Dashboard() {
   const [reminders, setReminders] = useState([]);
   const [reminderForm, setReminderForm] = useState({ title: '', description: '', scheduled_at: new Date(), recurrence: 'none' });
   const [reminderNotifPermission, setReminderNotifPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default');
+  const [isSubmittingReminder, setIsSubmittingReminder] = useState(false);
 
   const fetchIntegrations = async () => {
     try {
@@ -788,12 +789,14 @@ function Dashboard() {
 
   const handleCreateReminder = async (e) => {
     e.preventDefault();
+    if (isSubmittingReminder) return;
     triggerMedium();
     if (!reminderForm.title.trim()) {
       triggerError();
       alert('Please enter a reminder title');
       return;
     }
+    setIsSubmittingReminder(true);
     try {
       const res = await axios.post(`${API_URL}/api/reminders`, {
         title: reminderForm.title,
@@ -811,6 +814,8 @@ function Dashboard() {
     } catch (err) {
       triggerError();
       alert('Failed to create reminder: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsSubmittingReminder(false);
     }
   };
 
@@ -2419,94 +2424,31 @@ Looking forward to connecting!`;
                                   </select>
                                   <button
                                     type="submit"
+                                    disabled={isSubmittingReminder}
                                     style={{
                                       width: '100%',
                                       padding: '12px',
-                                      background: '#f59e0b',
+                                      background: isSubmittingReminder ? '#d97706' : '#f59e0b',
                                       color: 'white',
                                       fontWeight: 800,
                                       fontSize: '0.9rem',
                                       border: 'none',
                                       borderRadius: '0px',
-                                      cursor: 'pointer',
+                                      cursor: isSubmittingReminder ? 'not-allowed' : 'pointer',
                                       boxShadow: '0 4px 12px rgba(245,158,11,0.2)',
                                       transition: 'all 0.2s',
                                       textTransform: 'uppercase',
-                                      letterSpacing: '0.5px'
+                                      letterSpacing: '0.5px',
+                                      opacity: isSubmittingReminder ? 0.8 : 1
                                     }}
-                                    onMouseOver={e => e.currentTarget.style.background = '#d97706'}
-                                    onMouseOut={e => e.currentTarget.style.background = '#f59e0b'}
+                                    onMouseOver={e => { if (!isSubmittingReminder) e.currentTarget.style.background = '#d97706'; }}
+                                    onMouseOut={e => { if (!isSubmittingReminder) e.currentTarget.style.background = '#f59e0b'; }}
                                   >
-                                    Create Reminder
+                                    {isSubmittingReminder ? 'Scheduling...' : 'Create Reminder'}
                                   </button>
                                 </form>
                               </div>
 
-                              <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                background: 'white',
-                                border: '1px solid var(--border)',
-                                padding: '16px'
-                              }}>
-                                <h5 style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                  Active Reminders ({reminders.filter(r => r.status === 'pending').length})
-                                </h5>
-                                {reminders.filter(r => r.status === 'pending').length === 0 ? (
-                                  <div style={{
-                                    padding: '12px',
-                                    background: '#fffbeb',
-                                    border: '1px dashed #fef3c7',
-                                    textAlign: 'center',
-                                    color: '#b45309',
-                                    fontSize: '0.8rem'
-                                  }}>
-                                    No upcoming reminders. Create one above!
-                                  </div>
-                                ) : (
-                                  reminders.filter(r => r.status === 'pending').sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at)).map(r => {
-                                    const isOverdue = new Date(r.scheduled_at) <= new Date();
-                                    return (
-                                      <div key={r.id} style={{
-                                        padding: '12px',
-                                        background: isOverdue ? '#fef2f2' : '#fffbeb',
-                                        border: `1px solid ${isOverdue ? '#fecaca' : '#fef3c7'}`,
-                                        borderLeft: `4px solid ${isOverdue ? '#ef4444' : '#f59e0b'}`,
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'flex-start',
-                                        gap: '8px'
-                                      }}>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                          <p style={{ fontSize: '0.85rem', fontWeight: 800, color: isOverdue ? '#991b1b' : '#92400e', margin: '0 0 2px 0', wordBreak: 'break-word' }}>{r.title}</p>
-                                          {r.description && <p style={{ fontSize: '0.7rem', color: isOverdue ? '#b91c1c' : '#b45309', margin: '0 0 4px 0', wordBreak: 'break-word' }}>{r.description}</p>}
-                                          <p style={{ fontSize: '0.7rem', color: isOverdue ? '#dc2626' : '#d97706', margin: 0 }}>
-                                            {format(new Date(r.scheduled_at), 'MMM d, h:mm aa')}
-                                            {r.recurrence !== 'none' && ` (${r.recurrence})`}
-                                            {isOverdue && ' — Overdue'}
-                                          </p>
-                                        </div>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleDeleteReminder(r.id)}
-                                          style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            color: '#ef4444',
-                                            padding: '4px',
-                                            flexShrink: 0
-                                          }}
-                                          title="Delete reminder"
-                                        >
-                                          <Trash2 size={14} />
-                                        </button>
-                                      </div>
-                                    );
-                                  })
-                                )}
-                              </div>
 
                               {reminderNotifPermission === 'default' && (
                                 <div style={{
@@ -7477,9 +7419,11 @@ Join Link: [Auto-generated after scheduling]`}
                         border: 'none',
                         opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders' ? 0.5 : 1
                       }}
-                      disabled={credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders'}
+                      disabled={isSubmittingReminder || (credits.total_balance < getEstimatedCredits() && formStep === 3 && channel !== 'reminders')}
                     >
-                      {channel === 'reminders' ? (formStep === 1 ? 'Next Step' : 'Create Reminder') : (formStep === 3 ? 'Schedule Now' : 'Next Step')}
+                      {isSubmittingReminder 
+                        ? 'Scheduling...' 
+                        : (channel === 'reminders' ? (formStep === 1 ? 'Next Step' : 'Create Reminder') : (formStep === 3 ? 'Schedule Now' : 'Next Step'))}
                     </button>
                   </div>
                 </div>
