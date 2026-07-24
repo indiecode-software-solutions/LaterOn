@@ -240,6 +240,7 @@ function Dashboard() {
   const [telegramNewChatId, setTelegramNewChatId] = useState('');
   const [telegramNewChatTitle, setTelegramNewChatTitle] = useState('');
   const [isSavingTelegramChat, setIsSavingTelegramChat] = useState(false);
+  const [showTelegramAddChat, setShowTelegramAddChat] = useState(false);
 
   const fetchTelegramStatus = async () => {
     try {
@@ -2164,7 +2165,7 @@ Looking forward to connecting!`;
                         : channel === 'calendar'
                           ? 'Event Sync Active'
                           : channel === 'telegram'
-                            ? (telegramStatus.status === 'connected' ? (telegramStatus.config?.chat_title || 'Connected') : 'Ready to Connect')
+                            ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'custom_bot'}` : 'Ready to Connect')
                             : channel === 'instagram'
                               ? 'Ready to Connect'
                               : channel === 'reminders'
@@ -2193,29 +2194,6 @@ Looking forward to connecting!`;
                       }}
                     >
                       <Mail size={14} />
-                      Settings
-                    </button>
-                  ) : channel === 'telegram' ? (
-                    <button
-                      onClick={() => setShowTelegramConfig(true)}
-                      style={{
-                        height: '32px',
-                        padding: '0 10px',
-                        border: '1px solid #cbd5e1',
-                        background: 'white',
-                        color: '#0088cc',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        borderRadius: '0px'
-                      }}
-                    >
-                      <Settings size={14} />
                       Settings
                     </button>
                   ) : status === 'connected' && channel === 'whatsapp' && (
@@ -2516,16 +2494,98 @@ Looking forward to connecting!`;
                                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
                                       <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TARGET CHAT</label>
-                                      <select
-                                        value={selectedTelegramChat}
-                                        onChange={e => setSelectedTelegramChat(e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
-                                      >
-                                        {telegramStatus.config.chats.map(c => (
-                                          <option key={c.id} value={c.id}>{c.title}</option>
-                                        ))}
-                                      </select>
+                                      <div style={{ display: 'flex', gap: '6px' }}>
+                                        <select
+                                          value={selectedTelegramChat}
+                                          onChange={e => setSelectedTelegramChat(e.target.value)}
+                                          style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                        >
+                                          {telegramStatus.config.chats.map(c => (
+                                            <option key={c.id} value={c.id}>{c.title}</option>
+                                          ))}
+                                        </select>
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowTelegramAddChat(!showTelegramAddChat)}
+                                          title="Add new chat target"
+                                          style={{ padding: '10px', background: 'white', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#0088cc' }}
+                                        >
+                                          {showTelegramAddChat ? '✕' : '+ Chat'}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={async () => {
+                                            if (window.confirm('Disconnect this Telegram bot and token?')) {
+                                              try {
+                                                await axios.delete(`${API_URL}/api/integrations/telegram`);
+                                                await fetchTelegramStatus();
+                                              } catch (err) {
+                                                alert('Failed to disconnect');
+                                              }
+                                            }
+                                          }}
+                                          title="Disconnect bot"
+                                          style={{ padding: '10px', background: 'white', border: '1px solid #ef4444', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800 }}
+                                        >
+                                          Reset
+                                        </button>
+                                      </div>
                                     </div>
+
+                                    {showTelegramAddChat && (
+                                      <div style={{
+                                        background: '#f8fafc',
+                                        padding: '12px',
+                                        border: '1px solid var(--border)',
+                                        marginBottom: '8px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px'
+                                      }}>
+                                        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>Connect New Chat target</p>
+                                        <ol style={{ fontSize: '0.7rem', color: 'var(--text-muted)', paddingLeft: '12px', margin: 0, lineHeight: '1.3' }}>
+                                          <li>Add bot <b>@{telegramStatus.config?.bot_username}</b> to group/chat.</li>
+                                          <li>Forward a message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@userinfobot</a> to get ID.</li>
+                                        </ol>
+                                        <input
+                                          type="text"
+                                          placeholder="Chat ID (e.g. 5625755071)"
+                                          value={telegramNewChatId}
+                                          onChange={e => setTelegramNewChatId(e.target.value)}
+                                          style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                                        />
+                                        <input
+                                          type="text"
+                                          placeholder="Friendly Name (e.g. Support Group)"
+                                          value={telegramNewChatTitle}
+                                          onChange={e => setTelegramNewChatTitle(e.target.value)}
+                                          style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={async () => {
+                                            if (!telegramNewChatId.trim() || !telegramNewChatTitle.trim()) {
+                                              return alert('Please fill in Chat ID and Name');
+                                            }
+                                            try {
+                                              await axios.post(`${API_URL}/api/telegram/chats`, {
+                                                chatId: telegramNewChatId.trim(),
+                                                chatTitle: telegramNewChatTitle.trim()
+                                              });
+                                              setTelegramNewChatId('');
+                                              setTelegramNewChatTitle('');
+                                              setShowTelegramAddChat(false);
+                                              await fetchTelegramStatus();
+                                            } catch (err) {
+                                              alert('Failed to register chat target');
+                                            }
+                                          }}
+                                          style={{ padding: '8px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                                        >
+                                          Save Chat
+                                        </button>
+                                      </div>
+                                    )}
 
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
                                       <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>MESSAGE</label>
@@ -6528,189 +6588,6 @@ Looking forward to connecting!`;
                   >
                     Done
                   </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Telegram Configuration Modal */}
-        <AnimatePresence>
-          {showTelegramConfig && (
-            <div style={{
-              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(11, 20, 26, 0.85)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              zIndex: 2000, backdropFilter: 'blur(4px)', padding: '20px'
-            }}>
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                style={{
-                  background: 'white', padding: '32px', borderRadius: '0px',
-                  width: '100%', maxWidth: '440px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                  <div style={{ width: '40px', height: '40px', background: '#0088cc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <TelegramIcon size={20} color="white" />
-                  </div>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0088cc' }}>Telegram Integration</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Configure your bot or connection</p>
-                  </div>
-                </div>
-
-                {/* Connection Status Detail */}
-                <div style={{
-                  padding: '16px', marginBottom: '16px',
-                  border: telegramStatus.status === 'connected' ? '2px solid #16a34a' : '1px dashed #cbd5e1',
-                  background: telegramStatus.status === 'connected' ? '#f0fdf4' : '#f8fafc',
-                  borderRadius: '0px'
-                }}>
-                  <p style={{ fontSize: '0.85rem', fontWeight: 800, color: telegramStatus.status === 'connected' ? '#166534' : 'var(--text-main)', margin: 0 }}>
-                    Status: {telegramStatus.status === 'connected' ? 'Connected' : 'Disconnected'}
-                  </p>
-                  {telegramStatus.status === 'connected' && (
-                    <p style={{ fontSize: '0.75rem', color: '#16a34a', margin: '4px 0 0' }}>
-                      Target: <b>{telegramStatus.config?.chat_title || 'Personal Chat'}</b> (ID: {telegramStatus.config?.chat_id})
-                    </p>
-                  )}
-                  {telegramStatus.status !== 'connected' && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
-                      Connect by starting a conversation with `@LaterOnCompanionBot`
-                    </p>
-                  )}
-                </div>
-
-                {/* White-Label Custom Bot Settings */}
-                <div style={{
-                  padding: '16px', marginBottom: '20px',
-                  border: '1px solid var(--border)', background: 'white',
-                  borderRadius: '0px'
-                }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>
-                    White-Label Custom Bot (Optional)
-                  </h4>
-                  <div className="input-group" style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>BOT API TOKEN</label>
-                    <input
-                      type="password"
-                      placeholder="e.g. 123456789:ABCdef..."
-                      value={customTelegramToken}
-                      onChange={e => setCustomTelegramToken(e.target.value)}
-                      style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.85rem' }}
-                    />
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.2' }}>
-                      To send messages from your own custom bot name. Create one via <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@BotFather</a>.
-                    </p>
-                  </div>
-
-                  {telegramTestBotResult && (
-                    <div style={{
-                      padding: '8px 12px', marginBottom: '12px',
-                      background: telegramTestBotResult.success ? '#f0fdf4' : '#fef2f2',
-                      border: telegramTestBotResult.success ? '1px solid #bbf7d0' : '1px solid #fecaca',
-                      fontSize: '0.75rem', color: telegramTestBotResult.success ? '#166534' : '#991b1b'
-                    }}>
-                      {telegramTestBotResult.success 
-                        ? `✓ Valid Bot: @${telegramTestBotResult.username} (${telegramTestBotResult.firstName})`
-                        : `✗ Verification failed: ${telegramTestBotResult.error}`}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={async () => {
-                        if (!customTelegramToken.trim()) return alert('Please enter a bot token first');
-                        setIsTestingTelegramBot(true);
-                        setTelegramTestBotResult(null);
-                        try {
-                          // Test token validity
-                          const testRes = await axios.post(`${API_URL}/api/telegram/test-custom-bot`, { customBotToken: customTelegramToken });
-                          if (testRes.data.success) {
-                            setTelegramTestBotResult({ success: true, username: testRes.data.username, firstName: testRes.data.firstName });
-                            // Save configuration
-                            await axios.post(`${API_URL}/api/telegram/config`, {
-                              customBotToken: customTelegramToken,
-                              botUsername: testRes.data.username
-                            });
-                            await fetchTelegramStatus();
-                            alert('Custom Telegram Bot successfully connected!');
-                          }
-                        } catch (err) {
-                          setTelegramTestBotResult({ success: false, error: err.response?.data?.error || err.message });
-                        } finally {
-                          setIsTestingTelegramBot(false);
-                        }
-                      }}
-                      disabled={isTestingTelegramBot}
-                      style={{
-                        flex: 1, padding: '10px', background: '#0088cc', color: 'white', border: 'none',
-                        fontWeight: 700, fontSize: '0.8rem', cursor: isTestingTelegramBot ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      {isTestingTelegramBot ? 'Testing...' : 'Test & Save Bot'}
-                    </button>
-
-                    {telegramStatus.api_key && (
-                      <button
-                        onClick={async () => {
-                          if (window.confirm('Switch back to default LaterOn Companion Bot?')) {
-                            try {
-                              await axios.post(`${API_URL}/api/telegram/config`, { customBotToken: null, botUsername: null });
-                              setCustomTelegramToken('');
-                              setTelegramTestBotResult(null);
-                              await fetchTelegramStatus();
-                              alert('Switched back to Default Bot.');
-                            } catch (err) {
-                              alert('Failed to reset configuration.');
-                            }
-                          }
-                        }}
-                        style={{
-                          padding: '10px', background: 'white', border: '1px solid #ef4444', color: '#ef4444',
-                          fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer'
-                        }}
-                      >
-                        Reset to Default
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => setShowTelegramConfig(false)}
-                    className="btn"
-                    style={{ flex: 1, background: '#f0f2f5', color: 'var(--text)', borderRadius: '0px', padding: '12px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
-                  >
-                    Done
-                  </button>
-                  {telegramStatus.status === 'connected' && (
-                    <button
-                      onClick={async () => {
-                        if (window.confirm('Are you sure you want to disconnect Telegram entirely?')) {
-                          try {
-                            await axios.delete(`${API_URL}/api/integrations/telegram`);
-                            await fetchTelegramStatus();
-                            setShowTelegramConfig(false);
-                            alert('Telegram integration disconnected.');
-                          } catch (err) {
-                            alert('Failed to disconnect.');
-                          }
-                        }
-                      }}
-                      style={{
-                        padding: '12px', background: '#fef2f2', border: '1px solid #ef4444', color: '#ef4444',
-                        fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer'
-                      }}
-                    >
-                      Disconnect Chat
-                    </button>
-                  )}
                 </div>
               </motion.div>
             </div>
