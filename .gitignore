@@ -30,3 +30,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Firebase credentials
+server/service-account.json

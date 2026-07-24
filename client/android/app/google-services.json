@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "648957702030",
+    "project_id": "lateron-63dee",
+    "storage_bucket": "lateron-63dee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:648957702030:android:b4bbd44ecaddac24cf7edf",
+        "android_client_info": {
+          "package_name": "com.lateron.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjrsBB0wLBh3NyUFHwMPD3fpgntHiWuYI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
