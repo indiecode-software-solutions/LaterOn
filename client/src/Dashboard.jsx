@@ -689,8 +689,11 @@ function Dashboard() {
     }
   };
 
+  const pushRegisteredRef = React.useRef(false);
+
   const registerPushNotifications = async () => {
     if (Capacitor.isNativePlatform()) {
+      if (pushRegisteredRef.current) return; // Already registered this session
       try {
         let permStatus = await PushNotifications.checkPermissions();
         if (permStatus.receive === 'prompt') {
@@ -701,7 +704,8 @@ function Dashboard() {
           return;
         }
 
-        await PushNotifications.register();
+        // Remove all existing listeners before adding new ones to prevent duplicates
+        await PushNotifications.removeAllListeners();
 
         PushNotifications.addListener('registration', async (token) => {
           console.log('[Push] Native device registered, token:', token.value);
@@ -709,7 +713,8 @@ function Dashboard() {
             await axios.post(`${API_URL}/api/devices/register`, {
               device_token: token.value,
               device_type: Capacitor.getPlatform()
-            });
+            }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+            pushRegisteredRef.current = true;
           } catch (err) {
             console.error('[Push] Failed to register native device token with backend:', err.message);
           }
@@ -726,35 +731,46 @@ function Dashboard() {
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
           console.log('[Push] Notification action performed:', notification);
         });
+
+        await PushNotifications.register();
       } catch (err) {
         console.error('[Push] Failed to initialize native push notifications:', err.message);
       }
     } else {
+      // Browser: use Firebase JS SDK for real FCM web push token
       try {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-          const registration = await navigator.serviceWorker.ready;
-          const permission = await Notification.requestPermission();
-          if (permission !== 'granted') {
-            console.warn('[Push] Browser notifications permission was denied');
-            return;
-          }
+        if (!('Notification' in window)) return;
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          console.warn('[Push] Browser notifications permission was denied');
+          return;
+        }
 
-          let subscription = await registration.pushManager.getSubscription();
-          if (!subscription) {
-            const mockToken = `web_${localStorage.getItem('token')?.slice(-30)}_${navigator.userAgent.replace(/\s+/g, '')}`;
-            await axios.post(`${API_URL}/api/devices/register`, {
-              device_token: mockToken,
-              device_type: 'web'
-            });
-            console.log('[Push] Browser device registered, mock token:', mockToken);
-          } else {
-            const tokenStr = JSON.stringify(subscription);
-            await axios.post(`${API_URL}/api/devices/register`, {
-              device_token: tokenStr,
-              device_type: 'web'
-            });
-            console.log('[Push] Browser device registered, token:', tokenStr);
-          }
+        const { initializeApp, getApps } = await import('firebase/app');
+        const { getMessaging, getToken } = await import('firebase/messaging');
+
+        const firebaseConfig = {
+          apiKey: 'AIzaSyDjrsBB0wLBh3NyUFHwMPD3fpgntHiWuYI',
+          projectId: 'lateron-63dee',
+          messagingSenderId: '648957702030',
+          appId: '1:648957702030:web:lateron_web'
+        };
+
+        const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+        const messaging = getMessaging(app);
+
+        const token = await getToken(messaging, {
+          vapidKey: process.env.VITE_FIREBASE_VAPID_KEY,
+          serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+        });
+
+        if (token) {
+          console.log('[Push] Browser FCM token:', token);
+          await axios.post(`${API_URL}/api/devices/register`, {
+            device_token: token,
+            device_type: 'web'
+          }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+          pushRegisteredRef.current = true;
         }
       } catch (err) {
         console.error('[Push] Failed to initialize browser push notifications:', err.message);
