@@ -1725,6 +1725,19 @@ Looking forward to connecting!`;
                     </div>
                   </div>
                 </div>
+                {isMobile && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '24px 0 0 0',
+                    fontSize: '0.75rem',
+                    color: 'var(--text-muted)',
+                    fontWeight: 600,
+                    borderTop: '1px solid var(--border)',
+                    marginTop: '20px'
+                  }}>
+                    App Version 1.0.0
+                  </div>
+                )}
               </div>
             ) : (channel === 'whatsapp' && !userInfo && status !== 'connected') ? (
               <div style={{
@@ -4702,7 +4715,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      Upcoming ({schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'failed')).length})
+                      Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'failed')).length})
                     </div>
                     <div
                       onClick={() => { triggerSelection(); setQueueTab('history'); }}
@@ -4717,7 +4730,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      {showServiceSelector ? 'All History' : 'History'} ({schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length})
+                      {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length})
                     </div>
                   </>
                 ) : (
@@ -5275,7 +5288,113 @@ Looking forward to connecting!`;
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <AnimatePresence>
-                    {schedules.filter(s => {
+                    {channel === 'reminders' ? (
+                      // Render reminders list on mobile
+                      reminders.filter(r => {
+                        const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (r.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+                        if (!matchesSearch) return false;
+                        if (queueTab === 'upcoming') return r.status === 'pending';
+                        return r.status !== 'pending';
+                      }).length === 0 ? (
+                        <motion.div
+                          key="empty-reminders"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          style={{
+                            textAlign: 'center',
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            padding: '40px',
+                            borderRadius: '0px',
+                            boxShadow: 'var(--shadow)',
+                            margin: '100px auto',
+                            maxWidth: '400px'
+                          }}>
+                          <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: '#fffbeb',
+                            borderRadius: '0px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            color: '#f59e0b'
+                          }}>
+                            <Bell size={32} />
+                          </div>
+                          <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
+                            {searchQuery ? 'No matching reminders' : queueTab === 'upcoming' ? 'No Upcoming Reminders' : 'No Past Reminders'}
+                          </h3>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            {searchQuery ? `We couldn't find anything matching "${searchQuery}"` : queueTab === 'upcoming'
+                              ? 'Your personal reminders will appear here.'
+                              : 'Once your reminders trigger, they will move to history.'}
+                          </p>
+                        </motion.div>
+                      ) : (
+                        reminders
+                          .filter(r => {
+                            const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              (r.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+                            if (!matchesSearch) return false;
+                            if (queueTab === 'upcoming') return r.status === 'pending';
+                            return r.status !== 'pending';
+                          })
+                          .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
+                          .map(item => (
+                            <motion.div
+                              key={item.id}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              layout
+                              style={{
+                                alignSelf: 'center',
+                                width: '100%',
+                                maxWidth: '600px',
+                                background: item.status === 'pending' ? 'white' : '#fffbeb',
+                                border: '1px solid #fef3c7',
+                                borderLeft: `4px solid ${item.status === 'pending' ? '#f59e0b' : '#d97706'}`,
+                                padding: '12px 16px',
+                                borderRadius: '0px',
+                                boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
+                                position: 'relative'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#92400e', margin: '0 0 4px 0', wordBreak: 'break-word', textAlign: 'left' }}>
+                                    {item.title}
+                                  </h4>
+                                  {item.description && (
+                                    <p style={{ fontSize: '0.8rem', color: '#b45309', margin: '0 0 6px 0', wordBreak: 'break-word', textAlign: 'left' }}>
+                                      {item.description}
+                                    </p>
+                                  )}
+                                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                    <Clock size={12} />
+                                    <span>{format(new Date(item.scheduled_at), 'PPP h:mm aa')}</span>
+                                    {item.recurrence !== 'none' && (
+                                      <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#f59e0b', fontWeight: 700 }}>
+                                        <Repeat size={10} /> {item.recurrence}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteReminder(item.id)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '4px' }}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))
+                      )
+                    ) : schedules.filter(s => {
                       if (!showServiceSelector && s.channel !== channel) return false;
                       const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
