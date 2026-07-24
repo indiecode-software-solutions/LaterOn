@@ -2431,7 +2431,7 @@ Looking forward to connecting!`;
                                       <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 800 }}>✓ Bot Online</span>
                                     </div>
                                     <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                                      <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username}</span> to your chat or group.</li>
+                                      <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username || 'your_bot_username'}</span> to your chat or group.</li>
                                       <li style={{ marginBottom: '4px' }}>Get your chat ID (e.g. forward any message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@userinfobot</a>).</li>
                                       <li>Enter chat parameters below:</li>
                                     </ol>
@@ -2458,35 +2458,56 @@ Looking forward to connecting!`;
                                       />
                                     </div>
 
-                                    <button
-                                      onClick={async () => {
-                                        if (!telegramNewChatId.trim() || !telegramNewChatTitle.trim()) {
-                                          return alert('Please fill in Chat ID and Name');
-                                        }
-                                        setIsSavingTelegramChat(true);
-                                        try {
-                                          await axios.post(`${API_URL}/api/telegram/chats`, {
-                                            chatId: telegramNewChatId.trim(),
-                                            chatTitle: telegramNewChatTitle.trim()
-                                          });
-                                          setTelegramNewChatId('');
-                                          setTelegramNewChatTitle('');
-                                          await fetchTelegramStatus();
-                                        } catch (err) {
-                                          alert('Failed to register chat target');
-                                        } finally {
-                                          setIsSavingTelegramChat(false);
-                                        }
-                                      }}
-                                      disabled={isSavingTelegramChat}
-                                      style={{
-                                        width: '100%', padding: '12px', background: '#0088cc', color: 'white', border: 'none',
-                                        fontWeight: 800, fontSize: '0.85rem', cursor: isSavingTelegramChat ? 'not-allowed' : 'pointer',
-                                        textTransform: 'uppercase', letterSpacing: '0.5px'
-                                      }}
-                                    >
-                                      {isSavingTelegramChat ? 'Adding Chat...' : 'Add Chat target'}
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                      <button
+                                        onClick={async () => {
+                                          if (!telegramNewChatId.trim() || !telegramNewChatTitle.trim()) {
+                                            return alert('Please fill in Chat ID and Name');
+                                          }
+                                          setIsSavingTelegramChat(true);
+                                          try {
+                                            await axios.post(`${API_URL}/api/telegram/chats`, {
+                                              chatId: telegramNewChatId.trim(),
+                                              chatTitle: telegramNewChatTitle.trim()
+                                            });
+                                            setTelegramNewChatId('');
+                                            setTelegramNewChatTitle('');
+                                            await fetchTelegramStatus();
+                                          } catch (err) {
+                                            alert('Failed to register chat target');
+                                          } finally {
+                                            setIsSavingTelegramChat(false);
+                                          }
+                                        }}
+                                        disabled={isSavingTelegramChat}
+                                        style={{
+                                          flex: 2, padding: '12px', background: '#0088cc', color: 'white', border: 'none',
+                                          fontWeight: 800, fontSize: '0.85rem', cursor: isSavingTelegramChat ? 'not-allowed' : 'pointer',
+                                          textTransform: 'uppercase', letterSpacing: '0.5px'
+                                        }}
+                                      >
+                                        {isSavingTelegramChat ? 'Adding Chat...' : 'Add Chat target'}
+                                      </button>
+                                      <button
+                                        onClick={async () => {
+                                          if (window.confirm('Disconnect this Telegram bot and token?')) {
+                                            try {
+                                              await axios.delete(`${API_URL}/api/integrations/telegram`);
+                                              await fetchTelegramStatus();
+                                            } catch (err) {
+                                              alert('Failed to disconnect');
+                                            }
+                                          }
+                                        }}
+                                        style={{
+                                          flex: 1, padding: '12px', background: 'none', border: '1px solid #ef4444', color: '#ef4444',
+                                          fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer',
+                                          textTransform: 'uppercase', letterSpacing: '0.5px'
+                                        }}
+                                      >
+                                        Reset
+                                      </button>
+                                    </div>
                                   </div>
                                 </>
                               ) : (
