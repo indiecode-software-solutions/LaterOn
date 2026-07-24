@@ -5396,9 +5396,9 @@ Looking forward to connecting!`;
                       )
                     ) : schedules.filter(s => {
                       if (!showServiceSelector && s.channel !== channel) return false;
-                      const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        getContactName(s.phone.split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
+                      const matchesSearch = (s.phone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                       if (!matchesSearch) return false;
                       if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
                       if (historyFilter !== 'all' && s.status !== historyFilter) return false;
@@ -5504,9 +5504,9 @@ Looking forward to connecting!`;
                       schedules
                         .filter(s => {
                           if (!showServiceSelector && s.channel !== channel) return false;
-                          const matchesSearch = s.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            s.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            getContactName(s.phone.split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
+                          const matchesSearch = (s.phone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                           if (!matchesSearch) return false;
                           if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
                           if (historyFilter !== 'all' && s.status !== historyFilter) return false;
