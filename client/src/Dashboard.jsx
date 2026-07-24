@@ -6963,51 +6963,113 @@ Looking forward to connecting!`;
                             </div>
 
                             <div className="input-group">
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#ea4335' : 'var(--primary-dark)', margin: 0, display: 'block' }}>PICK DATE & TIME</label>
-                                <button
-                                  type="button"
-                                  onClick={() => setIs24Hour(!is24Hour)}
-                                  style={{
-                                    fontSize: '0.65rem',
-                                    padding: '4px 10px',
-                                    borderRadius: '0px',
-                                    background: 'white',
-                                    border: '1px solid var(--border)',
-                                    fontWeight: 700,
-                                    color: channel === 'email' ? '#ea4335' : 'var(--primary-dark)',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  {is24Hour ? 'Switch to 12H' : 'Switch to 24H'}
-                                </button>
-                              </div>
-                              <DatePicker
-                                selected={scheduledDate}
-                                onChange={(date) => setScheduledDate(date)}
-                                showTimeSelect
-                                timeFormat={is24Hour ? "HH:mm" : "h:mm aa"}
-                                timeIntervals={15}
-                                timeCaption="Time"
-                                dateFormat={is24Hour ? "MMMM d, yyyy HH:mm" : "MMMM d, yyyy h:mm aa"}
-                                customInput={<CustomDateInput />}
-                                minDate={new Date()}
-                              />
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: channel === 'reminders' ? '#f59e0b' : (channel === 'email' ? '#ea4335' : 'var(--primary-dark)'), marginBottom: '8px', display: 'block' }}>
+                                {channel === 'reminders' ? 'REMINDER DATE & TIME' : 'PICK DATE & TIME'}
+                              </label>
+                              {channel === 'reminders' ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                  <input
+                                    type="date"
+                                    value={reminderForm.scheduled_at ? (() => {
+                                      const d = new Date(reminderForm.scheduled_at);
+                                      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                                    })() : ''}
+                                    min={(() => {
+                                      const t = new Date();
+                                      return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+                                    })()}
+                                    onChange={e => {
+                                      const [y, m, d] = e.target.value.split('-');
+                                      const prev = reminderForm.scheduled_at ? new Date(reminderForm.scheduled_at) : new Date();
+                                      prev.setFullYear(Number(y), Number(m)-1, Number(d));
+                                      setReminderForm({ ...reminderForm, scheduled_at: new Date(prev) });
+                                    }}
+                                    style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
+                                  />
+                                  <input
+                                    type="time"
+                                    value={reminderForm.scheduled_at ? (() => {
+                                      const d = new Date(reminderForm.scheduled_at);
+                                      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                                    })() : ''}
+                                    onChange={e => {
+                                      const [h, min] = e.target.value.split(':');
+                                      const prev = reminderForm.scheduled_at ? new Date(reminderForm.scheduled_at) : new Date();
+                                      prev.setHours(Number(h), Number(min), 0, 0);
+                                      setReminderForm({ ...reminderForm, scheduled_at: new Date(prev) });
+                                    }}
+                                    style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                  <input
+                                    type="date"
+                                    value={scheduledDate ? (() => {
+                                      const d = new Date(scheduledDate);
+                                      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                                    })() : ''}
+                                    min={(() => {
+                                      const t = new Date();
+                                      return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+                                    })()}
+                                    onChange={e => {
+                                      const [y, m, d] = e.target.value.split('-');
+                                      const prev = scheduledDate ? new Date(scheduledDate) : new Date();
+                                      prev.setFullYear(Number(y), Number(m)-1, Number(d));
+                                      setScheduledDate(new Date(prev));
+                                    }}
+                                    style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
+                                  />
+                                  <input
+                                    type="time"
+                                    value={scheduledDate ? (() => {
+                                      const d = new Date(scheduledDate);
+                                      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                                    })() : ''}
+                                    onChange={e => {
+                                      const [h, min] = e.target.value.split(':');
+                                      const prev = scheduledDate ? new Date(scheduledDate) : new Date();
+                                      prev.setHours(Number(h), Number(min), 0, 0);
+                                      setScheduledDate(new Date(prev));
+                                    }}
+                                    style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                              )}
                             </div>
 
-                            <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}><Repeat size={14} /> REPEAT CYCLE</label>
-                              <select
-                                value={formData.recurrence}
-                                onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
-                                style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', background: 'white', fontSize: '1rem' }}
-                              >
-                                <option value="none">Does not repeat</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                              </select>
-                            </div>
+                            {channel === 'reminders' && (
+                              <div className="input-group">
+                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>REPEAT</label>
+                                <select
+                                  value={reminderForm.recurrence}
+                                  onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
+                                  style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', background: 'white', fontSize: '1rem', outline: 'none', cursor: 'pointer' }}
+                                >
+                                  <option value="none">Does not repeat</option>
+                                  <option value="daily">Every day</option>
+                                  <option value="weekly">Every week</option>
+                                  <option value="monthly">Every month</option>
+                                </select>
+                              </div>
+                            )}
+
+                            {channel !== 'reminders' && (
+                              <div className="input-group">
+                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}><Repeat size={14} /> REPEAT CYCLE</label>
+                                <select
+                                  value={formData.recurrence}
+                                  onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
+                                  style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', background: 'white', fontSize: '1rem' }}
+                                >
+                                  <option value="none">Does not repeat</option>
+                                  <option value="daily">Daily</option>
+                                  <option value="weekly">Weekly</option>
+                                  <option value="monthly">Monthly</option>
+                                </select>
+                              </div>
+                            )}
                           </>
                         )}
                       </motion.div>
