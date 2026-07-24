@@ -5381,7 +5381,7 @@ Looking forward to connecting!`;
                             if (queueTab === 'upcoming') return r.status === 'pending';
                             return r.status !== 'pending';
                           })
-                          .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
+                          .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
                           .map(item => (
                             <motion.div
                               key={item.id}
