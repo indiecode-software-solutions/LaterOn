@@ -2352,19 +2352,75 @@ app.post('/api/devices/register', verifyToken, async (req, res) => {
         return res.status(400).json({ error: 'device_token and device_type are required' });
     }
 
-    const { data, error } = await supabaseAdmin
-        .from('user_devices')
-        .upsert({
-            user_id: req.userId,
-            device_token,
-            device_type,
-            last_active: new Date().toISOString()
-        }, { onConflict: 'device_token' })
-        .select()
-        .single();
+    try {
+        // Clean up any occurrences of this token registered to other users first
+        await supabaseAdmin
+            .from('user_devices')
+            .delete()
+            .eq('device_token', device_token)
+            .neq('user_id', req.userId);
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+        // Clean up any stale tokens for the same user and device type that haven't been active in 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        await supabaseAdmin
+            .from('user_devices')
+            .delete()
+            .eq('user_id', req.userId)
+            .eq('device_type', device_type)
+            .lt('last_active', thirtyDaysAgo.toISOString());
+
+        // Upsert the token to associate/refresh for the current user
+        const { data, error } = await supabaseAdmin
+            .from('user_devices')
+            .upsert({
+                user_id: req.userId,
+                device_token,
+                device_type,
+                last_active: new Date().toISOString()
+            }, { onConflict: 'device_token' })
+            .select()
+            .single();
+
+        if (error) {
+            // Fallback: If upsert fails because of missing DB constraint, try regular insert/update
+            console.error('[Device Register] Upsert failed, executing select-then-insert fallback:', error.message);
+            
+            const { data: existing } = await supabaseAdmin
+                .from('user_devices')
+                .select('*')
+                .eq('device_token', device_token)
+                .single();
+
+            if (existing) {
+                const { data: updated } = await supabaseAdmin
+                    .from('user_devices')
+                    .update({ last_active: new Date().toISOString(), user_id: req.userId })
+                    .eq('device_token', device_token)
+                    .select()
+                    .single();
+                return res.json(updated);
+            } else {
+                const { data: inserted, error: insErr } = await supabaseAdmin
+                    .from('user_devices')
+                    .insert({
+                        user_id: req.userId,
+                        device_token,
+                        device_type,
+                        last_active: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                if (insErr) return res.status(500).json({ error: insErr.message });
+                return res.json(inserted);
+            }
+        }
+        res.json(data);
+    } catch (err) {
+        console.error('[Device Register] Global error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 
