@@ -1903,7 +1903,9 @@ async function checkAndSendMessages() {
 
                 const customToken = userIntegration.api_key;
                 const botToken = customToken || process.env.TELEGRAM_BOT_TOKEN;
-                const chatId = userIntegration.config?.chat_id;
+                const chatId = schedule.phone && schedule.phone !== 'telegram_chat' 
+                    ? schedule.phone 
+                    : userIntegration.config?.chat_id;
 
                 if (!botToken || !chatId) {
                     throw new Error('Telegram bot token or chat ID is missing');
@@ -2501,80 +2503,11 @@ app.post('/api/devices/register', verifyToken, async (req, res) => {
     }
 });
 
-// ── Telegram: Integration Endpoints and Webhooks ─────────────────────────────
-// Webhook for BotFather updates
-app.post('/api/telegram/webhook', async (req, res) => {
-    try {
-        const { message } = req.body;
-        if (!message || !message.text) {
-            return res.json({ ok: true });
-        }
-
-        const text = message.text.trim();
-        const chatId = message.chat.id.toString();
-        const chatTitle = message.chat.type === 'private' ? 'Personal Chat' : (message.chat.title || 'Telegram Group');
-
-        // Check if starts with /start command
-        if (text.startsWith('/start')) {
-            const startParam = text.split(' ')[1]; // Extract user_id parameter: /start <userId>
-            if (!startParam) {
-                // Send general welcome message
-                await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                    chat_id: chatId,
-                    text: '👋 Welcome to *LaterOn Companion*!\n\nTo connect your account, please log in to LaterOn, go to your dashboard, and click the Telegram Connect link.',
-                    parse_mode: 'Markdown'
-                });
-                return res.json({ ok: true });
-            }
-
-            const userId = startParam;
-            console.log(`[Telegram Webhook] Connecting user ${userId} to chat ${chatId} (${chatTitle})`);
-
-            // Save connection to database
-            const { data: existing } = await supabaseAdmin
-                .from('user_integrations')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('provider', 'telegram')
-                .single();
-
-            // Store details in config JSONB column
-            const config = existing?.config || {};
-            config.chat_id = chatId;
-            config.chat_title = chatTitle;
-
-            const { error } = await supabaseAdmin
-                .from('user_integrations')
-                .upsert({
-                    user_id: userId,
-                    provider: 'telegram',
-                    api_key: existing?.api_key || null, // Preserve custom token if exists
-                    config: config,
-                    status: 'connected'
-                }, { onConflict: 'user_id,provider' });
-
-            if (error) {
-                console.error(`[Telegram Webhook] DB Upsert error:`, error.message);
-                throw error;
-            }
-
-            // Send success message to user
-            await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                chat_id: chatId,
-                text: `🎉 *LaterOn Companion Connected!*\n\nI am now connected to your account. You can schedule messages to be delivered directly here.`,
-                parse_mode: 'Markdown'
-            });
-        }
-        res.json({ ok: true });
-    } catch (err) {
-        console.error('[Telegram Webhook] Error:', err.message);
-        res.status(200).json({ error: err.message }); // Keep webhook returning 200 so Telegram doesn't retry spamming us
-    }
-});
-
-// Save custom bot configurations
+// ── Telegram: Custom Bot Configuration Endpoints ──────────────────────────────
+// Save custom bot token configuration
 app.post('/api/telegram/config', verifyToken, async (req, res) => {
     const { customBotToken, botUsername } = req.body;
+    if (!customBotToken) return res.status(400).json({ error: 'customBotToken is required' });
 
     try {
         const { data: existing } = await supabaseAdmin
@@ -2586,16 +2519,100 @@ app.post('/api/telegram/config', verifyToken, async (req, res) => {
 
         const config = existing?.config || {};
         if (botUsername) config.bot_username = botUsername;
+        if (!config.chats) config.chats = []; // Initialize empty chat list
 
         const { data, error } = await supabaseAdmin
             .from('user_integrations')
             .upsert({
                 user_id: req.userId,
                 provider: 'telegram',
-                api_key: customBotToken || null, // Token acts as api_key field
+                api_key: customBotToken, // Token stored as api_key
                 config: config,
-                status: existing?.status || 'disconnected'
+                status: 'connected'
             }, { onConflict: 'user_id,provider' })
+            .select()
+            .single();
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add a target Chat ID to custom bot configuration
+app.post('/api/telegram/chats', verifyToken, async (req, res) => {
+    const { chatId, chatTitle } = req.body;
+    if (!chatId || !chatTitle) return res.status(400).json({ error: 'chatId and chatTitle are required' });
+
+    try {
+        const { data: existing } = await supabaseAdmin
+            .from('user_integrations')
+            .select('*')
+            .eq('user_id', req.userId)
+            .eq('provider', 'telegram')
+            .single();
+
+        if (!existing) return res.status(400).json({ error: 'Please connect your custom Bot Token first' });
+
+        const config = existing.config || {};
+        const chats = config.chats || [];
+
+        // Add or update chat item
+        const existingIdx = chats.findIndex(c => c.id === chatId);
+        if (existingIdx >= 0) {
+            chats[existingIdx].title = chatTitle;
+        } else {
+            chats.push({ id: chatId, title: chatTitle });
+        }
+
+        config.chats = chats;
+        // Keep config.chat_id and config.chat_title as backward compatible defaults
+        if (chats.length === 1) {
+            config.chat_id = chatId;
+            config.chat_title = chatTitle;
+        }
+
+        const { data, error } = await supabaseAdmin
+            .from('user_integrations')
+            .update({ config })
+            .eq('id', existing.id)
+            .select()
+            .single();
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete a target Chat ID from custom bot configuration
+app.delete('/api/telegram/chats/:chatId', verifyToken, async (req, res) => {
+    try {
+        const { data: existing } = await supabaseAdmin
+            .from('user_integrations')
+            .select('*')
+            .eq('user_id', req.userId)
+            .eq('provider', 'telegram')
+            .single();
+
+        if (!existing) return res.status(400).json({ error: 'Integration not found' });
+
+        const config = existing.config || {};
+        let chats = config.chats || [];
+        chats = chats.filter(c => c.id !== req.params.chatId);
+        config.chats = chats;
+
+        if (config.chat_id === req.params.chatId) {
+            config.chat_id = chats[0]?.id || null;
+            config.chat_title = chats[0]?.title || null;
+        }
+
+        const { data, error } = await supabaseAdmin
+            .from('user_integrations')
+            .update({ config })
+            .eq('id', existing.id)
             .select()
             .single();
 
@@ -2640,7 +2657,7 @@ app.get('/api/telegram/status', verifyToken, async (req, res) => {
             return res.status(500).json({ error: error.message });
         }
 
-        res.json(data || { provider: 'telegram', status: 'disconnected', config: {} });
+        res.json(data || { provider: 'telegram', status: 'disconnected', config: { chats: [] } });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
