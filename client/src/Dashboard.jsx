@@ -147,6 +147,290 @@ const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
   return currentRank >= CONNECTION_STATUS_RANK['qr-scanned'] && nextRank < currentRank;
 };
 
+// ── Instagram Sidebar ── proper component to respect Rules of Hooks ──────────
+function InstagramSidebar({ session, channel }) {
+  const [igStatus, setIgStatus] = React.useState(null);
+  const [igTab, setIgTab] = React.useState('schedule');
+  const [igPosts, setIgPosts] = React.useState([]);
+  const [igRules, setIgRules] = React.useState([]);
+  const [igPostForm, setIgPostForm] = React.useState({ caption: '', image_urls_raw: '', scheduled_at: '' });
+  const [igRuleForm, setIgRuleForm] = React.useState({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
+  const [igLoading, setIgLoading] = React.useState(false);
+  const [igConnecting, setIgConnecting] = React.useState(false);
+  const [igStatusLoading, setIgStatusLoading] = React.useState(true);
+
+  const authToken = session?.access_token;
+
+  React.useEffect(() => {
+    setIgStatusLoading(true);
+    fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json()).then(d => { setIgStatus(d); setIgStatusLoading(false); })
+      .catch(() => setIgStatusLoading(false));
+  }, [channel]);
+
+  React.useEffect(() => {
+    if (igStatus?.status !== 'connected') return;
+    fetch(`${API_URL}/api/instagram/posts`, { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json()).then(setIgPosts).catch(() => {});
+    fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json()).then(setIgRules).catch(() => {});
+  }, [igStatus]);
+
+  const handleIgConnect = async () => {
+    setIgConnecting(true);
+    try {
+      const r = await fetch(`${API_URL}/api/instagram/auth-url`, { headers: { Authorization: `Bearer ${authToken}` } });
+      const { url, error } = await r.json();
+      if (error) { alert(error); setIgConnecting(false); return; }
+      window.open(url, '_blank', 'width=600,height=700');
+      const poll = setInterval(async () => {
+        const sr = await fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } });
+        const sd = await sr.json();
+        if (sd.status === 'connected') { setIgStatus(sd); clearInterval(poll); setIgConnecting(false); }
+      }, 2000);
+      setTimeout(() => { clearInterval(poll); setIgConnecting(false); }, 120000);
+    } catch(e) { alert(e.message); setIgConnecting(false); }
+  };
+
+  const handleIgDisconnect = async () => {
+    if (!confirm('Disconnect Instagram?')) return;
+    await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
+    setIgStatus({ status: 'disconnected' });
+    setIgPosts([]); setIgRules([]);
+  };
+
+  const handleSchedulePost = async (e) => {
+    e.preventDefault();
+    const urls = igPostForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
+    if (!urls.length) return alert('Add at least one image URL');
+    if (!igPostForm.scheduled_at) return alert('Pick a date & time');
+    setIgLoading(true);
+    try {
+      const r = await fetch(`${API_URL}/api/instagram/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ caption: igPostForm.caption, image_urls: urls, scheduled_at: igPostForm.scheduled_at })
+      });
+      const d = await r.json();
+      if (d.error) return alert(d.error);
+      setIgPosts(prev => [d, ...prev]);
+      setIgPostForm({ caption: '', image_urls_raw: '', scheduled_at: '' });
+    } catch(e) { alert(e.message); } finally { setIgLoading(false); }
+  };
+
+  const handleAddRule = async (e) => {
+    e.preventDefault();
+    if (!igRuleForm.reply_message.trim()) return alert('Reply message is required');
+    if (igRuleForm.trigger_type === 'keyword' && !igRuleForm.trigger_keyword.trim()) return alert('Keyword is required');
+    setIgLoading(true);
+    try {
+      const r = await fetch(`${API_URL}/api/instagram/auto-rules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify(igRuleForm)
+      });
+      const d = await r.json();
+      if (d.error) return alert(d.error);
+      setIgRules(prev => [d, ...prev]);
+      setIgRuleForm({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
+    } catch(e) { alert(e.message); } finally { setIgLoading(false); }
+  };
+
+  const toggleRule = async (rule) => {
+    await fetch(`${API_URL}/api/instagram/auto-rules/${rule.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ is_active: !rule.is_active })
+    });
+    setIgRules(prev => prev.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
+  };
+
+  const deleteRule = async (id) => {
+    if (!confirm('Delete this rule?')) return;
+    await fetch(`${API_URL}/api/instagram/auto-rules/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
+    setIgRules(prev => prev.filter(r => r.id !== id));
+  };
+
+  if (igStatusLoading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px', gap: '10px' }}>
+      <div className="spin" style={{ width: 28, height: 28, border: '3px solid #f3f3f3', borderTop: '3px solid #e1306c', borderRadius: '50%' }} />
+      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>Checking connection…</p>
+    </div>
+  );
+
+  if (igStatus?.status !== 'connected') return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ padding: '20px', background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', borderRadius: '0px', textAlign: 'center', color: 'white' }}>
+        <InstagramIcon size={32} color="white" />
+        <p style={{ fontWeight: 800, fontSize: '1rem', margin: '8px 0 4px 0' }}>Connect Instagram</p>
+        <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.9 }}>Business or Creator account required</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 4px' }}>
+        {[
+          { n: '1', text: 'Make sure your Instagram account is set to Business or Creator (Settings → Account type).' },
+          { n: '2', text: 'Click "Connect Instagram" below and log in with your Instagram credentials.' },
+          { n: '3', text: 'Approve the requested permissions — these let LaterOn post and manage replies on your behalf.' },
+          { n: '4', text: "You'll be redirected back automatically once connected." }
+        ].map(s => (
+          <div key={s.n} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            <div style={{ minWidth: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{s.text}</p>
+          </div>
+        ))}
+      </div>
+      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
+        {igConnecting ? 'Waiting for login…' : '🔗 Connect Instagram'}
+      </button>
+      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+        ⚠️ Requires a <strong>Meta Developer App</strong>. Add <code>INSTAGRAM_APP_ID</code> + <code>INSTAGRAM_APP_SECRET</code> + <code>SERVER_BASE_URL</code> to your <code>.env</code> first.
+      </p>
+    </div>
+  );
+
+  const cfg = igStatus.config || {};
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Profile card */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '0px' }}>
+        {cfg.profile_picture_url
+          ? <img src={cfg.profile_picture_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e1306c' }} />
+          : <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><InstagramIcon size={18} color="white" /></div>
+        }
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: 800, fontSize: '0.88rem', margin: 0, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{cfg.username || 'Connected'}</p>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>{cfg.followers_count ? `${cfg.followers_count.toLocaleString()} followers` : 'Business Account'}</p>
+        </div>
+        <button onClick={handleIgDisconnect} style={{ fontSize: '0.7rem', color: '#e1306c', background: 'none', border: '1px solid #f7c6d8', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}>Disconnect</button>
+      </div>
+
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden' }}>
+        {[{ k: 'schedule', label: '📅 Schedule Post' }, { k: 'rules', label: '🤖 Auto-Replies' }].map(t => (
+          <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer', background: igTab === t.k ? 'linear-gradient(135deg, #e1306c, #f77737)' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* Schedule Post tab */}
+      {igTab === 'schedule' && (
+        <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Image URL(s)</label>
+            <textarea
+              placeholder={'Paste image URL(s), one per line.\nUp to 10 for a carousel.'}
+              value={igPostForm.image_urls_raw}
+              onChange={e => setIgPostForm(p => ({ ...p, image_urls_raw: e.target.value }))}
+              rows={3}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Images must be publicly accessible URLs (JPG/PNG, min 320×320px).</p>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Caption</label>
+            <textarea
+              placeholder="Write your caption with hashtags…"
+              value={igPostForm.caption}
+              onChange={e => setIgPostForm(p => ({ ...p, caption: e.target.value }))}
+              rows={3}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Schedule Date & Time</label>
+            <input
+              type="datetime-local"
+              value={igPostForm.scheduled_at}
+              onChange={e => setIgPostForm(p => ({ ...p, scheduled_at: e.target.value }))}
+              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+          <button type="submit" disabled={igLoading} style={{ padding: '12px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.85rem', border: 'none', borderRadius: '0px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
+            {igLoading ? 'Scheduling…' : '📅 Schedule Post'}
+          </button>
+          {igPosts.length > 0 && (
+            <div style={{ marginTop: '4px' }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 6px 0' }}>Scheduled ({igPosts.filter(p => p.status === 'scheduled').length})</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
+                {igPosts.slice(0, 5).map(post => (
+                  <div key={post.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: '#f8fafc', border: '1px solid var(--border)', borderRadius: '0px' }}>
+                    <img src={post.image_urls[0]} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: '3px', flexShrink: 0 }} onError={e => { e.target.style.display = 'none'; }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '0.73rem', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.caption || '(no caption)'}</p>
+                      <p style={{ fontSize: '0.67rem', color: 'var(--text-muted)', margin: 0 }}>{new Date(post.scheduled_at).toLocaleString()}</p>
+                    </div>
+                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: post.status === 'published' ? '#d1fae5' : post.status === 'failed' ? '#fee2e2' : '#fff0f5', color: post.status === 'published' ? '#059669' : post.status === 'failed' ? '#dc2626' : '#e1306c' }}>{post.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </form>
+      )}
+
+      {/* Auto-Rules tab */}
+      {igTab === 'rules' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <form onSubmit={handleAddRule} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '0px' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e1306c', margin: 0, textTransform: 'uppercase' }}>New Auto-Reply Rule</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              <div>
+                <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Reply to</label>
+                <select value={igRuleForm.rule_type} onChange={e => setIgRuleForm(p => ({ ...p, rule_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.78rem', outline: 'none' }}>
+                  <option value="dm">💬 DMs</option>
+                  <option value="comment">🖼 Comments</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Trigger</label>
+                <select value={igRuleForm.trigger_type} onChange={e => setIgRuleForm(p => ({ ...p, trigger_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.78rem', outline: 'none' }}>
+                  <option value="keyword">Keyword match</option>
+                  <option value="any">Any message</option>
+                </select>
+              </div>
+            </div>
+            {igRuleForm.trigger_type === 'keyword' && (
+              <input
+                placeholder="Trigger keyword (e.g. price, info)"
+                value={igRuleForm.trigger_keyword}
+                onChange={e => setIgRuleForm(p => ({ ...p, trigger_keyword: e.target.value }))}
+                style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
+              />
+            )}
+            <textarea
+              placeholder="Auto-reply message…"
+              value={igRuleForm.reply_message}
+              onChange={e => setIgRuleForm(p => ({ ...p, reply_message: e.target.value }))}
+              rows={2}
+              style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+            <button type="submit" disabled={igLoading} style={{ padding: '9px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.8rem', border: 'none', borderRadius: '0px', cursor: 'pointer' }}>
+              {igLoading ? 'Adding…' : '+ Add Rule'}
+            </button>
+          </form>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '280px', overflowY: 'auto' }}>
+            {igRules.length === 0 && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No rules yet. Add your first auto-reply above.</p>}
+            {igRules.map(rule => (
+              <div key={rule.id} style={{ padding: '10px 12px', border: `1px solid ${rule.is_active ? '#f7c6d8' : 'var(--border)'}`, background: rule.is_active ? '#fff0f5' : '#f8fafc', borderRadius: '0px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', gap: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: rule.rule_type === 'dm' ? '#dbeafe' : '#fef9c3', color: rule.rule_type === 'dm' ? '#1d4ed8' : '#854d0e' }}>{rule.rule_type === 'dm' ? '💬 DM' : '🖼 Comment'}</span>
+                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: '#f1f5f9', color: 'var(--text-muted)' }}>{rule.trigger_type === 'any' ? 'Any message' : `"${rule.trigger_keyword}"`}</span>
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rule.reply_message}</p>
+                </div>
+                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                  <button onClick={() => toggleRule(rule)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: rule.is_active ? '#d1fae5' : '#fee2e2', color: rule.is_active ? '#059669' : '#dc2626', fontWeight: 700 }}>{rule.is_active ? 'ON' : 'OFF'}</button>
+                  <button onClick={() => deleteRule(rule.id)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: 'white', color: '#dc2626' }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Dashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -2674,302 +2958,9 @@ Looking forward to connecting!`;
                             </div>
                           )}
 
-                          {channel === 'instagram' && (() => {
-                            const [igStatus, setIgStatus] = React.useState(null);
-                            const [igTab, setIgTab] = React.useState('schedule'); // 'schedule' | 'rules'
-                            const [igPosts, setIgPosts] = React.useState([]);
-                            const [igRules, setIgRules] = React.useState([]);
-                            const [igPostForm, setIgPostForm] = React.useState({ caption: '', image_urls_raw: '', scheduled_at: '' });
-                            const [igRuleForm, setIgRuleForm] = React.useState({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
-                            const [igLoading, setIgLoading] = React.useState(false);
-                            const [igConnecting, setIgConnecting] = React.useState(false);
-                            const [igStatusLoading, setIgStatusLoading] = React.useState(true);
-
-                            const authToken = session?.access_token;
-
-                            React.useEffect(() => {
-                              if (channel !== 'instagram') return;
-                              setIgStatusLoading(true);
-                              fetch(`${API_BASE}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } })
-                                .then(r => r.json()).then(d => { setIgStatus(d); setIgStatusLoading(false); })
-                                .catch(() => setIgStatusLoading(false));
-                            }, [channel]);
-
-                            React.useEffect(() => {
-                              if (igStatus?.status !== 'connected') return;
-                              fetch(`${API_BASE}/api/instagram/posts`, { headers: { Authorization: `Bearer ${authToken}` } })
-                                .then(r => r.json()).then(setIgPosts).catch(() => {});
-                              fetch(`${API_BASE}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
-                                .then(r => r.json()).then(setIgRules).catch(() => {});
-                            }, [igStatus]);
-
-                            const handleIgConnect = async () => {
-                              setIgConnecting(true);
-                              try {
-                                const r = await fetch(`${API_BASE}/api/instagram/auth-url`, { headers: { Authorization: `Bearer ${authToken}` } });
-                                const { url, error } = await r.json();
-                                if (error) { alert(error); setIgConnecting(false); return; }
-                                window.open(url, '_blank', 'width=600,height=700');
-                                // Poll for connection after OAuth
-                                const poll = setInterval(async () => {
-                                  const sr = await fetch(`${API_BASE}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } });
-                                  const sd = await sr.json();
-                                  if (sd.status === 'connected') { setIgStatus(sd); clearInterval(poll); setIgConnecting(false); }
-                                }, 2000);
-                                setTimeout(() => { clearInterval(poll); setIgConnecting(false); }, 120000);
-                              } catch(e) { alert(e.message); setIgConnecting(false); }
-                            };
-
-                            const handleIgDisconnect = async () => {
-                              if (!confirm('Disconnect Instagram?')) return;
-                              await fetch(`${API_BASE}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
-                              setIgStatus({ status: 'disconnected' });
-                              setIgPosts([]); setIgRules([]);
-                            };
-
-                            const handleSchedulePost = async (e) => {
-                              e.preventDefault();
-                              const urls = igPostForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
-                              if (!urls.length) return alert('Add at least one image URL');
-                              if (!igPostForm.scheduled_at) return alert('Pick a date & time');
-                              setIgLoading(true);
-                              try {
-                                const r = await fetch(`${API_BASE}/api/instagram/posts`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-                                  body: JSON.stringify({ caption: igPostForm.caption, image_urls: urls, scheduled_at: igPostForm.scheduled_at })
-                                });
-                                const d = await r.json();
-                                if (d.error) return alert(d.error);
-                                setIgPosts(prev => [d, ...prev]);
-                                setIgPostForm({ caption: '', image_urls_raw: '', scheduled_at: '' });
-                              } catch(e) { alert(e.message); } finally { setIgLoading(false); }
-                            };
-
-                            const handleAddRule = async (e) => {
-                              e.preventDefault();
-                              if (!igRuleForm.reply_message.trim()) return alert('Reply message is required');
-                              if (igRuleForm.trigger_type === 'keyword' && !igRuleForm.trigger_keyword.trim()) return alert('Keyword is required');
-                              setIgLoading(true);
-                              try {
-                                const r = await fetch(`${API_BASE}/api/instagram/auto-rules`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-                                  body: JSON.stringify(igRuleForm)
-                                });
-                                const d = await r.json();
-                                if (d.error) return alert(d.error);
-                                setIgRules(prev => [d, ...prev]);
-                                setIgRuleForm({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
-                              } catch(e) { alert(e.message); } finally { setIgLoading(false); }
-                            };
-
-                            const toggleRule = async (rule) => {
-                              const updated = { is_active: !rule.is_active };
-                              await fetch(`${API_BASE}/api/instagram/auto-rules/${rule.id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-                                body: JSON.stringify(updated)
-                              });
-                              setIgRules(prev => prev.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
-                            };
-
-                            const deleteRule = async (id) => {
-                              if (!confirm('Delete this rule?')) return;
-                              await fetch(`${API_BASE}/api/instagram/auto-rules/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
-                              setIgRules(prev => prev.filter(r => r.id !== id));
-                            };
-
-                            if (igStatusLoading) return (
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px', gap: '10px' }}>
-                                <div className="spin" style={{ width: 28, height: 28, border: '3px solid #f3f3f3', borderTop: '3px solid #e1306c', borderRadius: '50%' }} />
-                                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>Checking connection…</p>
-                              </div>
-                            );
-
-                            if (igStatus?.status !== 'connected') return (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {/* Header */}
-                                <div style={{ padding: '20px', background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', borderRadius: '0px', textAlign: 'center', color: 'white' }}>
-                                  <InstagramIcon size={32} color="white" />
-                                  <p style={{ fontWeight: 800, fontSize: '1rem', margin: '8px 0 4px 0' }}>Connect Instagram</p>
-                                  <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.9 }}>Business or Creator account required</p>
-                                </div>
-                                {/* Steps */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 4px' }}>
-                                  {[
-                                    { n: '1', text: 'Make sure your Instagram account is set to Business or Creator (Settings → Account type).' },
-                                    { n: '2', text: 'Click "Connect Instagram" below and log in with your Instagram credentials.' },
-                                    { n: '3', text: 'Approve the requested permissions — these let LaterOn post and manage replies on your behalf.' },
-                                    { n: '4', text: 'You\'ll be redirected back automatically once connected.' }
-                                  ].map(s => (
-                                    <div key={s.n} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                                      <div style={{ minWidth: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
-                                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{s.text}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                                <button
-                                  onClick={handleIgConnect}
-                                  disabled={igConnecting}
-                                  style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}
-                                >
-                                  {igConnecting ? 'Waiting for login…' : '🔗 Connect Instagram'}
-                                </button>
-                                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-                                  ⚠️ Requires a <strong>Meta Developer App</strong>. Add <code>INSTAGRAM_APP_ID</code> + <code>INSTAGRAM_APP_SECRET</code> + <code>SERVER_BASE_URL</code> to your <code>.env</code> first.
-                                </p>
-                              </div>
-                            );
-
-                            // ── CONNECTED STATE ──────────────────────────────
-                            const cfg = igStatus.config || {};
-                            return (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {/* Profile card */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '0px' }}>
-                                  {cfg.profile_picture_url
-                                    ? <img src={cfg.profile_picture_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e1306c' }} />
-                                    : <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><InstagramIcon size={18} color="white" /></div>
-                                  }
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontWeight: 800, fontSize: '0.88rem', margin: 0, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{cfg.username || 'Connected'}</p>
-                                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>{cfg.followers_count ? `${cfg.followers_count.toLocaleString()} followers` : 'Business Account'}</p>
-                                  </div>
-                                  <button onClick={handleIgDisconnect} style={{ fontSize: '0.7rem', color: '#e1306c', background: 'none', border: '1px solid #f7c6d8', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}>Disconnect</button>
-                                </div>
-
-                                {/* Tab switcher */}
-                                <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden' }}>
-                                  {[{ k: 'schedule', label: '📅 Schedule Post' }, { k: 'rules', label: '🤖 Auto-Replies' }].map(t => (
-                                    <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer', background: igTab === t.k ? 'linear-gradient(135deg, #e1306c, #f77737)' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
-                                  ))}
-                                </div>
-
-                                {/* Schedule Post tab */}
-                                {igTab === 'schedule' && (
-                                  <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <div>
-                                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Image URL(s)</label>
-                                      <textarea
-                                        placeholder={'Paste image URL(s), one per line.\nUp to 10 for a carousel.'}
-                                        value={igPostForm.image_urls_raw}
-                                        onChange={e => setIgPostForm(p => ({ ...p, image_urls_raw: e.target.value }))}
-                                        rows={3}
-                                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
-                                      />
-                                      <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Images must be publicly accessible URLs (JPG/PNG, min 320×320px).</p>
-                                    </div>
-                                    <div>
-                                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Caption</label>
-                                      <textarea
-                                        placeholder="Write your caption with hashtags…"
-                                        value={igPostForm.caption}
-                                        onChange={e => setIgPostForm(p => ({ ...p, caption: e.target.value }))}
-                                        rows={3}
-                                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
-                                      />
-                                    </div>
-                                    <div>
-                                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Schedule Date & Time</label>
-                                      <input
-                                        type="datetime-local"
-                                        value={igPostForm.scheduled_at}
-                                        onChange={e => setIgPostForm(p => ({ ...p, scheduled_at: e.target.value }))}
-                                        style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
-                                      />
-                                    </div>
-                                    <button type="submit" disabled={igLoading} style={{ padding: '12px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.85rem', border: 'none', borderRadius: '0px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
-                                      {igLoading ? 'Scheduling…' : '📅 Schedule Post'}
-                                    </button>
-                                    {/* Mini post list */}
-                                    {igPosts.length > 0 && (
-                                      <div style={{ marginTop: '4px' }}>
-                                        <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 6px 0' }}>Scheduled ({igPosts.filter(p => p.status === 'scheduled').length})</p>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
-                                          {igPosts.slice(0, 5).map(post => (
-                                            <div key={post.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: '#f8fafc', border: '1px solid var(--border)', borderRadius: '0px' }}>
-                                              <img src={post.image_urls[0]} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: '3px', flexShrink: 0 }} onError={e => { e.target.style.display = 'none'; }} />
-                                              <div style={{ flex: 1, minWidth: 0 }}>
-                                                <p style={{ fontSize: '0.73rem', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.caption || '(no caption)'}</p>
-                                                <p style={{ fontSize: '0.67rem', color: 'var(--text-muted)', margin: 0 }}>{new Date(post.scheduled_at).toLocaleString()}</p>
-                                              </div>
-                                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: post.status === 'published' ? '#d1fae5' : post.status === 'failed' ? '#fee2e2' : '#fff0f5', color: post.status === 'published' ? '#059669' : post.status === 'failed' ? '#dc2626' : '#e1306c' }}>{post.status}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </form>
-                                )}
-
-                                {/* Auto-Rules tab */}
-                                {igTab === 'rules' && (
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <form onSubmit={handleAddRule} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '0px' }}>
-                                      <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e1306c', margin: 0, textTransform: 'uppercase' }}>New Auto-Reply Rule</p>
-                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                                        <div>
-                                          <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Reply to</label>
-                                          <select value={igRuleForm.rule_type} onChange={e => setIgRuleForm(p => ({ ...p, rule_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.78rem', outline: 'none' }}>
-                                            <option value="dm">💬 DMs</option>
-                                            <option value="comment">💬 Comments</option>
-                                          </select>
-                                        </div>
-                                        <div>
-                                          <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Trigger</label>
-                                          <select value={igRuleForm.trigger_type} onChange={e => setIgRuleForm(p => ({ ...p, trigger_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.78rem', outline: 'none' }}>
-                                            <option value="keyword">Keyword match</option>
-                                            <option value="any">Any message</option>
-                                          </select>
-                                        </div>
-                                      </div>
-                                      {igRuleForm.trigger_type === 'keyword' && (
-                                        <input
-                                          placeholder="Trigger keyword (e.g. price, info)"
-                                          value={igRuleForm.trigger_keyword}
-                                          onChange={e => setIgRuleForm(p => ({ ...p, trigger_keyword: e.target.value }))}
-                                          style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
-                                        />
-                                      )}
-                                      <textarea
-                                        placeholder="Auto-reply message…"
-                                        value={igRuleForm.reply_message}
-                                        onChange={e => setIgRuleForm(p => ({ ...p, reply_message: e.target.value }))}
-                                        rows={2}
-                                        style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
-                                      />
-                                      <button type="submit" disabled={igLoading} style={{ padding: '9px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.8rem', border: 'none', borderRadius: '0px', cursor: 'pointer' }}>
-                                        {igLoading ? 'Adding…' : '+ Add Rule'}
-                                      </button>
-                                    </form>
-
-                                    {/* Rules list */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '280px', overflowY: 'auto' }}>
-                                      {igRules.length === 0 && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No rules yet. Add your first auto-reply above.</p>}
-                                      {igRules.map(rule => (
-                                        <div key={rule.id} style={{ padding: '10px 12px', border: `1px solid ${rule.is_active ? '#f7c6d8' : 'var(--border)'}`, background: rule.is_active ? '#fff0f5' : '#f8fafc', borderRadius: '0px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                                          <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ display: 'flex', gap: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: rule.rule_type === 'dm' ? '#dbeafe' : '#fef9c3', color: rule.rule_type === 'dm' ? '#1d4ed8' : '#854d0e' }}>{rule.rule_type === 'dm' ? '💬 DM' : '🖼 Comment'}</span>
-                                              <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: '#f1f5f9', color: 'var(--text-muted)' }}>{rule.trigger_type === 'any' ? 'Any message' : `"${rule.trigger_keyword}"`}</span>
-                                            </div>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rule.reply_message}</p>
-                                          </div>
-                                          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                                            <button onClick={() => toggleRule(rule)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: rule.is_active ? '#d1fae5' : '#fee2e2', color: rule.is_active ? '#059669' : '#dc2626', fontWeight: 700 }}>{rule.is_active ? 'ON' : 'OFF'}</button>
-                                            <button onClick={() => deleteRule(rule.id)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: 'white', color: '#dc2626' }}>✕</button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
-
-
+                          {channel === 'instagram' && (
+                            <InstagramSidebar session={session} channel={channel} />
+                          )}
 
                           {channel === 'reminders' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
