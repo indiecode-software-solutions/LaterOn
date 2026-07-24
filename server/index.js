@@ -2663,6 +2663,476 @@ app.get('/api/telegram/status', verifyToken, async (req, res) => {
     }
 });
 
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║                   INSTAGRAM GRAPH API                           ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+const IG_GRAPH = 'https://graph.instagram.com/v22.0';
+const META_GRAPH = 'https://graph.facebook.com/v22.0';
+const IG_APP_ID = process.env.INSTAGRAM_APP_ID;
+const IG_APP_SECRET = process.env.INSTAGRAM_APP_SECRET;
+const IG_VERIFY_TOKEN = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'lateron_ig_verify_2025';
+const SERVER_BASE_URL = process.env.SERVER_BASE_URL || 'https://lateron-server.onrender.com';
+
+// Helper: get Instagram integration for a user
+async function getIgIntegration(userId) {
+    const { data } = await supabaseAdmin
+        .from('user_integrations')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('provider', 'instagram')
+        .single();
+    return data;
+}
+
+// Helper: make authenticated Graph API call
+async function igApiCall(path, method = 'GET', params = {}, accessToken = null) {
+    const url = new URL(`${IG_GRAPH}${path}`);
+    if (accessToken) params.access_token = accessToken;
+    if (method === 'GET') {
+        Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+        const r = await axios.get(url.toString());
+        return r.data;
+    } else {
+        const r = await axios.post(url.toString(), params);
+        return r.data;
+    }
+}
+
+// ── 1. OAuth: Generate Auth URL ──────────────────────────────────────────────
+app.get('/api/instagram/auth-url', verifyToken, (req, res) => {
+    if (!IG_APP_ID) return res.status(500).json({ error: 'Instagram App ID not configured. Add INSTAGRAM_APP_ID to .env' });
+    const redirectUri = `${SERVER_BASE_URL}/api/instagram/callback`;
+    const scope = [
+        'instagram_business_basic',
+        'instagram_business_content_publish',
+        'instagram_business_manage_messages',
+        'instagram_business_manage_comments'
+    ].join(',');
+    const state = req.userId; // pass userId as state for callback identification
+    const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${IG_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code&state=${state}`;
+    res.json({ url: authUrl });
+});
+
+// ── 2. OAuth: Callback (exchange code → short-lived → long-lived token) ──────
+app.get('/api/instagram/callback', async (req, res) => {
+    const { code, state: userId, error: igError } = req.query;
+    if (igError) return res.redirect(`/?ig_error=${igError}`);
+    if (!code || !userId) return res.status(400).send('Missing code or state');
+
+    const redirectUri = `${SERVER_BASE_URL}/api/instagram/callback`;
+    try {
+        // Exchange code for short-lived token
+        const tokenRes = await axios.post('https://api.instagram.com/oauth/access_token', new URLSearchParams({
+            client_id: IG_APP_ID,
+            client_secret: IG_APP_SECRET,
+            grant_type: 'authorization_code',
+            redirect_uri: redirectUri,
+            code
+        }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+
+        const { access_token: shortToken, user_id: igUserId } = tokenRes.data;
+
+        // Exchange for long-lived token (60 days)
+        const longRes = await axios.get(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${IG_APP_SECRET}&access_token=${shortToken}`);
+        const { access_token: longToken, expires_in } = longRes.data;
+
+        // Fetch profile
+        const profile = await igApiCall('/me', 'GET', { fields: 'id,username,name,profile_picture_url,followers_count,media_count' }, longToken);
+
+        const tokenExpiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
+
+        await supabaseAdmin.from('user_integrations').upsert({
+            user_id: userId,
+            provider: 'instagram',
+            access_token: longToken,
+            config: {
+                ig_user_id: igUserId,
+                username: profile.username,
+                name: profile.name,
+                profile_picture_url: profile.profile_picture_url,
+                followers_count: profile.followers_count,
+                media_count: profile.media_count,
+                token_expires_at: tokenExpiresAt
+            },
+            status: 'connected'
+        }, { onConflict: 'user_id,provider' });
+
+        res.redirect('/?ig_connected=true');
+    } catch (err) {
+        console.error('[Instagram OAuth callback]', err.response?.data || err.message);
+        res.redirect(`/?ig_error=${encodeURIComponent(err.message)}`);
+    }
+});
+
+// ── 3. Status ─────────────────────────────────────────────────────────────────
+app.get('/api/instagram/status', verifyToken, async (req, res) => {
+    try {
+        const data = await getIgIntegration(req.userId);
+        if (!data) return res.json({ status: 'disconnected' });
+        res.json({
+            status: data.status,
+            config: data.config,
+            ig_user_id: data.config?.ig_user_id
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 4. Disconnect ─────────────────────────────────────────────────────────────
+app.delete('/api/instagram/disconnect', verifyToken, async (req, res) => {
+    try {
+        await supabaseAdmin.from('user_integrations')
+            .delete()
+            .eq('user_id', req.userId)
+            .eq('provider', 'instagram');
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 5. Schedule a Post ────────────────────────────────────────────────────────
+app.post('/api/instagram/posts', verifyToken, async (req, res) => {
+    const { caption, image_urls, scheduled_at } = req.body;
+    if (!image_urls?.length) return res.status(400).json({ error: 'image_urls required' });
+    if (!scheduled_at) return res.status(400).json({ error: 'scheduled_at required' });
+
+    try {
+        const postType = image_urls.length > 1 ? 'CAROUSEL' : 'IMAGE';
+        const { data, error } = await supabaseAdmin.from('instagram_posts').insert({
+            user_id: req.userId,
+            caption: caption || '',
+            image_urls,
+            post_type: postType,
+            scheduled_at,
+            status: 'scheduled'
+        }).select().single();
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 6. List Posts ─────────────────────────────────────────────────────────────
+app.get('/api/instagram/posts', verifyToken, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('instagram_posts')
+            .select('*')
+            .eq('user_id', req.userId)
+            .order('scheduled_at', { ascending: false })
+            .limit(50);
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data || []);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 7. Delete a Scheduled Post ────────────────────────────────────────────────
+app.delete('/api/instagram/posts/:id', verifyToken, async (req, res) => {
+    try {
+        const { error } = await supabaseAdmin
+            .from('instagram_posts')
+            .delete()
+            .eq('id', req.params.id)
+            .eq('user_id', req.userId)
+            .eq('status', 'scheduled'); // only allow deleting scheduled (not published)
+        if (error) return res.status(500).json({ error: error.message });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 8. Auto-Reply Rules: List ─────────────────────────────────────────────────
+app.get('/api/instagram/auto-rules', verifyToken, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('instagram_auto_rules')
+            .select('*')
+            .eq('user_id', req.userId)
+            .order('created_at', { ascending: false });
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data || []);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 9. Auto-Reply Rules: Create ───────────────────────────────────────────────
+app.post('/api/instagram/auto-rules', verifyToken, async (req, res) => {
+    const { rule_type, trigger_type, trigger_keyword, reply_message } = req.body;
+    if (!rule_type || !trigger_type || !reply_message) return res.status(400).json({ error: 'rule_type, trigger_type, reply_message required' });
+
+    try {
+        const { data, error } = await supabaseAdmin.from('instagram_auto_rules').insert({
+            user_id: req.userId,
+            rule_type,
+            trigger_type,
+            trigger_keyword: trigger_type === 'keyword' ? trigger_keyword : null,
+            reply_message,
+            is_active: true
+        }).select().single();
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 10. Auto-Reply Rules: Toggle active ───────────────────────────────────────
+app.patch('/api/instagram/auto-rules/:id', verifyToken, async (req, res) => {
+    const { is_active, reply_message } = req.body;
+    try {
+        const updates = { updated_at: new Date().toISOString() };
+        if (is_active !== undefined) updates.is_active = is_active;
+        if (reply_message !== undefined) updates.reply_message = reply_message;
+        const { data, error } = await supabaseAdmin
+            .from('instagram_auto_rules')
+            .update(updates)
+            .eq('id', req.params.id)
+            .eq('user_id', req.userId)
+            .select().single();
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 11. Auto-Reply Rules: Delete ──────────────────────────────────────────────
+app.delete('/api/instagram/auto-rules/:id', verifyToken, async (req, res) => {
+    try {
+        await supabaseAdmin.from('instagram_auto_rules')
+            .delete()
+            .eq('id', req.params.id)
+            .eq('user_id', req.userId);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ── 12. Webhook: Verification (GET) ───────────────────────────────────────────
+app.get('/api/instagram/webhook', (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+    if (mode === 'subscribe' && token === IG_VERIFY_TOKEN) {
+        console.log('[IG Webhook] Verified');
+        res.status(200).send(challenge);
+    } else {
+        res.status(403).send('Forbidden');
+    }
+});
+
+// ── 13. Webhook: Events (POST) ────────────────────────────────────────────────
+app.post('/api/instagram/webhook', async (req, res) => {
+    res.sendStatus(200); // Respond immediately to Meta
+    const body = req.body;
+    if (body.object !== 'instagram') return;
+
+    for (const entry of (body.entry || [])) {
+        const igUserId = entry.id;
+
+        // Find which LaterOn user owns this IG account
+        const { data: integration } = await supabaseAdmin
+            .from('user_integrations')
+            .select('*')
+            .eq('provider', 'instagram')
+            .eq('config->>ig_user_id', igUserId)
+            .single();
+
+        if (!integration) continue;
+        const token = integration.access_token;
+        const userId = integration.user_id;
+
+        // Fetch active rules for this user
+        const { data: rules } = await supabaseAdmin
+            .from('instagram_auto_rules')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_active', true);
+
+        if (!rules?.length) continue;
+
+        // Process DM messaging events
+        for (const msg of (entry.messaging || [])) {
+            if (!msg.message?.text || msg.message.is_echo) continue;
+            const senderId = msg.sender.id;
+            const msgId = msg.message.mid;
+            const text = msg.message.text.toLowerCase();
+
+            // Check already replied
+            const { data: alreadyReplied } = await supabaseAdmin
+                .from('instagram_replied_ids')
+                .select('id').eq('user_id', userId).eq('message_id', msgId).single();
+            if (alreadyReplied) continue;
+
+            const dmRules = rules.filter(r => r.rule_type === 'dm');
+            const matchedRule = dmRules.find(r =>
+                r.trigger_type === 'any' ||
+                (r.trigger_type === 'keyword' && r.trigger_keyword && text.includes(r.trigger_keyword.toLowerCase()))
+            );
+
+            if (matchedRule) {
+                try {
+                    await axios.post(`${META_GRAPH}/${igUserId}/messages`, {
+                        recipient: { id: senderId },
+                        message: { text: matchedRule.reply_message },
+                        access_token: token
+                    });
+                    await supabaseAdmin.from('instagram_replied_ids').insert({ user_id: userId, message_id: msgId });
+                    console.log(`[IG] Auto-replied DM to ${senderId}`);
+                } catch (e) {
+                    console.error('[IG] DM reply error:', e.response?.data || e.message);
+                }
+            }
+        }
+
+        // Process Comment change events
+        for (const change of (entry.changes || [])) {
+            if (change.field !== 'comments') continue;
+            const val = change.value;
+            if (!val?.id || !val?.text || val?.from?.id === igUserId) continue; // skip own comments
+            const commentId = val.id;
+            const commentText = val.text.toLowerCase();
+
+            const { data: alreadyReplied } = await supabaseAdmin
+                .from('instagram_replied_ids')
+                .select('id').eq('user_id', userId).eq('message_id', commentId).single();
+            if (alreadyReplied) continue;
+
+            const commentRules = rules.filter(r => r.rule_type === 'comment');
+            const matchedRule = commentRules.find(r =>
+                r.trigger_type === 'any' ||
+                (r.trigger_type === 'keyword' && r.trigger_keyword && commentText.includes(r.trigger_keyword.toLowerCase()))
+            );
+
+            if (matchedRule) {
+                try {
+                    await igApiCall(`/${commentId}/replies`, 'POST', { message: matchedRule.reply_message }, token);
+                    await supabaseAdmin.from('instagram_replied_ids').insert({ user_id: userId, message_id: commentId });
+                    console.log(`[IG] Auto-replied comment ${commentId}`);
+                } catch (e) {
+                    console.error('[IG] Comment reply error:', e.response?.data || e.message);
+                }
+            }
+        }
+    }
+});
+
+// ── 14. Cron: Publish due Instagram posts (every 30s) ────────────────────────
+async function publishDueInstagramPosts() {
+    try {
+        const now = new Date().toISOString();
+        const { data: duePosts } = await supabaseAdmin
+            .from('instagram_posts')
+            .select('*')
+            .eq('status', 'scheduled')
+            .lte('scheduled_at', now);
+
+        if (!duePosts?.length) return;
+
+        for (const post of duePosts) {
+            const integration = await getIgIntegration(post.user_id);
+            if (!integration || integration.status !== 'connected') {
+                await supabaseAdmin.from('instagram_posts').update({ status: 'failed', error_message: 'Instagram not connected' }).eq('id', post.id);
+                continue;
+            }
+
+            const token = integration.access_token;
+            const igUserId = integration.config?.ig_user_id;
+
+            try {
+                let containerId;
+
+                if (post.post_type === 'CAROUSEL' && post.image_urls.length > 1) {
+                    // Step 1: Create individual image containers
+                    const childIds = [];
+                    for (const imgUrl of post.image_urls) {
+                        const childRes = await igApiCall(`/${igUserId}/media`, 'POST', {
+                            image_url: imgUrl,
+                            is_carousel_item: 'true'
+                        }, token);
+                        childIds.push(childRes.id);
+                    }
+                    // Step 2: Create carousel container
+                    const carouselRes = await igApiCall(`/${igUserId}/media`, 'POST', {
+                        media_type: 'CAROUSEL',
+                        children: childIds.join(','),
+                        caption: post.caption || ''
+                    }, token);
+                    containerId = carouselRes.id;
+                } else {
+                    // Single image
+                    const mediaRes = await igApiCall(`/${igUserId}/media`, 'POST', {
+                        image_url: post.image_urls[0],
+                        caption: post.caption || ''
+                    }, token);
+                    containerId = mediaRes.id;
+                }
+
+                // Publish
+                const publishRes = await igApiCall(`/${igUserId}/media_publish`, 'POST', {
+                    creation_id: containerId
+                }, token);
+
+                await supabaseAdmin.from('instagram_posts').update({
+                    status: 'published',
+                    ig_post_id: publishRes.id,
+                    updated_at: new Date().toISOString()
+                }).eq('id', post.id);
+
+                console.log(`[IG] Published post ${post.id} → IG post ${publishRes.id}`);
+            } catch (err) {
+                const errMsg = err.response?.data?.error?.message || err.message;
+                await supabaseAdmin.from('instagram_posts').update({ status: 'failed', error_message: errMsg }).eq('id', post.id);
+                console.error(`[IG] Publish failed for post ${post.id}:`, errMsg);
+            }
+        }
+    } catch (err) {
+        console.error('[IG cron] publish error:', err.message);
+    }
+}
+cron.schedule('*/30 * * * * *', publishDueInstagramPosts);
+
+// ── 15. Cron: Refresh expiring Instagram tokens (daily at 02:00) ──────────────
+async function refreshExpiringIgTokens() {
+    try {
+        const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: integrations } = await supabaseAdmin
+            .from('user_integrations')
+            .select('*')
+            .eq('provider', 'instagram')
+            .eq('status', 'connected')
+            .lte('config->>token_expires_at', sevenDaysFromNow);
+
+        if (!integrations?.length) return;
+
+        for (const integration of integrations) {
+            try {
+                const refreshRes = await axios.get(`${IG_GRAPH}/refresh_access_token?grant_type=ig_refresh_token&access_token=${integration.access_token}`);
+                const { access_token: newToken, expires_in } = refreshRes.data;
+                const newExpiry = new Date(Date.now() + expires_in * 1000).toISOString();
+                const newConfig = { ...integration.config, token_expires_at: newExpiry };
+                await supabaseAdmin.from('user_integrations').update({ access_token: newToken, config: newConfig }).eq('id', integration.id);
+                console.log(`[IG] Refreshed token for user ${integration.user_id}`);
+            } catch (err) {
+                console.error(`[IG] Token refresh failed for user ${integration.user_id}:`, err.message);
+            }
+        }
+    } catch (err) {
+        console.error('[IG cron] token refresh error:', err.message);
+    }
+}
+cron.schedule('0 2 * * *', refreshExpiringIgTokens);
+
 
 
 // ── Razorpay: Create Order ───────────────────────────────────────────────────
