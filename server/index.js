@@ -31,12 +31,28 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
 // Initialize Firebase Admin SDK for Cloud Push Notifications (FCM)
+// Supports both: local service-account.json file OR FIREBASE_SERVICE_ACCOUNT env var (for Render/cloud deployments)
 let fcmMessaging = null;
 const serviceAccountPath = path.join(__dirname, 'service-account.json');
-if (fs.existsSync(serviceAccountPath)) {
+
+const initFcm = () => {
     try {
         const admin = require('firebase-admin');
-        const serviceAccount = require(serviceAccountPath);
+        let serviceAccount;
+
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            // Production: loaded from environment variable (Render.com etc.)
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            console.log('[FCM] Loaded service account from FIREBASE_SERVICE_ACCOUNT env var.');
+        } else if (fs.existsSync(serviceAccountPath)) {
+            // Local development: loaded from file
+            serviceAccount = require(serviceAccountPath);
+            console.log('[FCM] Loaded service account from service-account.json file.');
+        } else {
+            console.warn('[FCM] Warning: No Firebase credentials found (no FIREBASE_SERVICE_ACCOUNT env var and no service-account.json). Push notifications will be bypassed.');
+            return;
+        }
+
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         });
@@ -45,9 +61,8 @@ if (fs.existsSync(serviceAccountPath)) {
     } catch (err) {
         console.error('[FCM] Failed to initialize Firebase Admin SDK:', err);
     }
-} else {
-    console.warn('[FCM] Warning: service-account.json not found. Push notifications will be bypassed.');
-}
+};
+initFcm();
 
 const razorpay = new Razorpay({
     key_id: process.env.Razorpay_live,
