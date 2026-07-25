@@ -6142,7 +6142,10 @@ Looking forward to connecting!`;
                             getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                           if (!matchesSearch) return false;
                           if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
+                          // history tab — exclude pending/scheduled/failed, then apply status filter
+                          if (s.status === 'pending' || s.status === 'scheduled' || s.status === 'failed') return false;
                           if (historyFilter !== 'all' && s.status !== historyFilter) return false;
+                          return true;
                         })
                         .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
                         .map(item => (
