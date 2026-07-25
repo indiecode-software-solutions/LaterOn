@@ -2743,7 +2743,8 @@ app.get('/api/instagram/auth-url', verifyToken, (req, res) => {
         'instagram_content_publish',
         'instagram_manage_comments',
         'instagram_manage_messages',
-        'pages_read_engagement'
+        'pages_read_engagement',
+        'business_management'
     ].join(',');
     const state = req.userId; // pass userId as state for callback identification
     const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${IG_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code&state=${state}&auth_type=rerequest`;
