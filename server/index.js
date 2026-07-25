@@ -2738,8 +2738,48 @@ app.get('/api/instagram/callback', async (req, res) => {
         const longRes = await axios.get(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${IG_APP_SECRET}&access_token=${shortToken}`);
         const { access_token: longToken, expires_in } = longRes.data;
 
-        // Fetch profile
-        const profile = await igApiCall('/me', 'GET', { fields: 'id,username,name,profile_picture_url,followers_count,media_count' }, longToken);
+        // Fetch Instagram Business Account details via linked Facebook Pages
+        let finalIgUserId = igUserId;
+        let profile = { username: 'Instagram User', name: 'Instagram Account', profile_picture_url: '', followers_count: 0 };
+
+        try {
+            const pagesRes = await axios.get(`https://graph.facebook.com/v22.0/me/accounts`, {
+                params: {
+                    fields: 'instagram_business_account{id,username,name,profile_picture_url,followers_count}',
+                    access_token: longToken
+                }
+            });
+
+            const pages = pagesRes.data?.data || [];
+            // Find the page with a linked Instagram Business Account
+            const linkedPage = pages.find(p => p.instagram_business_account);
+            if (linkedPage && linkedPage.instagram_business_account) {
+                const igBiz = linkedPage.instagram_business_account;
+                finalIgUserId = igBiz.id;
+                profile = {
+                    username: igBiz.username || profile.username,
+                    name: igBiz.name || profile.name,
+                    profile_picture_url: igBiz.profile_picture_url || '',
+                    followers_count: igBiz.followers_count || 0
+                };
+                console.log(`[IG Auth] Found linked Instagram Business Account: @${profile.username} (${finalIgUserId})`);
+            } else {
+                // Fallback to basic profile fetch if no linked business account found
+                console.log('[IG Auth] No linked Instagram Business Account found in Pages. Trying basic fallback...');
+                const basicProfile = await igApiCall('/me', 'GET', { fields: 'id,username,name,profile_picture_url,followers_count' }, longToken);
+                finalIgUserId = basicProfile.id;
+                profile = {
+                    username: basicProfile.username || 'user',
+                    name: basicProfile.name || 'User',
+                    profile_picture_url: basicProfile.profile_picture_url || '',
+                    followers_count: basicProfile.followers_count || 0
+                };
+            }
+        } catch (err) {
+            console.error('[Instagram Profile Fetch Warning]', err.response?.data || err.message);
+            // Last resort fallback to short-lived user ID
+            finalIgUserId = igUserId;
+        }
 
         const tokenExpiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
 
@@ -2748,12 +2788,11 @@ app.get('/api/instagram/callback', async (req, res) => {
             provider: 'instagram',
             access_token: longToken,
             config: {
-                ig_user_id: igUserId,
+                ig_user_id: finalIgUserId,
                 username: profile.username,
                 name: profile.name,
                 profile_picture_url: profile.profile_picture_url,
                 followers_count: profile.followers_count,
-                media_count: profile.media_count,
                 token_expires_at: tokenExpiresAt
             },
             status: 'connected'
