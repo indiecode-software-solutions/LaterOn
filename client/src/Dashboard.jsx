@@ -306,21 +306,15 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       {/* Schedule Post tab */}
       {igTab === 'schedule' && (
         <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
-            <div className="wizard-step-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff0f5', padding: '10px 15px', borderLeft: '4px solid #e1306c', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e1306c', textTransform: 'uppercase' }}>1. Scheduling</span>
-            </div>
-          </div>
           <div className="input-group">
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Image URL(s)</label>
             <textarea
-              placeholder={'Paste image URL(s), one per line.\nUp to 10 for a carousel.'}
+              placeholder={'Paste image URL(s), one per line. Up to 10 for a carousel.'}
               value={igPostForm.image_urls_raw}
               onChange={e => setIgPostForm(p => ({ ...p, image_urls_raw: e.target.value }))}
               rows={3}
-              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '1rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
-            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Images must be publicly accessible URLs (JPG/PNG, min 320x320px).</p>
           </div>
           <div className="input-group">
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Caption</label>
@@ -329,7 +323,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               value={igPostForm.caption}
               onChange={e => setIgPostForm(p => ({ ...p, caption: e.target.value }))}
               rows={3}
-              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '1rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
           </div>
           <div className="input-group">
