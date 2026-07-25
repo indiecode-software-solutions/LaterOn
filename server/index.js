@@ -2707,10 +2707,11 @@ app.get('/api/instagram/auth-url', verifyToken, (req, res) => {
         'instagram_business_basic',
         'instagram_business_content_publish',
         'instagram_business_manage_messages',
-        'instagram_business_manage_comments'
+        'instagram_business_manage_comments',
+        'instagram_business_manage_insights'
     ].join(',');
     const state = req.userId; // pass userId as state for callback identification
-    const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${IG_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code&state=${state}`;
+    const authUrl = `https://api.instagram.com/oauth/authorize?force_reauth=true&client_id=${IG_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code&state=${state}`;
     res.json({ url: authUrl });
 });
 
