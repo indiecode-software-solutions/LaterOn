@@ -171,9 +171,9 @@ function InstagramSidebar({ token, channel }) {
   React.useEffect(() => {
     if (igStatus?.status !== 'connected') return;
     fetch(`${API_URL}/api/instagram/posts`, { headers: { Authorization: `Bearer ${authToken}` } })
-      .then(r => r.json()).then(setIgPosts).catch(() => {});
+      .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgPosts(d); }).catch(() => {});
     fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
-      .then(r => r.json()).then(setIgRules).catch(() => {});
+      .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => {});
   }, [igStatus]);
 
   const handleIgConnect = async () => {
