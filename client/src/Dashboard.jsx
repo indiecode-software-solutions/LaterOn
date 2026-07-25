@@ -499,6 +499,9 @@ function Dashboard() {
   
   // Instagram Integration States
   const [instagramStatus, setInstagramStatus] = useState({ provider: 'instagram', status: 'disconnected', config: {} });
+  const [igMobileForm, setIgMobileForm] = useState({ image_urls_raw: '', caption: '' });
+  const [igMobileDate, setIgMobileDate] = useState(new Date());
+  const [igMobileLoading, setIgMobileLoading] = useState(false);
   const fetchInstagramStatus = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/instagram/status`);
@@ -7286,14 +7289,14 @@ Looking forward to connecting!`;
                 <div className="wizard-header">
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
-                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : (channel === 'reminders' ? 'Create Reminder' : (channel === 'telegram' ? 'Schedule Telegram Message' : 'Schedule Message')))}
+                      {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : (channel === 'reminders' ? 'Create Reminder' : (channel === 'telegram' ? 'Schedule Telegram Message' : (channel === 'instagram' ? 'Schedule Instagram Post' : 'Schedule Message'))))}
                     </h2>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of {['reminders', 'telegram'].includes(channel) ? 2 : 3}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of {['reminders', 'telegram', 'instagram'].includes(channel) ? 2 : 3}</span>
                   </div>
                   <div className="wizard-step-indicator">
                     <div className={`step-dot ${formStep >= 1 ? 'active' : ''}`} />
                     <div className={`step-dot ${formStep >= 2 ? 'active' : ''}`} />
-                    {!['reminders', 'telegram'].includes(channel) && <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />}
+                    {!['reminders', 'telegram', 'instagram'].includes(channel) && <div className={`step-dot ${formStep >= 3 ? 'active' : ''}`} />}
                   </div>
                   <button
                     onClick={() => setShowMobileForm(false)}
@@ -7615,6 +7618,54 @@ Looking forward to connecting!`;
                               </>
                             )}
                           </>
+                        ) : channel === 'instagram' ? (
+                          <>
+                            {instagramStatus.status !== 'connected' ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '20px 0', textAlign: 'center' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <InstagramIcon size={28} color="white" />
+                                </div>
+                                <div>
+                                  <h3 style={{ fontWeight: 800, fontSize: '1rem', margin: '0 0 6px 0' }}>Connect Instagram First</h3>
+                                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>You need a Business or Creator account to schedule posts.</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => { setShowMobileForm(false); }}
+                                  style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', width: '100%' }}
+                                >
+                                  Go to Instagram Settings
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <h3 className="stage-title">Post Content</h3>
+                                  <p className="stage-desc">Add your image URL(s) and caption.</p>
+                                </div>
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', marginBottom: '8px', display: 'block' }}>IMAGE URL(S)</label>
+                                  <textarea
+                                    placeholder="Paste image URL(s), one per line. Up to 10 for a carousel."
+                                    value={igMobileForm.image_urls_raw}
+                                    onChange={e => setIgMobileForm(p => ({ ...p, image_urls_raw: e.target.value }))}
+                                    rows={3}
+                                    style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                                <div className="input-group">
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', marginBottom: '8px', display: 'block' }}>CAPTION</label>
+                                  <textarea
+                                    placeholder="Write your caption with hashtags..."
+                                    value={igMobileForm.caption}
+                                    onChange={e => setIgMobileForm(p => ({ ...p, caption: e.target.value }))}
+                                    rows={4}
+                                    style={{ width: '100%', padding: '12px 16px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </>
                         ) : (
                           <>
                             <div>
@@ -7784,6 +7835,50 @@ Looking forward to connecting!`;
                                 <option value={45}>45 Minutes</option>
                                 <option value={60}>60 Minutes</option>
                               </select>
+                            </div>
+                          </>
+                        ) : channel === 'instagram' ? (
+                          <>
+                            <div>
+                              <h3 className="stage-title">When should it go out?</h3>
+                              <p className="stage-desc">Pick a date and time for your post.</p>
+                            </div>
+                            <div className="input-group">
+                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', marginBottom: '8px', display: 'block' }}>PICK DATE & TIME</label>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <input
+                                  type="date"
+                                  value={igMobileDate ? (() => {
+                                    const d = new Date(igMobileDate);
+                                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                  })() : ''}
+                                  min={(() => {
+                                    const t = new Date();
+                                    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+                                  })()}
+                                  onChange={e => {
+                                    const [y, m, d] = e.target.value.split('-');
+                                    const prev = igMobileDate ? new Date(igMobileDate) : new Date();
+                                    prev.setFullYear(Number(y), Number(m) - 1, Number(d));
+                                    setIgMobileDate(new Date(prev));
+                                  }}
+                                  style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
+                                />
+                                <input
+                                  type="time"
+                                  value={igMobileDate ? (() => {
+                                    const d = new Date(igMobileDate);
+                                    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                                  })() : ''}
+                                  onChange={e => {
+                                    const [h, min] = e.target.value.split(':');
+                                    const prev = igMobileDate ? new Date(igMobileDate) : new Date();
+                                    prev.setHours(Number(h), Number(min), 0, 0);
+                                    setIgMobileDate(new Date(prev));
+                                  }}
+                                  style={{ width: '100%', padding: '14px', borderRadius: '0px', border: '1px solid var(--border)', fontSize: '1rem', outline: 'none', background: 'white', boxSizing: 'border-box' }}
+                                />
+                              </div>
                             </div>
                           </>
                         ) : (
@@ -8255,6 +8350,19 @@ Join Link: [Auto-generated after scheduling]`}
                               return;
                             }
                           }
+                          if (channel === 'instagram') {
+                            if (instagramStatus.status !== 'connected') {
+                              triggerError();
+                              alert('Please connect your Instagram account first');
+                              return;
+                            }
+                            const urls = igMobileForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
+                            if (!urls.length) {
+                              triggerError();
+                              alert('Please add at least one image URL');
+                              return;
+                            }
+                          }
                           setFormStep(2);
                         } else if (formStep === 2) {
                           if (channel === 'calendar' && !meetingTitle.trim()) {
@@ -8279,6 +8387,26 @@ Join Link: [Auto-generated after scheduling]`}
                             }
                             await handleSubmit({ preventDefault: () => { } });
                             setShowMobileForm(false);
+                            return;
+                          }
+                          if (channel === 'instagram') {
+                            const urls = igMobileForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
+                            if (!igMobileDate) { triggerError(); alert('Please pick a date and time'); return; }
+                            setIgMobileLoading(true);
+                            try {
+                              const r = await fetch(`${API_URL}/api/instagram/posts`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ caption: igMobileForm.caption, image_urls: urls, scheduled_at: igMobileDate.toISOString() })
+                              });
+                              const d = await r.json();
+                              if (d.error) { alert(d.error); return; }
+                              if (fetchSchedules) fetchSchedules();
+                              setIgMobileForm({ image_urls_raw: '', caption: '' });
+                              setIgMobileDate(new Date());
+                              setShowMobileForm(false);
+                              setFormStep(1);
+                            } catch(e) { alert(e.message); } finally { setIgMobileLoading(false); }
                             return;
                           }
                           setFormStep(3);
@@ -8313,17 +8441,17 @@ Join Link: [Auto-generated after scheduling]`}
                         padding: '16px',
                         borderRadius: '0px',
                         fontWeight: 800,
-                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : (channel === 'telegram' ? '#0088cc' : 'var(--primary)'))),
+                        background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : 'var(--primary)')))),
                         color: 'white',
                         border: 'none',
-                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 && !['reminders', 'telegram'].includes(channel) ? 0.5 : 1
+                        opacity: credits.total_balance < getEstimatedCredits() && formStep === 3 && !['reminders', 'telegram', 'instagram'].includes(channel) ? 0.5 : 1
                       }}
-                      disabled={isSubmittingReminder || (credits.total_balance < getEstimatedCredits() && formStep === 3 && !['reminders', 'telegram'].includes(channel))}
+                      disabled={isSubmittingReminder || igMobileLoading || (credits.total_balance < getEstimatedCredits() && formStep === 3 && !['reminders', 'telegram', 'instagram'].includes(channel))}
                     >
-                      {isSubmittingReminder
+                      {(isSubmittingReminder || igMobileLoading)
                         ? 'Scheduling...'
-                        : (['reminders', 'telegram'].includes(channel)
-                          ? (formStep === 1 ? 'Next Step' : (channel === 'telegram' ? 'Schedule Message' : 'Create Reminder'))
+                        : (['reminders', 'telegram', 'instagram'].includes(channel)
+                          ? (formStep === 1 ? 'Next Step' : (channel === 'telegram' ? 'Schedule Message' : (channel === 'instagram' ? 'Schedule Post' : 'Create Reminder')))
                           : (formStep === 3 ? 'Schedule Now' : 'Next Step'))}
                     </button>
                   </div>
