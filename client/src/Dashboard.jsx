@@ -1589,9 +1589,17 @@ Looking forward to connecting!`;
     }
   };
 
-  const deleteSchedule = async (id) => {
+  const deleteSchedule = async (itemOrId) => {
+    const isObject = typeof itemOrId === 'object' && itemOrId !== null;
+    const id = isObject ? itemOrId.id : itemOrId;
+    const isInstagram = isObject && itemOrId.channel === 'instagram';
+    
     try {
-      await axios.delete(`${API_URL}/api/schedules/${id}`);
+      if (isInstagram) {
+        await axios.delete(`${API_URL}/api/instagram/posts/${id}`);
+      } else {
+        await axios.delete(`${API_URL}/api/schedules/${id}`);
+      }
       fetchSchedules();
     } catch (err) {
       alert('Failed to delete schedule');
@@ -6159,12 +6167,14 @@ Looking forward to connecting!`;
                                 ? '#ffffff'
                                 : (item.channel === 'email'
                                   ? '#ffffff'
-                                  : ((item.status === 'pending' || item.status === 'failed') ? 'white' : '#dcf8c6')),
-                              border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #fee2e2' : 'none'),
-                              borderLeft: item.channel === 'calendar' ? '4px solid #1a73e8' : (item.channel === 'email' ? '4px solid #a52a2a' : 'none'),
+                                  : (item.channel === 'instagram'
+                                    ? '#ffffff'
+                                    : ((item.status === 'pending' || item.status === 'failed') ? 'white' : '#dcf8c6'))),
+                              border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #fee2e2' : (item.channel === 'instagram' ? '1px solid #f7c6d8' : 'none')),
+                              borderLeft: item.channel === 'calendar' ? '4px solid #1a73e8' : (item.channel === 'email' ? '4px solid #a52a2a' : (item.channel === 'instagram' ? '4px solid #e1306c' : 'none')),
                               padding: '12px 16px',
                               borderRadius: '0px',
-                              boxShadow: item.channel === 'calendar' ? '0 2px 8px rgba(26, 115, 232, 0.08)' : (item.channel === 'email' ? '0 2px 8px rgba(165, 42, 42, 0.08)' : '0 1px 0.5px rgba(0,0,0,0.13)'),
+                              boxShadow: item.channel === 'calendar' ? '0 2px 8px rgba(26, 115, 232, 0.08)' : (item.channel === 'email' ? '0 2px 8px rgba(165, 42, 42, 0.08)' : (item.channel === 'instagram' ? '0 2px 8px rgba(225, 48, 108, 0.08)' : '0 1px 0.5px rgba(0,0,0,0.13)')),
                               position: 'relative'
                             }}
                           >
@@ -6174,18 +6184,20 @@ Looking forward to connecting!`;
                                   width: '26px',
                                   height: '26px',
                                   borderRadius: item.channel === 'email' || item.channel === 'calendar' ? '0px' : '50%',
-                                  background: item.channel === 'calendar' ? '#e8f0fe' : (item.channel === 'email' ? '#fdf2f2' : '#f0f2f5'),
+                                  background: item.channel === 'calendar' ? '#e8f0fe' : (item.channel === 'email' ? '#fdf2f2' : (item.channel === 'instagram' ? '#fff0f5' : '#f0f2f5')),
                                   overflow: 'hidden',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   flexShrink: 0,
-                                  border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #f8d7da' : '1px solid rgba(0,0,0,0.05)')
+                                  border: item.channel === 'calendar' ? '1px solid #d2e3fc' : (item.channel === 'email' ? '1px solid #f8d7da' : (item.channel === 'instagram' ? '1px solid #f7c6d8' : '1px solid rgba(0,0,0,0.05)'))
                                 }}>
                                   {item.channel === 'calendar' ? (
                                     <Calendar size={14} color="#1a73e8" />
                                   ) : item.channel === 'email' ? (
                                     <Mail size={14} color="#a52a2a" />
+                                  ) : item.channel === 'instagram' ? (
+                                    <InstagramIcon size={14} color="#e1306c" />
                                   ) : contacts[item.phone.split('@')[0]]?.photo ? (
                                     <img src={contacts[item.phone.split('@')[0]].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                   ) : item.phone.includes('@g.us') ? (
@@ -6210,6 +6222,22 @@ Looking forward to connecting!`;
                                     MEETING
                                   </span>
                                 )}
+                                {item.channel === 'instagram' && (
+                                  <span style={{
+                                    fontSize: '0.65rem',
+                                    padding: '2px 6px',
+                                    background: '#fff0f5',
+                                    color: '#e1306c',
+                                    border: '1px solid #f7c6d8',
+                                    fontWeight: 800,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    borderRadius: '0px'
+                                  }}>
+                                    INSTAGRAM
+                                  </span>
+                                )}
                                 {item.channel === 'email' && (
                                   <span style={{
                                     fontSize: '0.65rem',
@@ -6228,13 +6256,13 @@ Looking forward to connecting!`;
                                 )}
                                 <span style={{
                                   fontWeight: 700,
-                                  color: item.channel === 'calendar' ? '#1a73e8' : (item.channel === 'email' ? '#a52a2a' : (item.phone.includes('@g.us') ? '#0057b7' : '#075e54')),
+                                  color: item.channel === 'calendar' ? '#1a73e8' : (item.channel === 'email' ? '#a52a2a' : (item.channel === 'instagram' ? '#e1306c' : (item.phone.includes('@g.us') ? '#0057b7' : '#075e54'))),
                                   fontSize: '0.9rem',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '4px'
                                 }}>
-                                  {item.channel === 'calendar' ? (item.metadata?.title || 'Untitled Meeting') : (item.channel === 'email' ? `To: ${item.email_to || item.phone}` : `To: ${groups[item.phone] || getContactName(item.phone.split('@')[0])}`)}
+                                  {item.channel === 'calendar' ? (item.metadata?.title || 'Untitled Meeting') : (item.channel === 'email' ? `To: ${item.email_to || item.phone}` : (item.channel === 'instagram' ? 'To: Instagram Feed' : `To: ${groups[item.phone] || getContactName(item.phone.split('@')[0])}`))}
                                 </span>
                                 <span style={{ fontSize: '0.7rem', color: '#667781', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '0px' }}>
                                   {format(new Date(item.scheduled_at || item.scheduledAt), 'MMM d, h:mm a')}

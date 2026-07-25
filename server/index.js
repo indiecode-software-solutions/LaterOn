@@ -1210,14 +1210,48 @@ app.get('/api/groups', verifyToken, async (req, res) => {
 
 app.get('/api/schedules', verifyToken, async (req, res) => {
     const workspaceUserIds = await getWorkspaceUserIds(req.userId);
-    const { data, error } = await supabaseAdmin
+    
+    // Fetch regular channel schedules (WhatsApp, Email, Telegram, Calendar)
+    const { data: schedules, error: schedulesError } = await supabaseAdmin
         .from('schedules')
         .select('*')
-        .in('user_id', workspaceUserIds)
-        .order('scheduled_at', { ascending: false });
+        .in('user_id', workspaceUserIds);
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data || []);
+    if (schedulesError) return res.status(500).json({ error: schedulesError.message });
+
+    // Fetch Instagram posts
+    const { data: igPosts, error: igError } = await supabaseAdmin
+        .from('instagram_posts')
+        .select('*')
+        .in('user_id', workspaceUserIds);
+
+    if (igError) return res.status(500).json({ error: igError.message });
+
+    // Map Instagram posts to match the main schedules layout structure
+    const mappedIgPosts = (igPosts || []).map(post => ({
+        id: post.id,
+        user_id: post.user_id,
+        channel: 'instagram',
+        phone: 'Instagram Feed',
+        message: post.caption || '[Image Post]',
+        scheduled_at: post.scheduled_at,
+        status: post.status,
+        error_message: post.error_message,
+        created_at: post.created_at,
+        updated_at: post.updated_at,
+        metadata: {
+            image_urls: post.image_urls,
+            post_type: post.post_type,
+            ig_post_id: post.ig_post_id
+        }
+    }));
+
+    // Merge and sort by scheduled_at descending
+    const combined = [...(schedules || []), ...mappedIgPosts].sort((a, b) => {
+        return new Date(b.scheduled_at) - new Date(a.scheduled_at);
+    });
+
+    res.json(combined);
 });
 
 async function hasGoogleIntegration(userId, supabaseAdmin) {
