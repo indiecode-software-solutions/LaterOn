@@ -2430,7 +2430,11 @@ Looking forward to connecting!`;
                     ) : channel === 'telegram' ? (
                       <TelegramIcon size={18} color="white" />
                     ) : channel === 'instagram' ? (
-                      <InstagramIcon size={18} color="white" />
+                      instagramStatus.status === 'connected' && instagramStatus.config?.profile_picture_url ? (
+                        <img src={instagramStatus.config.profile_picture_url} alt={instagramStatus.config.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0px' }} />
+                      ) : (
+                        <InstagramIcon size={18} color="white" />
+                      )
                     ) : channel === 'reminders' ? (
                       <Bell size={18} />
                     ) : status === 'connected' ? (
@@ -2445,7 +2449,7 @@ Looking forward to connecting!`;
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <p style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {channel === 'email' ? (user?.name || 'Email Service') : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram Companion' : (channel === 'instagram' ? 'Instagram' : (channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'Active Account')))))}
+                      {channel === 'email' ? (user?.name || 'Email Service') : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram Companion' : (channel === 'instagram' ? (instagramStatus.status === 'connected' ? (instagramStatus.config?.name || 'Instagram') : 'Instagram') : (channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'Active Account')))))}
                     </p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {channel === 'email'
@@ -2455,7 +2459,9 @@ Looking forward to connecting!`;
                           : channel === 'telegram'
                             ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'custom_bot'}` : 'Ready to Connect')
                             : channel === 'instagram'
-                              ? (instagramStatus.status === 'connected' ? `@${instagramStatus.config?.username || 'instagram_account'}` : 'Ready to Connect')
+                              ? (instagramStatus.status === 'connected'
+                                  ? <>{`@${instagramStatus.config?.username || 'instagram_account'}`}{instagramStatus.config?.followers_count ? <span style={{ marginLeft: '6px', fontWeight: 600, color: '#e1306c' }}>{instagramStatus.config.followers_count.toLocaleString()} followers</span> : null}</>
+                                  : 'Ready to Connect')
                               : channel === 'reminders'
                                 ? 'Reminders Active'
                                 : (status === 'connected' ? `+${userInfo?.id}` : 'Reconnecting...')}
