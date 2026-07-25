@@ -2721,7 +2721,7 @@ async function getIgIntegration(userId) {
 
 // Helper: make authenticated Graph API call
 async function igApiCall(path, method = 'GET', params = {}, accessToken = null) {
-    const url = new URL(`${IG_GRAPH}${path}`);
+    const url = new URL(`${META_GRAPH}${path}`);
     if (accessToken) params.access_token = accessToken;
     if (method === 'GET') {
         Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
