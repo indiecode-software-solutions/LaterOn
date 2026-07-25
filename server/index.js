@@ -2733,23 +2733,24 @@ async function igApiCall(path, method = 'GET', params = {}, accessToken = null) 
     }
 }
 
-// ── 1. OAuth: Generate Auth URL ──────────────────────────────────────────────
+// ── 1. OAuth: Generate Auth URL (using Facebook Login for Business) ──────────
 app.get('/api/instagram/auth-url', verifyToken, (req, res) => {
     if (!IG_APP_ID) return res.status(500).json({ error: 'Instagram App ID not configured. Add INSTAGRAM_APP_ID to .env' });
     const redirectUri = `${SERVER_BASE_URL}/api/instagram/callback`;
     const scope = [
-        'instagram_business_basic',
-        'instagram_business_content_publish',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_comments',
-        'instagram_business_manage_insights'
+        'pages_show_list',
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_comments',
+        'instagram_manage_messages',
+        'pages_read_engagement'
     ].join(',');
     const state = req.userId; // pass userId as state for callback identification
-    const authUrl = `https://api.instagram.com/oauth/authorize?force_reauth=true&client_id=${IG_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code&state=${state}`;
+    const authUrl = `https://www.facebook.com/v22.0/dialog/oauth?client_id=${IG_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code&state=${state}&auth_type=rerequest`;
     res.json({ url: authUrl });
 });
 
-// ── 2. OAuth: Callback (exchange code → short-lived → long-lived token) ──────
+// ── 2. OAuth: Callback (exchange code → short-lived → long-lived Facebook token) ──────
 app.get('/api/instagram/callback', async (req, res) => {
     const { code, state: userId, error: igError } = req.query;
     if (igError) return res.redirect(`/?ig_error=${igError}`);
@@ -2757,23 +2758,31 @@ app.get('/api/instagram/callback', async (req, res) => {
 
     const redirectUri = `${SERVER_BASE_URL}/api/instagram/callback`;
     try {
-        // Exchange code for short-lived token
-        const tokenRes = await axios.post('https://api.instagram.com/oauth/access_token', new URLSearchParams({
-            client_id: IG_APP_ID,
-            client_secret: IG_APP_SECRET,
-            grant_type: 'authorization_code',
-            redirect_uri: redirectUri,
-            code
-        }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        // Exchange code for Facebook user access token
+        const tokenRes = await axios.get('https://graph.facebook.com/v22.0/oauth/access_token', {
+            params: {
+                client_id: IG_APP_ID,
+                client_secret: IG_APP_SECRET,
+                redirect_uri: redirectUri,
+                code
+            }
+        });
 
-        const { access_token: shortToken, user_id: igUserId } = tokenRes.data;
+        const { access_token: shortToken } = tokenRes.data;
 
-        // Exchange for long-lived token (60 days)
-        const longRes = await axios.get(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${IG_APP_SECRET}&access_token=${shortToken}`);
+        // Exchange for long-lived Facebook user access token (60 days)
+        const longRes = await axios.get('https://graph.facebook.com/v22.0/oauth/access_token', {
+            params: {
+                grant_type: 'fb_exchange_token',
+                client_id: IG_APP_ID,
+                client_secret: IG_APP_SECRET,
+                fb_exchange_token: shortToken
+            }
+        });
         const { access_token: longToken, expires_in } = longRes.data;
 
         // Fetch Instagram Business Account details via linked Facebook Pages
-        let finalIgUserId = igUserId;
+        let finalIgUserId = null;
         let profile = { username: 'Instagram User', name: 'Instagram Account', profile_picture_url: '', followers_count: 0 };
 
         try {
@@ -2811,8 +2820,6 @@ app.get('/api/instagram/callback', async (req, res) => {
             }
         } catch (err) {
             console.error('[Instagram Profile Fetch Warning]', err.response?.data || err.message);
-            // Last resort fallback to short-lived user ID
-            finalIgUserId = igUserId;
         }
 
         const tokenExpiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
