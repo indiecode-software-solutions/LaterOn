@@ -2804,7 +2804,7 @@ Looking forward to connecting!`;
                                           onChange={e => setSelectedTelegramChat(e.target.value)}
                                           style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                                         >
-                                          {telegramStatus.config.chats.map(c => (
+                                          {(telegramStatus.config?.chats || []).map(c => (
                                             <option key={c.id} value={c.id}>{c.title}</option>
                                           ))}
                                         </select>
@@ -7474,7 +7474,7 @@ Looking forward to connecting!`;
                                       onChange={e => setSelectedTelegramChat(e.target.value)}
                                       style={{ flex: 1, padding: '12px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '1rem' }}
                                     >
-                                      {telegramStatus.config.chats.map(c => (
+                                      {(telegramStatus.config?.chats || []).map(c => (
                                         <option key={c.id} value={c.id}>{c.title}</option>
                                       ))}
                                     </select>
