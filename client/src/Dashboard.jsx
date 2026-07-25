@@ -148,11 +148,12 @@ const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
 };
 
 // ── Instagram Sidebar ── proper component to respect Rules of Hooks ──────────
-function InstagramSidebar({ token, channel, fetchSchedules }) {
-  const [igStatus, setIgStatus] = React.useState(null);
+// ── Instagram Sidebar ── proper component to respect Rules of Hooks ──────────
+function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fetchInstagramStatus, setInstagramStatus }) {
   const [igTab, setIgTab] = React.useState('schedule');
   const [igRules, setIgRules] = React.useState([]);
-  const [igPostForm, setIgPostForm] = React.useState({ caption: '', image_urls_raw: '', scheduled_at: '' });
+  const [scheduledDate, setScheduledDate] = React.useState(new Date());
+  const [igPostForm, setIgPostForm] = React.useState({ caption: '', image_urls_raw: '' });
   const [igRuleForm, setIgRuleForm] = React.useState({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
   const [igLoading, setIgLoading] = React.useState(false);
   const [igConnecting, setIgConnecting] = React.useState(false);
@@ -160,18 +161,25 @@ function InstagramSidebar({ token, channel, fetchSchedules }) {
 
   const authToken = token;
 
+  const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
+    <button type="button" className="datepicker-custom-input" onClick={onClick} ref={ref} style={{ border: '1px solid var(--border)', color: 'var(--text-main)' }}>
+      <Calendar size={18} />
+      {value}
+    </button>
+  ));
+
   React.useEffect(() => {
     setIgStatusLoading(true);
     fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } })
-      .then(r => r.json()).then(d => { setIgStatus(d); setIgStatusLoading(false); })
+      .then(r => r.json()).then(d => { setInstagramStatus(d); setIgStatusLoading(false); })
       .catch(() => setIgStatusLoading(false));
   }, [channel]);
 
   React.useEffect(() => {
-    if (igStatus?.status !== 'connected') return;
+    if (instagramStatus?.status !== 'connected') return;
     fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => {});
-  }, [igStatus]);
+  }, [instagramStatus]);
 
   const handleIgConnect = async () => {
     setIgConnecting(true);
@@ -183,7 +191,7 @@ function InstagramSidebar({ token, channel, fetchSchedules }) {
       const poll = setInterval(async () => {
         const sr = await fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } });
         const sd = await sr.json();
-        if (sd.status === 'connected') { setIgStatus(sd); clearInterval(poll); setIgConnecting(false); }
+        if (sd.status === 'connected') { setInstagramStatus(sd); clearInterval(poll); setIgConnecting(false); }
       }, 2000);
       setTimeout(() => { clearInterval(poll); setIgConnecting(false); }, 120000);
     } catch(e) { alert(e.message); setIgConnecting(false); }
@@ -192,7 +200,7 @@ function InstagramSidebar({ token, channel, fetchSchedules }) {
   const handleIgDisconnect = async () => {
     if (!confirm('Disconnect Instagram?')) return;
     await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
-    setIgStatus({ status: 'disconnected' });
+    setInstagramStatus({ status: 'disconnected' });
     setIgRules([]);
   };
 
@@ -200,12 +208,9 @@ function InstagramSidebar({ token, channel, fetchSchedules }) {
     e.preventDefault();
     const urls = igPostForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
     if (!urls.length) return alert('Add at least one image URL');
-    if (!igPostForm.scheduled_at) return alert('Pick a date & time');
     
-    // Convert local datetime input to UTC ISO string
-    const localDate = new Date(igPostForm.scheduled_at);
-    if (isNaN(localDate.getTime())) return alert('Invalid date selected');
-    const utcScheduledAt = localDate.toISOString();
+    // Convert selected date to UTC ISO string
+    const utcScheduledAt = scheduledDate.toISOString();
 
     setIgLoading(true);
     try {
@@ -217,7 +222,8 @@ function InstagramSidebar({ token, channel, fetchSchedules }) {
       const d = await r.json();
       if (d.error) return alert(d.error);
       if (fetchSchedules) fetchSchedules();
-      setIgPostForm({ caption: '', image_urls_raw: '', scheduled_at: '' });
+      setIgPostForm({ caption: '', image_urls_raw: '' });
+      setScheduledDate(new Date());
     } catch(e) { alert(e.message); } finally { setIgLoading(false); }
   };
 
@@ -257,97 +263,91 @@ function InstagramSidebar({ token, channel, fetchSchedules }) {
   if (igStatusLoading) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px', gap: '10px' }}>
       <div className="spin" style={{ width: 28, height: 28, border: '3px solid #f3f3f3', borderTop: '3px solid #e1306c', borderRadius: '50%' }} />
-      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>Checking connection…</p>
+      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>Checking connection...</p>
     </div>
   );
 
-  if (igStatus?.status !== 'connected') return (
+  if (instagramStatus?.status !== 'connected') return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ padding: '20px', background: 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', borderRadius: '0px', textAlign: 'center', color: 'white' }}>
+      <div style={{ padding: '20px', background: 'linear-gradient(135deg, #e1306c, #f77737)', borderRadius: '0px', textAlign: 'center', color: 'white' }}>
         <InstagramIcon size={32} color="white" />
         <p style={{ fontWeight: 800, fontSize: '1rem', margin: '8px 0 4px 0' }}>Connect Instagram</p>
         <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.9 }}>Business or Creator account required</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 4px' }}>
         {[
-          { n: '1', text: 'Make sure your Instagram account is set to Business or Creator (Settings → Account type).' },
-          { n: '2', text: 'Click "Connect Instagram" below and log in with your Instagram credentials.' },
-          { n: '3', text: 'Approve the requested permissions — these let LaterOn post and manage replies on your behalf.' },
-          { n: '4', text: "You'll be redirected back automatically once connected." }
+          { n: '1', text: 'Make sure your Instagram account is set to Business or Creator (Settings -> Account type).' },
+          { n: '2', text: 'Click Connect Instagram below and log in with your credentials.' },
+          { n: '3', text: 'Approve the requested permissions so LaterOn can post on your behalf.' },
+          { n: '4', text: 'You will be redirected back automatically once connected.' }
         ].map(s => (
           <div key={s.n} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-            <div style={{ minWidth: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
+            <div style={{ minWidth: 22, height: 22, borderRadius: '50%', background: '#e1306c', color: 'white', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{s.text}</p>
           </div>
         ))}
       </div>
-      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
-        {igConnecting ? 'Waiting for login…' : '🔗 Connect Instagram'}
+      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
+        {igConnecting ? 'Waiting for login...' : 'Connect Instagram'}
       </button>
-      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-        ⚠️ Requires a <strong>Meta Developer App</strong>. Add <code>INSTAGRAM_APP_ID</code> + <code>INSTAGRAM_APP_SECRET</code> + <code>SERVER_BASE_URL</code> to your <code>.env</code> first.
-      </p>
     </div>
   );
 
-  const cfg = igStatus.config || {};
+  const cfg = instagramStatus.config || {};
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {/* Profile card */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '0px' }}>
-        {cfg.profile_picture_url
-          ? <img src={cfg.profile_picture_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e1306c' }} />
-          : <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #e1306c, #f77737)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><InstagramIcon size={18} color="white" /></div>
-        }
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontWeight: 800, fontSize: '0.88rem', margin: 0, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{cfg.username || 'Connected'}</p>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>{cfg.followers_count ? `${cfg.followers_count.toLocaleString()} followers` : 'Business Account'}</p>
-        </div>
-        <button onClick={handleIgDisconnect} style={{ fontSize: '0.7rem', color: '#e1306c', background: 'none', border: '1px solid #f7c6d8', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer' }}>Disconnect</button>
-      </div>
-
       {/* Tab switcher */}
       <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden' }}>
-        {[{ k: 'schedule', label: '📅 Schedule Post' }, { k: 'rules', label: '🤖 Auto-Replies' }].map(t => (
-          <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer', background: igTab === t.k ? 'linear-gradient(135deg, #e1306c, #f77737)' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
+        {[{ k: 'schedule', label: 'Schedule Post' }, { k: 'rules', label: 'Auto-Replies' }].map(t => (
+          <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer', background: igTab === t.k ? '#e1306c' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
         ))}
       </div>
 
       {/* Schedule Post tab */}
       {igTab === 'schedule' && (
-        <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div>
-            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Image URL(s)</label>
+            <div className="wizard-step-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff0f5', padding: '10px 15px', borderLeft: '4px solid #e1306c', marginBottom: '12px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e1306c', textTransform: 'uppercase' }}>1. Scheduling</span>
+            </div>
+          </div>
+          <div className="input-group">
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Image URL(s)</label>
             <textarea
               placeholder={'Paste image URL(s), one per line.\nUp to 10 for a carousel.'}
               value={igPostForm.image_urls_raw}
               onChange={e => setIgPostForm(p => ({ ...p, image_urls_raw: e.target.value }))}
               rows={3}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '1rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
-            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Images must be publicly accessible URLs (JPG/PNG, min 320×320px).</p>
+            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Images must be publicly accessible URLs (JPG/PNG, min 320x320px).</p>
           </div>
-          <div>
-            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Caption</label>
+          <div className="input-group">
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Caption</label>
             <textarea
-              placeholder="Write your caption with hashtags…"
+              placeholder="Write your caption with hashtags..."
               value={igPostForm.caption}
               onChange={e => setIgPostForm(p => ({ ...p, caption: e.target.value }))}
               rows={3}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '1rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
           </div>
-          <div>
-            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>Schedule Date & Time</label>
-            <input
-              type="datetime-local"
-              value={igPostForm.scheduled_at}
-              onChange={e => setIgPostForm(p => ({ ...p, scheduled_at: e.target.value }))}
-              style={{ width: '100%', padding: '8px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
+          <div className="input-group">
+            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Schedule For</label>
+            <DatePicker
+              selected={scheduledDate}
+              onChange={(date) => setScheduledDate(date)}
+              showTimeSelect
+              timeFormat="h:mm aa"
+              timeIntervals={1}
+              timeCaption="Time"
+              dateFormat="MMMM d, yyyy h:mm aa"
+              customInput={<CustomDateInput />}
+              minDate={new Date()}
             />
           </div>
-          <button type="submit" disabled={igLoading} style={{ padding: '12px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.85rem', border: 'none', borderRadius: '0px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
-            {igLoading ? 'Scheduling…' : '📅 Schedule Post'}
+          <button type="submit" disabled={igLoading} style={{ padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
+            {igLoading ? 'Scheduling...' : 'Schedule Post'}
           </button>
         </form>
       )}
@@ -502,6 +502,17 @@ function Dashboard() {
 
   // Telegram Integration States
   const [telegramStatus, setTelegramStatus] = useState({ provider: 'telegram', status: 'disconnected', config: {} });
+  
+  // Instagram Integration States
+  const [instagramStatus, setInstagramStatus] = useState({ provider: 'instagram', status: 'disconnected', config: {} });
+  const fetchInstagramStatus = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/instagram/status`);
+      setInstagramStatus(res.data);
+    } catch (err) {
+      console.error('Failed to fetch Instagram status:', err.message);
+    }
+  };
   const [showTelegramConfig, setShowTelegramConfig] = useState(false);
   const [customTelegramToken, setCustomTelegramToken] = useState('');
   const [isTestingTelegramBot, setIsTestingTelegramBot] = useState(false);
@@ -543,6 +554,7 @@ function Dashboard() {
         setEmailFromAddress(hasResend.email_address || '');
       }
       await fetchTelegramStatus();
+      await fetchInstagramStatus();
     } catch (err) {
       console.error('Failed to fetch integrations:', err.message);
     }
@@ -2449,7 +2461,7 @@ Looking forward to connecting!`;
                           : channel === 'telegram'
                             ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'custom_bot'}` : 'Ready to Connect')
                             : channel === 'instagram'
-                              ? 'Ready to Connect'
+                              ? (instagramStatus.status === 'connected' ? `@${instagramStatus.config?.username || 'instagram_account'}` : 'Ready to Connect')
                               : channel === 'reminders'
                                 ? 'Reminders Active'
                                 : (status === 'connected' ? `+${userInfo?.id}` : 'Reconnecting...')}
@@ -2953,7 +2965,14 @@ Looking forward to connecting!`;
                           )}
 
                           {channel === 'instagram' && (
-                            <InstagramSidebar token={token} channel={channel} fetchSchedules={fetchSchedules} />
+                            <InstagramSidebar
+                              token={token}
+                              channel={channel}
+                              fetchSchedules={fetchSchedules}
+                              instagramStatus={instagramStatus}
+                              fetchInstagramStatus={fetchInstagramStatus}
+                              setInstagramStatus={setInstagramStatus}
+                            />
                           )}
 
                           {channel === 'reminders' && (
