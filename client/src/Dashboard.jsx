@@ -6130,8 +6130,8 @@ Looking forward to connecting!`;
                           if (!matchesSearch) return false;
                           if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
                           if (historyFilter !== 'all' && s.status !== historyFilter) return false;
-                          return s.status !== 'pending' && s.status !== 'failed';
                         })
+                        .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
                         .map(item => (
                           <motion.div
                             key={item.id}
@@ -6364,6 +6364,34 @@ Looking forward to connecting!`;
                                 borderRadius: '0px'
                               }}>
                                 <span style={{ color: '#7f1d1d', fontWeight: 800 }}>Subject:</span> {item.email_subject}
+                              </div>
+                            )}
+                            {item.channel === 'instagram' && item.metadata?.image_urls?.length > 0 && (
+                              <div style={{
+                                display: 'flex',
+                                gap: '8px',
+                                overflowX: 'auto',
+                                paddingBottom: '10px',
+                                marginBottom: '10px',
+                                maxWidth: '100%',
+                                scrollbarWidth: 'thin'
+                              }}>
+                                {item.metadata.image_urls.map((url, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={url}
+                                    alt=""
+                                    style={{
+                                      width: '100px',
+                                      height: '100px',
+                                      objectFit: 'cover',
+                                      borderRadius: '4px',
+                                      border: '1px solid #f7c6d8',
+                                      flexShrink: 0
+                                    }}
+                                    onError={e => { e.target.style.display = 'none'; }}
+                                  />
+                                ))}
                               </div>
                             )}
                             <div style={{
