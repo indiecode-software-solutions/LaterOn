@@ -5335,7 +5335,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'failed')).length})
+                      Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled' || s.status === 'failed')).length})
                     </div>
                     <div
                       onClick={() => { triggerSelection(); setQueueTab('history'); }}
@@ -5350,7 +5350,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length})
+                      {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled' && s.status !== 'failed').length})
                     </div>
                   </>
                 ) : (
@@ -6020,9 +6020,9 @@ Looking forward to connecting!`;
                         (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                         getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                       if (!matchesSearch) return false;
-                      if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
+                      if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled' || s.status === 'failed';
                       if (historyFilter !== 'all' && s.status !== historyFilter) return false;
-                      return s.status !== 'pending' && s.status !== 'failed';
+                      return s.status !== 'pending' && s.status !== 'scheduled' && s.status !== 'failed';
                     }).length === 0 ? (
                       <>
                         <motion.div
