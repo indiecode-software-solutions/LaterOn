@@ -204,12 +204,18 @@ function InstagramSidebar({ token, channel }) {
     const urls = igPostForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
     if (!urls.length) return alert('Add at least one image URL');
     if (!igPostForm.scheduled_at) return alert('Pick a date & time');
+    
+    // Convert local datetime input to UTC ISO string
+    const localDate = new Date(igPostForm.scheduled_at);
+    if (isNaN(localDate.getTime())) return alert('Invalid date selected');
+    const utcScheduledAt = localDate.toISOString();
+
     setIgLoading(true);
     try {
       const r = await fetch(`${API_URL}/api/instagram/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ caption: igPostForm.caption, image_urls: urls, scheduled_at: igPostForm.scheduled_at })
+        body: JSON.stringify({ caption: igPostForm.caption, image_urls: urls, scheduled_at: utcScheduledAt })
       });
       const d = await r.json();
       if (d.error) return alert(d.error);
