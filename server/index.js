@@ -3176,6 +3176,24 @@ async function publishDueInstagramPosts() {
                     containerId = mediaRes.id;
                 }
 
+                // Poll until container is FINISHED — Meta requires this before calling media_publish.
+                // Without waiting, publish returns "Media ID is not available".
+                const maxWaitMs = 30000;
+                const pollInterval = 3000;
+                const deadline = Date.now() + maxWaitMs;
+                let containerReady = false;
+                while (Date.now() < deadline) {
+                    const statusRes = await igApiCall(`/${containerId}`, 'GET', { fields: 'status_code' }, token);
+                    const code = statusRes.status_code;
+                    console.log(`[IG] Container ${containerId} status: ${code}`);
+                    if (code === 'FINISHED') { containerReady = true; break; }
+                    if (code === 'ERROR' || code === 'EXPIRED') {
+                        throw new Error(`Media container entered status: ${code}`);
+                    }
+                    await new Promise(r => setTimeout(r, pollInterval));
+                }
+                if (!containerReady) throw new Error('Media container did not become ready within 30s');
+
                 // Publish
                 const publishRes = await igApiCall(`/${igUserId}/media_publish`, 'POST', {
                     creation_id: containerId
