@@ -2759,10 +2759,26 @@ app.get('/api/instagram/callback', async (req, res) => {
             status: 'connected'
         }, { onConflict: 'user_id,provider' });
 
-        res.redirect('/?ig_connected=true');
+        res.send(`
+            <html>
+            <body>
+                <p>Instagram connected successfully! Closing window...</p>
+                <script>
+                    window.close();
+                </script>
+            </body>
+            </html>
+        `);
     } catch (err) {
         console.error('[Instagram OAuth callback]', err.response?.data || err.message);
-        res.redirect(`/?ig_error=${encodeURIComponent(err.message)}`);
+        res.send(`
+            <html>
+            <body>
+                <p>Error connecting Instagram: ${err.message}</p>
+                <button onclick="window.close()">Close Window</button>
+            </body>
+            </html>
+        `);
     }
 });
 
