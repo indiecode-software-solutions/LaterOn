@@ -148,10 +148,9 @@ const shouldIgnoreOlderConnectionStatus = (currentStatus, nextStatus) => {
 };
 
 // ── Instagram Sidebar ── proper component to respect Rules of Hooks ──────────
-function InstagramSidebar({ token, channel }) {
+function InstagramSidebar({ token, channel, fetchSchedules }) {
   const [igStatus, setIgStatus] = React.useState(null);
   const [igTab, setIgTab] = React.useState('schedule');
-  const [igPosts, setIgPosts] = React.useState([]);
   const [igRules, setIgRules] = React.useState([]);
   const [igPostForm, setIgPostForm] = React.useState({ caption: '', image_urls_raw: '', scheduled_at: '' });
   const [igRuleForm, setIgRuleForm] = React.useState({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
@@ -170,8 +169,6 @@ function InstagramSidebar({ token, channel }) {
 
   React.useEffect(() => {
     if (igStatus?.status !== 'connected') return;
-    fetch(`${API_URL}/api/instagram/posts`, { headers: { Authorization: `Bearer ${authToken}` } })
-      .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgPosts(d); }).catch(() => {});
     fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => {});
   }, [igStatus]);
@@ -196,7 +193,7 @@ function InstagramSidebar({ token, channel }) {
     if (!confirm('Disconnect Instagram?')) return;
     await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
     setIgStatus({ status: 'disconnected' });
-    setIgPosts([]); setIgRules([]);
+    setIgRules([]);
   };
 
   const handleSchedulePost = async (e) => {
@@ -219,7 +216,7 @@ function InstagramSidebar({ token, channel }) {
       });
       const d = await r.json();
       if (d.error) return alert(d.error);
-      setIgPosts(prev => [d, ...prev]);
+      if (fetchSchedules) fetchSchedules();
       setIgPostForm({ caption: '', image_urls_raw: '', scheduled_at: '' });
     } catch(e) { alert(e.message); } finally { setIgLoading(false); }
   };
@@ -352,23 +349,6 @@ function InstagramSidebar({ token, channel }) {
           <button type="submit" disabled={igLoading} style={{ padding: '12px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.85rem', border: 'none', borderRadius: '0px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
             {igLoading ? 'Scheduling…' : '📅 Schedule Post'}
           </button>
-          {igPosts.length > 0 && (
-            <div style={{ marginTop: '4px' }}>
-              <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', margin: '0 0 6px 0' }}>Scheduled ({igPosts.filter(p => p.status === 'scheduled').length})</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
-                {igPosts.slice(0, 5).map(post => (
-                  <div key={post.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: '#f8fafc', border: '1px solid var(--border)', borderRadius: '0px' }}>
-                    <img src={post.image_urls[0]} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: '3px', flexShrink: 0 }} onError={e => { e.target.style.display = 'none'; }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '0.73rem', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{post.caption || '(no caption)'}</p>
-                      <p style={{ fontSize: '0.67rem', color: 'var(--text-muted)', margin: 0 }}>{new Date(post.scheduled_at).toLocaleString()}</p>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: post.status === 'published' ? '#d1fae5' : post.status === 'failed' ? '#fee2e2' : '#fff0f5', color: post.status === 'published' ? '#059669' : post.status === 'failed' ? '#dc2626' : '#e1306c' }}>{post.status}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </form>
       )}
 
@@ -2973,7 +2953,7 @@ Looking forward to connecting!`;
                           )}
 
                           {channel === 'instagram' && (
-                            <InstagramSidebar token={token} channel={channel} />
+                            <InstagramSidebar token={token} channel={channel} fetchSchedules={fetchSchedules} />
                           )}
 
                           {channel === 'reminders' && (
