@@ -178,7 +178,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
   React.useEffect(() => {
     if (instagramStatus?.status !== 'connected') return;
     fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
-      .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => {});
+      .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => { });
   }, [instagramStatus]);
 
   const handleIgConnect = async () => {
@@ -194,7 +194,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
         if (sd.status === 'connected') { setInstagramStatus(sd); clearInterval(poll); setIgConnecting(false); }
       }, 2000);
       setTimeout(() => { clearInterval(poll); setIgConnecting(false); }, 120000);
-    } catch(e) { alert(e.message); setIgConnecting(false); }
+    } catch (e) { alert(e.message); setIgConnecting(false); }
   };
 
   const handleIgDisconnect = async () => {
@@ -208,7 +208,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
     e.preventDefault();
     const urls = igPostForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
     if (!urls.length) return alert('Add at least one image URL');
-    
+
     // Convert selected date to UTC ISO string
     const utcScheduledAt = scheduledDate.toISOString();
 
@@ -224,7 +224,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       if (fetchSchedules) fetchSchedules();
       setIgPostForm({ caption: '', image_urls_raw: '' });
       setScheduledDate(new Date());
-    } catch(e) { alert(e.message); } finally { setIgLoading(false); }
+    } catch (e) { alert(e.message); } finally { setIgLoading(false); }
   };
 
   const handleAddRule = async (e) => {
@@ -242,7 +242,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       if (d.error) return alert(d.error);
       setIgRules(prev => [d, ...prev]);
       setIgRuleForm({ rule_type: 'dm', trigger_type: 'keyword', trigger_keyword: '', reply_message: '' });
-    } catch(e) { alert(e.message); } finally { setIgLoading(false); }
+    } catch (e) { alert(e.message); } finally { setIgLoading(false); }
   };
 
   const toggleRule = async (rule) => {
@@ -305,8 +305,8 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
       {/* Schedule Post tab */}
       {igTab === 'schedule' && (
-        <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div className="input-group">
+        <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column' }}>
+          <div>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Image URL(s)</label>
             <textarea
               placeholder={'Paste image URL(s), one per line. Up to 10 for a carousel.'}
@@ -316,7 +316,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
           </div>
-          <div className="input-group">
+          <div>
             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Caption</label>
             <textarea
               placeholder="Write your caption with hashtags..."
@@ -496,7 +496,7 @@ function Dashboard() {
 
   // Telegram Integration States
   const [telegramStatus, setTelegramStatus] = useState({ provider: 'telegram', status: 'disconnected', config: {} });
-  
+
   // Instagram Integration States
   const [instagramStatus, setInstagramStatus] = useState({ provider: 'instagram', status: 'disconnected', config: {} });
   const [igMobileForm, setIgMobileForm] = useState({ image_urls_raw: '', caption: '' });
@@ -1582,7 +1582,7 @@ Looking forward to connecting!`;
     const isObject = typeof itemOrId === 'object' && itemOrId !== null;
     const id = isObject ? itemOrId.id : itemOrId;
     const isInstagram = isObject && itemOrId.channel === 'instagram';
-    
+
     try {
       if (isInstagram) {
         await axios.delete(`${API_URL}/api/instagram/posts/${id}`);
@@ -2463,8 +2463,8 @@ Looking forward to connecting!`;
                             ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'custom_bot'}` : 'Ready to Connect')
                             : channel === 'instagram'
                               ? (instagramStatus.status === 'connected'
-                                  ? <>{`@${instagramStatus.config?.username || 'instagram_account'}`}{instagramStatus.config?.followers_count ? <span style={{ marginLeft: '6px', fontWeight: 600, color: '#e1306c' }}>{instagramStatus.config.followers_count.toLocaleString()} followers</span> : null}</>
-                                  : 'Ready to Connect')
+                                ? <>{`@${instagramStatus.config?.username || 'instagram_account'}`}{instagramStatus.config?.followers_count ? <span style={{ marginLeft: '6px', fontWeight: 600, color: '#e1306c' }}>{instagramStatus.config.followers_count.toLocaleString()} followers</span> : null}</>
+                                : 'Ready to Connect')
                               : channel === 'reminders'
                                 ? 'Reminders Active'
                                 : (status === 'connected' ? `+${userInfo?.id}` : 'Reconnecting...')}
@@ -2613,7 +2613,7 @@ Looking forward to connecting!`;
 
                           <p style={{ marginTop: '20px', fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                             Click to edit this message
-</p>
+                          </p>
                         </motion.div>
                       ) : null}
 
@@ -2641,9 +2641,9 @@ Looking forward to connecting!`;
                                       <li style={{ marginBottom: '4px' }}>
                                         Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.
                                         <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden', maxWidth: '100%' }}>
-                                          <img 
-                                            src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png" 
-                                            alt="Search BotFather on Telegram" 
+                                          <img
+                                            src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png"
+                                            alt="Search BotFather on Telegram"
                                             style={{ width: '100%', height: 'auto', display: 'block' }}
                                           />
                                         </div>
@@ -2669,7 +2669,7 @@ Looking forward to connecting!`;
                                         border: telegramTestBotResult.success ? '1px solid #bbf7d0' : '1px solid #fecaca',
                                         fontSize: '0.75rem', color: telegramTestBotResult.success ? '#166534' : '#991b1b'
                                       }}>
-                                        {telegramTestBotResult.success 
+                                        {telegramTestBotResult.success
                                           ? `✓ Connected: @${telegramTestBotResult.username}`
                                           : `✗ Error: ${telegramTestBotResult.error}`}
                                       </div>
@@ -5357,7 +5357,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled' || s.status === 'failed')).length})
+                      Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled')).length})
                     </div>
                     <div
                       onClick={() => { triggerSelection(); setQueueTab('history'); }}
@@ -5372,7 +5372,7 @@ Looking forward to connecting!`;
                         fontSize: '0.9rem'
                       }}
                     >
-                      {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled' && s.status !== 'failed').length})
+                      {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled').length})
                     </div>
                   </>
                 ) : (
@@ -6042,9 +6042,9 @@ Looking forward to connecting!`;
                         (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                         getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                       if (!matchesSearch) return false;
-                      if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled' || s.status === 'failed';
+                      if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled';
                       if (historyFilter !== 'all' && s.status !== historyFilter) return false;
-                      return s.status !== 'pending' && s.status !== 'scheduled' && s.status !== 'failed';
+                      return s.status !== 'pending' && s.status !== 'scheduled';
                     }).length === 0 ? (
                       <>
                         <motion.div
@@ -6150,9 +6150,9 @@ Looking forward to connecting!`;
                             (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                             getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                           if (!matchesSearch) return false;
-                          if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'failed';
-                          // history tab — exclude pending/scheduled/failed, then apply status filter
-                          if (s.status === 'pending' || s.status === 'scheduled' || s.status === 'failed') return false;
+                          if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled';
+                          // history tab — exclude pending/scheduled, then apply status filter
+                          if (s.status === 'pending' || s.status === 'scheduled') return false;
                           if (historyFilter !== 'all' && s.status !== historyFilter) return false;
                           return true;
                         })
@@ -8406,7 +8406,7 @@ Join Link: [Auto-generated after scheduling]`}
                               setIgMobileDate(new Date());
                               setShowMobileForm(false);
                               setFormStep(1);
-                            } catch(e) { alert(e.message); } finally { setIgMobileLoading(false); }
+                            } catch (e) { alert(e.message); } finally { setIgMobileLoading(false); }
                             return;
                           }
                           setFormStep(3);
