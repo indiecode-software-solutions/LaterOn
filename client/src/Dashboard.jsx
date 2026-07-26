@@ -6290,7 +6290,7 @@ Looking forward to connecting!`;
                                 )}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {(item.status === 'pending' || item.status === 'failed') && (
+                                {(item.status === 'pending' || item.status === 'failed') && item.channel !== 'instagram' && (
                                   <button
                                     onClick={() => handleEdit(item)}
                                     className="btn-icon"
@@ -6316,7 +6316,7 @@ Looking forward to connecting!`;
                                 ) : (
                                   <Clock size={16} color="#667781" />
                                 )}
-                                <button onClick={() => deleteSchedule(item.id)} className="btn-icon" style={{ padding: '4px 5px' }}>
+                                <button onClick={() => deleteSchedule(item)} className="btn-icon" style={{ padding: '4px 5px' }}>
                                   <Trash2 size={14} />
                                 </button>
                               </div>
