@@ -1854,6 +1854,25 @@ Looking forward to connecting!`;
         </button>
       </div>
       <div className="brand-tagline">Messages, Scheduled.</div>
+      {showBooking ? (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', flexDirection: 'column', background: 'white' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', background: '#1a1a1a' }}>
+            <span style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem' }}>Book a Free Support Call</span>
+            <button onClick={() => setShowBooking(false)} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+              ← Back to App
+            </button>
+          </div>
+          <div style={{ flex: 1 }}>
+            <iframe
+              src="https://cal-meet.vercel.app/indiecode/free-lateron-consultation?embed=true"
+              width="100%"
+              height="100%"
+              style={{ border: 'none', display: 'block' }}
+              title="Book a Consultation"
+            />
+          </div>
+        </div>
+      ) : (
       <div className="app-wrapper">
         {/* Left Sidebar */}
         <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
@@ -8983,6 +9002,7 @@ Join Link: [Auto-generated after scheduling]`}
         )}
 
       </div>
+      )}
     </div>
   );
 }
