@@ -1691,13 +1691,15 @@ app.delete('/api/schedules/history', verifyToken, async (req, res) => {
 app.delete('/api/schedules/:id', verifyToken, async (req, res) => {
     const workspaceUserIds = await getWorkspaceUserIds(req.userId);
     const { id } = req.params;
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
         .from('schedules')
         .delete()
         .eq('id', id)
-        .in('user_id', workspaceUserIds);
+        .in('user_id', workspaceUserIds)
+        .select('id');
 
     if (error) return res.status(500).json({ error: error.message });
+    if (!data || data.length === 0) return res.status(404).json({ error: 'Schedule not found or access denied' });
     res.json({ success: true });
 });
 
@@ -3011,13 +3013,15 @@ app.get('/api/instagram/posts', verifyToken, async (req, res) => {
 // ── 7. Delete a Scheduled Post ────────────────────────────────────────────────
 app.delete('/api/instagram/posts/:id', verifyToken, async (req, res) => {
     try {
-        const { error } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin
             .from('instagram_posts')
             .delete()
             .eq('id', req.params.id)
             .eq('user_id', req.userId)
-            .eq('status', 'scheduled'); // only allow deleting scheduled (not published)
+            .eq('status', 'scheduled')
+            .select('id');
         if (error) return res.status(500).json({ error: error.message });
+        if (!data || data.length === 0) return res.status(404).json({ error: 'Post not found or already published' });
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

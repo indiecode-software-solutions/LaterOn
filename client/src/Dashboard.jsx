@@ -1214,6 +1214,7 @@ function Dashboard() {
       }
     } catch (err) {
       console.error('Failed to delete reminder', err);
+      fetchReminders();
     }
   };
 
@@ -1659,6 +1660,7 @@ Looking forward to connecting!`;
       }
     } catch (err) {
       console.error('Failed to delete schedule', err);
+      setSchedules(prev => [...prev, itemOrId].sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt)));
     }
   };
 
