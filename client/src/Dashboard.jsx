@@ -490,6 +490,7 @@ function Dashboard() {
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
   const [bookingLoaded, setBookingLoaded] = useState(false);
+  const [bookingKey, setBookingKey] = useState(0);
   const [purchasingPack, setPurchasingPack] = useState(null);
 
   const [isAiUsed, setIsAiUsed] = useState(false);
@@ -1880,6 +1881,7 @@ Looking forward to connecting!`;
                 </div>
               )}
               <iframe
+                key={bookingKey}
                 onLoad={() => setBookingLoaded(true)}
                 src="https://cal-meet.vercel.app/indiecode/free-lateron-consultation?embed=true"
                 width="100%"
@@ -2258,7 +2260,7 @@ Looking forward to connecting!`;
 
                 {/* Free Consultation */}
                 <div
-                  onClick={() => { setShowServiceSelector(false); setShowBooking(true); }}
+                  onClick={() => { setShowServiceSelector(false); setShowBooking(true); setBookingLoaded(false); setBookingKey(k => k + 1); }}
                   style={{
                     background: '#1a1a1a',
                     border: '1px solid #333',
@@ -5722,6 +5724,7 @@ Looking forward to connecting!`;
                 </div>
                 <div style={{ flex: 1, minHeight: '600px' }}>
                   <iframe
+                    key={bookingKey}
                     src="https://cal-meet.vercel.app/indiecode/free-lateron-consultation?embed=true"
                     width="100%"
                     height="100%"
@@ -6423,7 +6426,7 @@ Looking forward to connecting!`;
                                 padding: '40px',
                                 borderRadius: '6px',
                                 boxShadow: 'var(--shadow)',
-                                margin: '80px auto',
+                                margin: '60px auto',
                                 maxWidth: '400px'
                               }}>
                               <div style={{
