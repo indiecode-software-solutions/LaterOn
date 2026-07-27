@@ -1805,6 +1805,7 @@ Looking forward to connecting!`;
 
   return (
     <div className={`dashboard-container channel-${channel}`}>
+      {!showServiceSelector && (
       <div className="right-channel-dock">
         <button
           className={`channel-strip ${channel === 'whatsapp' ? 'active' : ''}`}
@@ -1855,6 +1856,7 @@ Looking forward to connecting!`;
           <span className="strip-icon"><Bell size={18} /></span>
         </button>
       </div>
+      )}
       <div className="brand-tagline">Messages, Scheduled.</div>
       <div className="app-wrapper">
         {showBooking && (
