@@ -2252,7 +2252,7 @@ Looking forward to connecting!`;
                     <span style={{ fontSize: '1.1rem' }}>🎙️</span>
                     <div>
                       <div style={{ color: 'white', fontWeight: 700, fontSize: '0.85rem' }}>Book a Free Support Call</div>
-                      <div style={{ color: '#888', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
+                      <div style={{ color: '#ccc', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
                     </div>
                   </div>
                   <span style={{
