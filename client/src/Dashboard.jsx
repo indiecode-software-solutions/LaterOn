@@ -272,7 +272,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ padding: '20px', background: 'linear-gradient(135deg, #e1306c, #f77737)', borderRadius: '6px', textAlign: 'center', color: 'white' }}>
         <InstagramIcon size={32} color="white" />
-        <p style={{ fontWeight: 800, fontSize: '1rem', margin: '8px 0 4px 0' }}>Connect Instagram</p>
+        <p style={{ fontWeight: 600, fontSize: '1rem', margin: '8px 0 4px 0' }}>Connect Instagram</p>
         <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.9 }}>Business or Creator account required</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 4px' }}>
@@ -283,12 +283,12 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
           { n: '4', text: 'You will be redirected back automatically once connected.' }
         ].map(s => (
           <div key={s.n} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-            <div style={{ minWidth: 22, height: 22, borderRadius: '50%', background: '#e1306c', color: 'white', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
+            <div style={{ minWidth: 22, height: 22, borderRadius: '50%', background: '#e1306c', color: 'white', fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</div>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>{s.text}</p>
           </div>
         ))}
       </div>
-      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '6px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
+      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: '#e1306c', color: 'white', fontWeight: 600, fontSize: '0.88rem', border: 'none', borderRadius: '6px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
         {igConnecting ? 'Waiting for login...' : 'Connect Instagram'}
       </button>
     </div>
@@ -300,7 +300,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       {/* Tab switcher */}
       <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}>
         {[{ k: 'schedule', label: 'Schedule Post' }, { k: 'rules', label: 'Auto-Replies' }].map(t => (
-          <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer', background: igTab === t.k ? '#e1306c' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
+          <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 600, border: 'none', cursor: 'pointer', background: igTab === t.k ? '#e1306c' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
         ))}
       </div>
 
@@ -308,7 +308,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       {igTab === 'schedule' && (
         <form onSubmit={handleSchedulePost} style={{ display: 'flex', flexDirection: 'column' }}>
           <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Image URL(s)</label>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Image URL(s)</label>
             <textarea
               placeholder={'Paste image URL(s), one per line. Up to 10 for a carousel.'}
               value={igPostForm.image_urls_raw}
@@ -318,7 +318,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
             />
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Caption</label>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Caption</label>
             <textarea
               placeholder="Write your caption with hashtags..."
               value={igPostForm.caption}
@@ -328,7 +328,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
             />
           </div>
           <div className="input-group">
-            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Schedule For</label>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>Schedule For</label>
             <DatePicker
               selected={scheduledDate}
               onChange={(date) => setScheduledDate(date)}
@@ -341,7 +341,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               minDate={new Date()}
             />
           </div>
-          <button type="submit" disabled={igLoading} style={{ padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '6px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
+          <button type="submit" disabled={igLoading} style={{ padding: '14px', background: '#e1306c', color: 'white', fontWeight: 600, fontSize: '0.88rem', border: 'none', borderRadius: '6px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
             {igLoading ? 'Scheduling...' : 'Schedule Post'}
           </button>
         </form>
@@ -351,17 +351,17 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       {igTab === 'rules' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <form onSubmit={handleAddRule} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '6px' }}>
-            <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e1306c', margin: 0, textTransform: 'uppercase' }}>New Auto-Reply Rule</p>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', margin: 0, textTransform: 'uppercase' }}>New Auto-Reply Rule</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
               <div>
-                <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Reply to</label>
+                <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Reply to</label>
                 <select value={igRuleForm.rule_type} onChange={e => setIgRuleForm(p => ({ ...p, rule_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.78rem', outline: 'none' }}>
                   <option value="dm">💬 DMs</option>
                   <option value="comment">🖼 Comments</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Trigger</label>
+                <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Trigger</label>
                 <select value={igRuleForm.trigger_type} onChange={e => setIgRuleForm(p => ({ ...p, trigger_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.78rem', outline: 'none' }}>
                   <option value="keyword">Keyword match</option>
                   <option value="any">Any message</option>
@@ -383,7 +383,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               rows={2}
               style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
-            <button type="submit" disabled={igLoading} style={{ padding: '9px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.8rem', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+            <button type="submit" disabled={igLoading} style={{ padding: '9px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 600, fontSize: '0.8rem', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
               {igLoading ? 'Adding…' : '+ Add Rule'}
             </button>
           </form>
@@ -394,13 +394,13 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               <div key={rule.id} style={{ padding: '10px 12px', border: `1px solid ${rule.is_active ? '#f7c6d8' : 'var(--border)'}`, background: rule.is_active ? '#fff0f5' : '#f8fafc', borderRadius: '6px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: rule.rule_type === 'dm' ? '#dbeafe' : '#fef9c3', color: rule.rule_type === 'dm' ? '#1d4ed8' : '#854d0e' }}>{rule.rule_type === 'dm' ? '💬 DM' : '🖼 Comment'}</span>
-                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: '#f1f5f9', color: 'var(--text-muted)' }}>{rule.trigger_type === 'any' ? 'Any message' : `"${rule.trigger_keyword}"`}</span>
+                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 600, background: rule.rule_type === 'dm' ? '#dbeafe' : '#fef9c3', color: rule.rule_type === 'dm' ? '#1d4ed8' : '#854d0e' }}>{rule.rule_type === 'dm' ? '💬 DM' : '🖼 Comment'}</span>
+                    <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 600, background: '#f1f5f9', color: 'var(--text-muted)' }}>{rule.trigger_type === 'any' ? 'Any message' : `"${rule.trigger_keyword}"`}</span>
                   </div>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rule.reply_message}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                  <button onClick={() => toggleRule(rule)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: rule.is_active ? '#d1fae5' : '#fee2e2', color: rule.is_active ? '#059669' : '#dc2626', fontWeight: 700 }}>{rule.is_active ? 'ON' : 'OFF'}</button>
+                  <button onClick={() => toggleRule(rule)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: rule.is_active ? '#d1fae5' : '#fee2e2', color: rule.is_active ? '#059669' : '#dc2626', fontWeight: 600 }}>{rule.is_active ? 'ON' : 'OFF'}</button>
                   <button onClick={() => deleteRule(rule.id)} style={{ fontSize: '0.65rem', padding: '3px 7px', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', background: 'white', color: '#dc2626' }}>✕</button>
                 </div>
               </div>
@@ -1862,8 +1862,8 @@ Looking forward to connecting!`;
         {showBooking && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: 'white' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #333', background: '#1a1a1a', flexShrink: 0 }}>
-              <span style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem' }}>Book a Free Support Call</span>
-              <button onClick={() => { setShowBooking(false); setShowServiceSelector(true); }} style={{ padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, background: 'white', color: '#1a1a1a', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
+              <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>Book a Free Support Call</span>
+              <button onClick={() => { setShowBooking(false); setShowServiceSelector(true); }} style={{ padding: '6px 14px', fontSize: '0.75rem', fontWeight: 600, background: 'white', color: '#1a1a1a', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
                 ← Back to App
               </button>
             </div>
@@ -1901,7 +1901,7 @@ Looking forward to connecting!`;
               <h1 style={{
                 fontFamily: "'Poppins', sans-serif",
                 fontSize: '1.5rem',
-                fontWeight: 800,
+                fontWeight: 600,
                 color: 'var(--text)',
                 letterSpacing: '1px',
                 lineHeight: 1,
@@ -1975,7 +1975,7 @@ Looking forward to connecting!`;
                       padding: '6px 12px',
                       borderRadius: '100px',
                       fontSize: '0.8rem',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       color: 'var(--text-muted)',
                       cursor: 'pointer',
                       border: '1px solid var(--border)'
@@ -2009,7 +2009,7 @@ Looking forward to connecting!`;
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       fontSize: '0.85rem',
                       border: '1.5px solid var(--border)'
                     }}>
@@ -2028,7 +2028,7 @@ Looking forward to connecting!`;
                 {channel === 'email' ? <Mail size={16} /> : channel === 'calendar' ? <Calendar size={16} /> : channel === 'telegram' ? <TelegramIcon size={16} color="white" /> : channel === 'instagram' ? <InstagramIcon size={16} color="white" /> : channel === 'reminders' ? <Bell size={16} /> : userInfo?.photo ? <img src={userInfo.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Check size={16} strokeWidth={3} />}
               </div>
               <div style={{ flex: 1, overflow: 'hidden' }}>
-                <p style={{ fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+                <p style={{ fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
                   {channel === 'email' ? 'Email' : channel === 'calendar' ? 'Meetings' : channel === 'telegram' ? 'Telegram' : channel === 'instagram' ? (instagramStatus.config?.name || 'Instagram') : channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'WhatsApp')}
                 </p>
                 <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>
@@ -2039,7 +2039,7 @@ Looking forward to connecting!`;
                 <div style={{ position: 'relative' }}>
                   <button
                     onClick={() => setShowWhatsAppManage(prev => !prev)}
-                    style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 700, borderRadius: '6px' }}
+                    style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 600, borderRadius: '6px' }}
                   >
                     <Settings size={12} />
                     Manage
@@ -2098,7 +2098,7 @@ Looking forward to connecting!`;
                       <MessageSquare size={20} />
                     </div>
                     <div>
-                      <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 2px 0' }}>Message Details</h3>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 2px 0' }}>Message Details</h3>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Quick Preview</p>
                     </div>
                   </div>
@@ -2134,7 +2134,7 @@ Looking forward to connecting!`;
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-main)', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <User size={14} color="var(--text-muted)" />
-                      <span style={{ fontWeight: 700 }}>{getContactName(hoveredSchedule.phone)}</span>
+                      <span style={{ fontWeight: 600 }}>{getContactName(hoveredSchedule.phone)}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Calendar size={14} color="var(--text-muted)" />
@@ -2144,7 +2144,7 @@ Looking forward to connecting!`;
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color: hoveredSchedule.status === 'pending' ? 'var(--primary-dark)' : 'var(--text-muted)'
                     }}>
                       <Zap size={14} />
@@ -2159,7 +2159,7 @@ Looking forward to connecting!`;
               </div>
             ) : showServiceSelector ? (
               <div style={{ padding: isMobile ? '16px' : '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 800 }}>Select a Service</h2></div>}
+                {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 600 }}>Select a Service</h2></div>}
                 <div className="service-grid">
                   {/* WhatsApp Card */}
                   <div className={channel === 'whatsapp' ? 'active' : ''} style={{ borderColor: channel === 'whatsapp' ? '#25d366' : 'var(--border)', background: channel === 'whatsapp' ? '#f0fff4' : 'white' }}
@@ -2282,7 +2282,7 @@ Looking forward to connecting!`;
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontSize: '1.1rem' }}>🎙️</span>
                     <div>
-                      <div style={{ color: 'white', fontWeight: 700, fontSize: '0.85rem' }}>Book a Free Support Call</div>
+                      <div style={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>Book a Free Support Call</div>
                       <div style={{ color: '#ccc', marginTop: '4px', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
                     </div>
                   </div>
@@ -2290,7 +2290,7 @@ Looking forward to connecting!`;
                     padding: '5px 12px',
                     background: 'white',
                     color: '#1a1a1a',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: '0.75rem'
                   }}>
                     Book
@@ -2325,7 +2325,7 @@ Looking forward to connecting!`;
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px' }}>Link your WhatsApp</h3>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px' }}>Link your WhatsApp</h3>
 
                     {!usePairingCode ? (
                       <>
@@ -2350,16 +2350,16 @@ Looking forward to connecting!`;
                       <div style={{ marginBottom: '24px', width: '100%', maxWidth: '280px', margin: '0 auto 24px' }}>
                         {!pairingCode ? (
                           <div style={{ background: 'white', padding: '24px', borderRadius: '6px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', display: 'block', textAlign: 'left', marginBottom: '8px' }}>ENTER PHONE NUMBER</label>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-dark)', display: 'block', textAlign: 'left', marginBottom: '8px' }}>ENTER PHONE NUMBER</label>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', background: '#f0f2f5', borderRadius: '6px', border: '1px solid var(--border)', padding: '0 8px', minWidth: '76px' }}>
-                                <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: '0.9rem' }}>+</span>
+                                <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.9rem' }}>+</span>
                                 <input
                                   type="text"
                                   inputMode="numeric"
                                   value={pairingCountryCode}
                                   onChange={e => setPairingCountryCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                                  style={{ width: '42px', border: 'none', background: 'transparent', outline: 'none', fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)' }}
+                                  style={{ width: '42px', border: 'none', background: 'transparent', outline: 'none', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)' }}
                                   aria-label="Country code"
                                 />
                               </div>
@@ -2387,7 +2387,7 @@ Looking forward to connecting!`;
                           </div>
                         ) : (
                           <div style={{ background: 'white', padding: '24px', borderRadius: '6px', border: '2px solid var(--primary)', boxShadow: '0 8px 30px rgba(37, 211, 102, 0.15)' }}>
-                            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '12px' }}>YOUR PAIRING CODE</p>
+                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-dark)', marginBottom: '12px' }}>YOUR PAIRING CODE</p>
                             {pairingCodePhone && (
                               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
                                 For WhatsApp number <strong style={{ color: 'var(--text)' }}>+{pairingCodePhone}</strong>
@@ -2397,7 +2397,7 @@ Looking forward to connecting!`;
                               onClick={handleCopyCode}
                               style={{
                                 fontSize: '2rem',
-                                fontWeight: 900,
+                                fontWeight: 600,
                                 letterSpacing: '4px',
                                 color: 'var(--primary-dark)',
                                 fontFamily: 'monospace',
@@ -2438,7 +2438,7 @@ Looking forward to connecting!`;
                     )}
                     <button
                       onClick={() => setUsePairingCode(!usePairingCode)}
-                      style={{ background: 'none', border: 'none', color: 'var(--primary-dark)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 auto' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--primary-dark)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 auto' }}
                     >
                       {usePairingCode ? <QrCode size={16} /> : <Phone size={16} />}
                       {usePairingCode ? 'Switch to QR Code' : 'Link with Phone Number'}
@@ -2518,7 +2518,7 @@ Looking forward to connecting!`;
                 ) : (
                   <div style={{ padding: '20px', textAlign: 'center' }}>
                     <WifiOff size={40} color="#ef4444" style={{ marginBottom: '12px' }} />
-                    <h4 style={{ fontWeight: 700 }}>Connection Lost</h4>
+                    <h4 style={{ fontWeight: 600 }}>Connection Lost</h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Reconnecting to WhatsApp server...</p>
                     <button onClick={fetchStatus} className="btn-primary" style={{ padding: '8px 20px', borderRadius: '6px' }}>Retry Now</button>
                   </div>
@@ -2564,7 +2564,7 @@ Looking forward to connecting!`;
                     )}
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <p style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {channel === 'email' ? (user?.name || 'Email Service') : (channel === 'calendar' ? 'Meetings' : (channel === 'telegram' ? 'Telegram Companion' : (channel === 'instagram' ? (instagramStatus.status === 'connected' ? (instagramStatus.config?.name || 'Instagram') : 'Instagram') : (channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'Active Account')))))}
                     </p>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -2599,7 +2599,7 @@ Looking forward to connecting!`;
                         cursor: 'pointer',
                         flexShrink: 0,
                         fontSize: '0.72rem',
-                        fontWeight: 800,
+                        fontWeight: 600,
                         borderRadius: '6px'
                       }}
                     >
@@ -2623,7 +2623,7 @@ Looking forward to connecting!`;
                           cursor: 'pointer',
                           flexShrink: 0,
                           fontSize: '0.72rem',
-                          fontWeight: 800,
+                          fontWeight: 600,
                           borderRadius: '6px'
                         }}
                       >
@@ -2709,7 +2709,7 @@ Looking forward to connecting!`;
                               <MessageSquare size={20} />
                             </div>
                             <div>
-                              <h4 style={{ fontWeight: 700, fontSize: '1rem' }}>Message Details</h4>
+                              <h4 style={{ fontWeight: 600, fontSize: '1rem' }}>Message Details</h4>
                               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Quick Preview</p>
                             </div>
                           </div>
@@ -2751,7 +2751,7 @@ Looking forward to connecting!`;
                               <Zap size={14} color="var(--text-muted)" />
                               <span style={{
                                 fontSize: '0.75rem',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 textTransform: 'uppercase',
                                 color: hoveredSchedule.status === 'pending' ? 'var(--primary-dark)' : 'var(--text-muted)'
                               }}>
@@ -2783,12 +2783,12 @@ Looking forward to connecting!`;
                                     padding: '16px',
                                     border: '1px solid var(--border)'
                                   }}>
-                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase' }}>
                                       1. Connect Bot Token
                                     </h4>
                                     <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
                                       <li style={{ marginBottom: '4px' }}>
-                                        Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.
+                                        Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 600 }}>@BotFather</a> on Telegram.
                                         <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden', maxWidth: '100%' }}>
                                           <img
                                             src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png"
@@ -2848,7 +2848,7 @@ Looking forward to connecting!`;
                                       disabled={isTestingTelegramBot}
                                       style={{
                                         width: '100%', padding: '12px', background: '#0088cc', color: 'white', border: 'none',
-                                        fontWeight: 800, fontSize: '0.85rem', cursor: isTestingTelegramBot ? 'not-allowed' : 'pointer',
+                                        fontWeight: 600, fontSize: '0.85rem', cursor: isTestingTelegramBot ? 'not-allowed' : 'pointer',
                                         textTransform: 'uppercase', letterSpacing: '0.5px'
                                       }}
                                     >
@@ -2865,19 +2865,19 @@ Looking forward to connecting!`;
                                     border: '1px solid var(--border)'
                                   }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                      <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>
+                                      <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase' }}>
                                         2. Connect Chat target
                                       </h4>
-                                      <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 800 }}>✓ Bot Online</span>
+                                      <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600 }}>✓ Bot Online</span>
                                     </div>
                                     <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                                      <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username || 'your_bot_username'}</span> to your chat or group.</li>
+                                      <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username || 'your_bot_username'}</span> to your chat or group.</li>
                                       <li style={{ marginBottom: '4px' }}>Get your chat ID (e.g. forward any message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@userinfobot</a>).</li>
                                       <li>Enter chat parameters below:</li>
                                     </ol>
 
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
-                                      <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>TELEGRAM CHAT ID</label>
+                                      <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>TELEGRAM CHAT ID</label>
                                       <input
                                         type="text"
                                         placeholder="e.g. 5625755071 or -1001234567"
@@ -2888,7 +2888,7 @@ Looking forward to connecting!`;
                                     </div>
 
                                     <div className="input-group" style={{ marginBottom: '12px' }}>
-                                      <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>CHAT NAME / LABEL</label>
+                                      <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>CHAT NAME / LABEL</label>
                                       <input
                                         type="text"
                                         placeholder="e.g. My Personal Chat or Dev Group"
@@ -2922,7 +2922,7 @@ Looking forward to connecting!`;
                                         disabled={isSavingTelegramChat}
                                         style={{
                                           flex: 2, padding: '12px', background: '#0088cc', color: 'white', border: 'none',
-                                          fontWeight: 800, fontSize: '0.85rem', cursor: isSavingTelegramChat ? 'not-allowed' : 'pointer',
+                                          fontWeight: 600, fontSize: '0.85rem', cursor: isSavingTelegramChat ? 'not-allowed' : 'pointer',
                                           textTransform: 'uppercase', letterSpacing: '0.5px'
                                         }}
                                       >
@@ -2941,7 +2941,7 @@ Looking forward to connecting!`;
                                         }}
                                         style={{
                                           flex: 1, padding: '12px', background: 'none', border: '1px solid #ef4444', color: '#ef4444',
-                                          fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer',
+                                          fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer',
                                           textTransform: 'uppercase', letterSpacing: '0.5px'
                                         }}
                                       >
@@ -2955,7 +2955,7 @@ Looking forward to connecting!`;
                                   {/* Active Scheduler for Telegram */}
                                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TARGET CHAT</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TARGET CHAT</label>
                                       <div style={{ display: 'flex', gap: '6px' }}>
                                         <select
                                           value={selectedTelegramChat}
@@ -2970,7 +2970,7 @@ Looking forward to connecting!`;
                                           type="button"
                                           onClick={() => setShowTelegramAddChat(!showTelegramAddChat)}
                                           title="Add new chat target"
-                                          style={{ padding: '10px', background: 'white', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#0088cc' }}
+                                          style={{ padding: '10px', background: 'white', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, color: '#0088cc' }}
                                         >
                                           {showTelegramAddChat ? '✕' : '+ Chat'}
                                         </button>
@@ -2987,7 +2987,7 @@ Looking forward to connecting!`;
                                             }
                                           }}
                                           title="Disconnect bot"
-                                          style={{ padding: '10px', background: 'white', border: '1px solid #ef4444', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800 }}
+                                          style={{ padding: '10px', background: 'white', border: '1px solid #ef4444', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 600 }}
                                         >
                                           Reset
                                         </button>
@@ -3004,7 +3004,7 @@ Looking forward to connecting!`;
                                         flexDirection: 'column',
                                         gap: '8px'
                                       }}>
-                                        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>Connect New Chat target</p>
+                                        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>Connect New Chat target</p>
                                         <ol style={{ fontSize: '0.7rem', color: 'var(--text-muted)', paddingLeft: '12px', margin: 0, lineHeight: '1.3' }}>
                                           <li>Add bot <b>@{telegramStatus.config?.bot_username}</b> to group/chat.</li>
                                           <li>Forward a message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@userinfobot</a> to get ID.</li>
@@ -3042,7 +3042,7 @@ Looking forward to connecting!`;
                                               alert('Failed to register chat target');
                                             }
                                           }}
-                                          style={{ padding: '8px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                                          style={{ padding: '8px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer' }}
                                         >
                                           Save Chat
                                         </button>
@@ -3050,7 +3050,7 @@ Looking forward to connecting!`;
                                     )}
 
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>MESSAGE</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>MESSAGE</label>
                                       <textarea
                                         placeholder="Write your telegram message here..."
                                         value={formData.message}
@@ -3062,7 +3062,7 @@ Looking forward to connecting!`;
                                     </div>
 
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>SCHEDULE FOR</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>SCHEDULE FOR</label>
                                       <DatePicker
                                         selected={scheduledDate}
                                         onChange={(date) => setScheduledDate(date)}
@@ -3077,7 +3077,7 @@ Looking forward to connecting!`;
                                     </div>
 
                                     <div className="input-group" style={{ marginBottom: '8px' }}>
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>REPEAT CYCLE</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>REPEAT CYCLE</label>
                                       <select
                                         value={formData.recurrence}
                                         onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
@@ -3098,7 +3098,7 @@ Looking forward to connecting!`;
                                         padding: '14px',
                                         background: '#0088cc',
                                         color: 'white',
-                                        fontWeight: 800,
+                                        fontWeight: 600,
                                         fontSize: '0.9rem',
                                         border: 'none',
                                         borderRadius: '6px',
@@ -3131,7 +3131,7 @@ Looking forward to connecting!`;
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                               <form onSubmit={handleCreateReminder} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <div className="input-group" style={{ marginBottom: '8px' }}>
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TITLE</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>TITLE</label>
                                   <input
                                     type="text"
                                     placeholder="Reminder title"
@@ -3142,7 +3142,7 @@ Looking forward to connecting!`;
                                 </div>
 
                                 <div className="input-group" style={{ marginBottom: '8px' }}>
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>DESCRIPTION (OPTIONAL)</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>DESCRIPTION (OPTIONAL)</label>
                                   <textarea
                                     placeholder="What is this reminder about?"
                                     value={reminderForm.description}
@@ -3153,7 +3153,7 @@ Looking forward to connecting!`;
                                 </div>
 
                                 <div className="input-group" style={{ marginBottom: '8px' }}>
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>SCHEDULE FOR</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>SCHEDULE FOR</label>
                                   <DatePicker
                                     selected={reminderForm.scheduled_at}
                                     onChange={(date) => setReminderForm({ ...reminderForm, scheduled_at: date })}
@@ -3168,7 +3168,7 @@ Looking forward to connecting!`;
                                 </div>
 
                                 <div className="input-group" style={{ marginBottom: '8px' }}>
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>REPEAT CYCLE</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'block' }}>REPEAT CYCLE</label>
                                   <select
                                     value={reminderForm.recurrence}
                                     onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
@@ -3190,7 +3190,7 @@ Looking forward to connecting!`;
                                       padding: '16px',
                                       background: isSubmittingReminder ? '#d97706' : '#f59e0b',
                                       color: 'white',
-                                      fontWeight: 800,
+                                      fontWeight: 600,
                                       fontSize: '1rem',
                                       border: 'none',
                                       borderRadius: '6px',
@@ -3225,7 +3225,7 @@ Looking forward to connecting!`;
                                       color: 'white',
                                       border: 'none',
                                       padding: '8px 16px',
-                                      fontWeight: 700,
+                                      fontWeight: 600,
                                       cursor: 'pointer',
                                       fontSize: '0.75rem'
                                     }}
@@ -3251,7 +3251,7 @@ Looking forward to connecting!`;
                               borderRadius: '6px',
                               border: '1px solid var(--border)'
                             }}>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), textTransform: 'uppercase' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), textTransform: 'uppercase' }}>
                                 {channel === 'calendar'
                                   ? (sidebarStep === 1 ? '1. Recipient Details' : sidebarStep === 2 ? '2. Meeting Settings' : '3. Preview & Confirm')
                                   : (sidebarStep === 1 ? '1. Scheduling' : '2. Message')}
@@ -3277,7 +3277,7 @@ Looking forward to connecting!`;
                                 {channel === 'calendar' ? (
                                   <>
                                     <div className="input-group phone-input-container">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT CONTACT (WHATSAPP)</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT CONTACT (WHATSAPP)</label>
                                       <div style={{ display: 'flex', gap: '8px' }}>
                                         <div style={{
                                           padding: '12px 16px',
@@ -3317,7 +3317,7 @@ Looking forward to connecting!`;
                                               padding: '2px 8px',
                                               borderRadius: '6px',
                                               fontSize: '0.8rem',
-                                              fontWeight: 700,
+                                              fontWeight: 600,
                                               whiteSpace: 'nowrap',
                                               flexShrink: 0
                                             }}>
@@ -3362,7 +3362,7 @@ Looking forward to connecting!`;
                                               border: '1px solid var(--border)'
                                             }}>
                                               {schedules.length > 0 && (
-                                                <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>RECENT</div>
+                                                <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>RECENT</div>
                                               )}
                                               {[...new Set(schedules.map(s => s.phone))].slice(0, 3).map(num => (
                                                 <div
@@ -3379,7 +3379,7 @@ Looking forward to connecting!`;
                                                 </div>
                                               ))}
 
-                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
+                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
                                               {Object.entries(contacts)
                                                 .filter(([id, contact]) => {
                                                   if (!isRealPhoneNumber(id)) return false;
@@ -3425,7 +3425,7 @@ Looking forward to connecting!`;
                                       </div>
                                     </div>
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT EMAIL (OPTIONAL)</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>RECIPIENT EMAIL (OPTIONAL)</label>
                                       <input
                                         type="email"
                                         placeholder="client@example.com"
@@ -3438,7 +3438,7 @@ Looking forward to connecting!`;
                                 ) : channel === 'email' ? (
                                   <>
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>TO (EMAIL)</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a52a2a' }}>TO (EMAIL)</label>
                                       <input
                                         type="email"
                                         placeholder="user@example.com"
@@ -3448,7 +3448,7 @@ Looking forward to connecting!`;
                                       />
                                     </div>
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a52a2a' }}>SUBJECT</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a52a2a' }}>SUBJECT</label>
                                       <input
                                         type="text"
                                         placeholder="Subject line"
@@ -3500,7 +3500,7 @@ Looking forward to connecting!`;
                                             padding: '2px 8px',
                                             borderRadius: '0px',
                                             fontSize: '0.8rem',
-                                            fontWeight: 700,
+                                            fontWeight: 600,
                                             whiteSpace: 'nowrap',
                                             flexShrink: 0
                                           }}>
@@ -3573,7 +3573,7 @@ Looking forward to connecting!`;
                                             border: '1px solid var(--border)'
                                           }}>
                                             {schedules.length > 0 && (
-                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>RECENT</div>
+                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>RECENT</div>
                                             )}
                                             {[...new Set(schedules.map(s => s.phone))].slice(0, 3).map(num => (
                                               <div
@@ -3592,7 +3592,7 @@ Looking forward to connecting!`;
 
 
                                             {/* All Contacts — filter out LID/garbage IDs */}
-                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
+                                            <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>ALL CONTACTS</div>
                                             {Object.entries(contacts)
                                               .filter(([id, contact]) => {
                                                 // Skip LID-style long numeric IDs and group numbers
@@ -3643,7 +3643,7 @@ Looking forward to connecting!`;
 
                                             {/* Groups */}
                                             {Object.keys(groups).length > 0 && (
-                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>GROUPS</div>
+                                              <div style={{ padding: '8px 12px', background: '#f0f2f5', fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)' }}>GROUPS</div>
                                             )}
                                             {Object.entries(groups)
                                               .filter(([, name]) =>
@@ -3708,7 +3708,7 @@ Looking forward to connecting!`;
                                               alignItems: 'center',
                                               gap: '6px',
                                               fontSize: '0.75rem',
-                                              fontWeight: 700
+                                              fontWeight: 600
                                             }}
                                           >
                                             <span>{groups[phone] || getContactName(phone)}</span>
@@ -3757,7 +3757,7 @@ Looking forward to connecting!`;
                                             borderRadius: '0px',
                                             background: '#f0f2f5',
                                             border: '1px solid var(--border)',
-                                            fontWeight: 700,
+                                            fontWeight: 600,
                                             color: 'var(--text-muted)',
                                             cursor: 'pointer'
                                           }}
@@ -3827,7 +3827,7 @@ Looking forward to connecting!`;
                                                 borderRadius: '0px',
                                                 border: '1px solid var(--border)',
                                                 fontSize: '0.75rem',
-                                                fontWeight: 700,
+                                                fontWeight: 600,
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -3889,7 +3889,7 @@ Looking forward to connecting!`;
                                     borderRadius: '0px',
                                     background: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)'),
                                     color: 'white',
-                                    fontWeight: 800,
+                                    fontWeight: 600,
                                     border: 'none',
                                     padding: '12px',
                                     cursor: 'pointer',
@@ -3923,7 +3923,7 @@ Looking forward to connecting!`;
                                 {channel === 'calendar' && sidebarStep === 2 ? (
                                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
                                       <input
                                         type="text"
                                         placeholder="e.g. 30-Min Strategy Call"
@@ -3933,7 +3933,7 @@ Looking forward to connecting!`;
                                       />
                                     </div>
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' }}>PLATFORM</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '6px', display: 'block', letterSpacing: '0.5px' }}>PLATFORM</label>
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         {meetingPlatform !== 'custom' ? (
                                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
@@ -3946,7 +3946,7 @@ Looking forward to connecting!`;
                                                 borderRadius: '0px',
                                                 background: meetingPlatform === 'google_meet' ? '#e8f0fe' : 'white',
                                                 color: meetingPlatform === 'google_meet' ? '#1a73e8' : 'var(--text-main)',
-                                                fontWeight: 700,
+                                                fontWeight: 600,
                                                 fontSize: '0.78rem',
                                                 cursor: 'pointer',
                                                 display: 'flex',
@@ -3967,7 +3967,7 @@ Looking forward to connecting!`;
                                                 borderRadius: '0px',
                                                 background: 'white',
                                                 color: 'var(--text-main)',
-                                                fontWeight: 700,
+                                                fontWeight: 600,
                                                 fontSize: '0.78rem',
                                                 cursor: 'pointer',
                                                 display: 'flex',
@@ -4025,7 +4025,7 @@ Looking forward to connecting!`;
                                     </div>
 
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8' }}>SCHEDULE FOR</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8' }}>SCHEDULE FOR</label>
                                       <DatePicker
                                         selected={scheduledDate}
                                         onChange={date => setScheduledDate(date)}
@@ -4046,7 +4046,7 @@ Looking forward to connecting!`;
                                           color: '#54656f',
                                           border: '1px solid var(--border)',
                                           borderRadius: '0px',
-                                          fontWeight: 700,
+                                          fontWeight: 600,
                                           cursor: 'pointer',
                                           display: 'flex',
                                           alignItems: 'center',
@@ -4092,7 +4092,7 @@ Looking forward to connecting!`;
                                           borderRadius: '0px',
                                           background: '#1a73e8',
                                           color: 'white',
-                                          fontWeight: 800,
+                                          fontWeight: 600,
                                           border: 'none',
                                           padding: '12px',
                                           cursor: 'pointer',
@@ -4110,7 +4110,7 @@ Looking forward to connecting!`;
                                 ) : channel === 'calendar' && sidebarStep === 3 ? (
                                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>NOTIFICATIONS</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>NOTIFICATIONS</label>
                                       <div style={{ display: 'flex', gap: '8px' }}>
                                         <button
                                           type="button"
@@ -4122,7 +4122,7 @@ Looking forward to connecting!`;
                                             border: meetingNotifyWhatsApp ? '1px solid #25d366' : '1px solid var(--border)',
                                             background: meetingNotifyWhatsApp ? '#f0fdf4' : 'white',
                                             color: meetingNotifyWhatsApp ? '#128c7e' : 'var(--text-muted)',
-                                            fontWeight: 700,
+                                            fontWeight: 600,
                                             fontSize: '0.78rem',
                                             cursor: 'pointer',
                                             display: 'flex',
@@ -4144,7 +4144,7 @@ Looking forward to connecting!`;
                                             border: meetingNotifyEmail ? '1px solid #ea4335' : '1px solid var(--border)',
                                             background: meetingNotifyEmail ? '#fdf2f2' : 'white',
                                             color: meetingNotifyEmail ? '#d93025' : 'var(--text-muted)',
-                                            fontWeight: 700,
+                                            fontWeight: 600,
                                             fontSize: '0.78rem',
                                             cursor: 'pointer',
                                             display: 'flex',
@@ -4160,7 +4160,7 @@ Looking forward to connecting!`;
                                     </div>
 
                                     <div className="input-group">
-                                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>REMINDERS</label>
+                                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>REMINDERS</label>
                                       <div style={{ display: 'flex', gap: '6px' }}>
                                         {[
                                           { value: '24h', label: '24h Before' },
@@ -4178,7 +4178,7 @@ Looking forward to connecting!`;
                                               border: meetingReminderTiming === r.value ? '1px solid #1a73e8' : '1px solid var(--border)',
                                               background: meetingReminderTiming === r.value ? '#e8f0fe' : 'white',
                                               color: meetingReminderTiming === r.value ? '#1a73e8' : 'var(--text-muted)',
-                                              fontWeight: 700,
+                                              fontWeight: 600,
                                               fontSize: '0.75rem',
                                               cursor: 'pointer',
                                               textAlign: 'center'
@@ -4191,7 +4191,7 @@ Looking forward to connecting!`;
                                     </div>
 
                                     <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                      <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: '#1a73e8', letterSpacing: '0.5px', marginBottom: '8px' }}>INVITATION PREVIEW</label>
+                                      <label style={{ margin: 0, fontWeight: 600, fontSize: '0.75rem', color: '#1a73e8', letterSpacing: '0.5px', marginBottom: '8px' }}>INVITATION PREVIEW</label>
                                       <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
                                         <textarea
                                           value={formData.message}
@@ -4249,7 +4249,7 @@ Looking forward to connecting!`;
                                           color: '#54656f',
                                           border: '1px solid var(--border)',
                                           borderRadius: '0px',
-                                          fontWeight: 700,
+                                          fontWeight: 600,
                                           cursor: 'pointer',
                                           display: 'flex',
                                           alignItems: 'center',
@@ -4269,7 +4269,7 @@ Looking forward to connecting!`;
                                           color: 'white',
                                           border: 'none',
                                           borderRadius: '0px',
-                                          fontWeight: 800,
+                                          fontWeight: 600,
                                           cursor: 'pointer',
                                           display: 'flex',
                                           alignItems: 'center',
@@ -4286,7 +4286,7 @@ Looking forward to connecting!`;
                                   <>
                                     <div className="input-group" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px', position: 'relative' }}>
                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                                        <label style={{ margin: 0, fontWeight: 800, fontSize: '0.75rem', color: 'var(--primary-dark)', letterSpacing: '0.5px' }}>MESSAGE CONTENT</label>
+                                        <label style={{ margin: 0, fontWeight: 600, fontSize: '0.75rem', color: 'var(--primary-dark)', letterSpacing: '0.5px' }}>MESSAGE CONTENT</label>
                                         <button
                                           type="button"
                                           onClick={() => setShowAiPrompt(!showAiPrompt)}
@@ -4477,7 +4477,7 @@ Looking forward to connecting!`;
                                       padding: '8px 12px',
                                       border: '1px solid var(--border)',
                                       fontSize: '0.8rem',
-                                      fontWeight: 700
+                                      fontWeight: 600
                                     }}>
                                       <span style={{ color: 'var(--text-muted)' }}>
                                         Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
@@ -4519,7 +4519,7 @@ Looking forward to connecting!`;
                                           cursor: (((channel === 'whatsapp' ? status === 'connected' : true) && !loading && credits.total_balance >= getEstimatedCredits()) ? 'pointer' : 'not-allowed'),
                                           background: editingId ? '#0057b7' : (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')),
                                           color: 'white',
-                                          fontWeight: 800,
+                                          fontWeight: 600,
                                           border: 'none',
                                           height: '42px',
                                           display: 'flex',
@@ -4570,7 +4570,7 @@ Looking forward to connecting!`;
                     </>
                   ) : activeView === 'credits' ? (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Later Credits</p>
+                      <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Later Credits</p>
 
                       <div style={{
                         background: 'white',
@@ -4581,7 +4581,7 @@ Looking forward to connecting!`;
                         gap: '14px',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                       }}>
-                        <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)', margin: 0 }}>System Credit Rules</h4>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)', margin: 0 }}>System Credit Rules</h4>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.8rem', color: '#4a5568', lineHeight: '1.4' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
@@ -4631,7 +4631,7 @@ Looking forward to connecting!`;
                               background: 'none',
                               border: 'none',
                               color: 'var(--primary-dark)',
-                              fontWeight: 800,
+                              fontWeight: 600,
                               fontSize: '0.75rem',
                               cursor: 'pointer',
                               marginBottom: '20px',
@@ -4644,12 +4644,12 @@ Looking forward to connecting!`;
 
                           {currentBusinessTool === 'auto-reply' ? (
                             <>
-                              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px' }}>Auto Reply Bot</h3>
+                              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '8px' }}>Auto Reply Bot</h3>
                               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>Configure instant replies based on keywords.</p>
 
                               <form onSubmit={handleReplySubmit}>
                                 <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)' }}>TRIGGER KEYWORD</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-dark)' }}>TRIGGER KEYWORD</label>
                                   <input
                                     type="text"
                                     placeholder="e.g. price, hello, help"
@@ -4660,7 +4660,7 @@ Looking forward to connecting!`;
                                   />
                                 </div>
                                 <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)' }}>BOT RESPONSE</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-dark)' }}>BOT RESPONSE</label>
                                   <textarea
                                     rows="5"
                                     placeholder="Enter the message to reply with..."
@@ -4682,11 +4682,11 @@ Looking forward to connecting!`;
                           ) : currentBusinessTool === 'drip' ? (
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Content Drip</h3>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Content Drip</h3>
                                 {!isCreatingSequence && (
                                   <button
                                     onClick={() => setIsCreatingSequence(true)}
-                                    style={{ padding: '4px 8px', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                                    style={{ padding: '4px 8px', background: 'var(--primary)', color: 'white', border: 'none', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer' }}
                                   >
                                     NEW SEQUENCE
                                   </button>
@@ -4697,7 +4697,7 @@ Looking forward to connecting!`;
                               {isCreatingSequence ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                   <div className="input-group">
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>SEQUENCE NAME</label>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>SEQUENCE NAME</label>
                                     <input
                                       type="text"
                                       placeholder="e.g. Onboarding Flow"
@@ -4708,7 +4708,7 @@ Looking forward to connecting!`;
                                   </div>
                                   {/* Trigger Settings (Premium Design) */}
                                   <div style={{ marginBottom: '24px' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-dark)', display: 'block', marginBottom: '12px', letterSpacing: '0.5px' }}>AUTO-ENROLL TRIGGER</label>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-dark)', display: 'block', marginBottom: '12px', letterSpacing: '0.5px' }}>AUTO-ENROLL TRIGGER</label>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                                       {[
@@ -4738,7 +4738,7 @@ Looking forward to connecting!`;
                                             {option.icon}
                                           </div>
                                           <div>
-                                            <p style={{ fontSize: '0.75rem', fontWeight: 800, margin: 0, color: newSequence.trigger === option.id ? 'var(--primary-dark)' : 'var(--text)' }}>
+                                            <p style={{ fontSize: '0.75rem', fontWeight: 600, margin: 0, color: newSequence.trigger === option.id ? 'var(--primary-dark)' : 'var(--text)' }}>
                                               {option.label}
                                             </p>
                                             <p style={{ fontSize: '0.6rem', margin: 0, color: 'var(--text-muted)', fontWeight: 500 }}>
@@ -4755,13 +4755,13 @@ Looking forward to connecting!`;
                                         animate={{ opacity: 1, y: 0 }}
                                         style={{ marginTop: '12px', padding: '12px', background: 'white', border: '1px solid var(--primary)', borderLeft: '4px solid var(--primary)' }}
                                       >
-                                        <label style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary-dark)', display: 'block', marginBottom: '8px' }}>TRIGGER WORD</label>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary-dark)', display: 'block', marginBottom: '8px' }}>TRIGGER WORD</label>
                                         <input
                                           type="text"
                                           placeholder="e.g. START, INFO"
                                           value={newSequence.triggerValue || ''}
                                           onChange={e => setNewSequence({ ...newSequence, triggerValue: e.target.value.toUpperCase() })}
-                                          style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', fontSize: '0.9rem', background: 'white', fontWeight: 800, letterSpacing: '1px' }}
+                                          style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', fontSize: '0.9rem', background: 'white', fontWeight: 600, letterSpacing: '1px' }}
                                         />
                                         <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '6px', fontStyle: 'italic' }}>Tip: Use a simple, uppercase word like "INFO"</p>
                                       </motion.div>
@@ -4769,7 +4769,7 @@ Looking forward to connecting!`;
                                   </div>
 
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>SEQUENCE STEPS</label>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 600 }}>SEQUENCE STEPS</label>
                                     {newSequence.steps.map((step, index) => (
                                       <motion.div
                                         initial={{ opacity: 0, y: 5 }}
@@ -4778,7 +4778,7 @@ Looking forward to connecting!`;
                                         style={{ padding: '12px', background: '#f8fafc', border: '1px solid var(--border)', position: 'relative' }}
                                       >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-dark)' }}>STEP {index + 1}</span>
+                                          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary-dark)' }}>STEP {index + 1}</span>
                                           {newSequence.steps.length > 1 && (
                                             <button
                                               onClick={() => {
@@ -4794,7 +4794,7 @@ Looking forward to connecting!`;
 
                                         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                                           <div style={{ flex: 1 }}>
-                                            <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>WAIT TIME</label>
+                                            <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>WAIT TIME</label>
                                             <input
                                               type="number"
                                               min="0"
@@ -4813,7 +4813,7 @@ Looking forward to connecting!`;
                                             </div>
                                           </div>
                                           <div style={{ flex: 2 }}>
-                                            <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700 }}>SEND CONDITION</label>
+                                            <label style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600 }}>SEND CONDITION</label>
                                             <select
                                               value={step.condition}
                                               onChange={e => {
@@ -4875,7 +4875,7 @@ Looking forward to connecting!`;
                                         steps: [...newSequence.steps, { message: '', delay: 1, condition: 'none' }]
                                       });
                                     }}
-                                    style={{ padding: '8px', border: '1px dashed var(--primary)', color: 'var(--primary-dark)', background: 'none', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                                    style={{ padding: '8px', border: '1px dashed var(--primary)', color: 'var(--primary-dark)', background: 'none', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
                                   >
                                     + ADD NEXT STEP
                                   </button>
@@ -4948,12 +4948,12 @@ Looking forward to connecting!`;
                                     >
                                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                                         <div style={{ flex: 1 }}>
-                                          <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary-dark)' }}>{seq.name}</h4>
+                                          <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary-dark)' }}>{seq.name}</h4>
                                           <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: '#f1f5f9', color: 'var(--text-muted)', fontWeight: 700 }}>
+                                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: '#f1f5f9', color: 'var(--text-muted)', fontWeight: 600 }}>
                                               {seq.steps?.length || 0} STEPS
                                             </span>
-                                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: seq.trigger_type === 'manual' ? '#f1f5f9' : '#dcfce7', color: seq.trigger_type === 'manual' ? 'var(--text-muted)' : 'var(--primary-dark)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: seq.trigger_type === 'manual' ? '#f1f5f9' : '#dcfce7', color: seq.trigger_type === 'manual' ? 'var(--text-muted)' : 'var(--primary-dark)', fontWeight: 600, textTransform: 'uppercase' }}>
                                               {seq.trigger_type === 'new_contact' ? 'WELCOME' : seq.trigger_type === 'keyword' ? `KEYWORD: ${seq.trigger_value}` : 'MANUAL'}
                                             </span>
                                           </div>
@@ -5023,7 +5023,7 @@ Looking forward to connecting!`;
                             <>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                                 <div>
-                                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--primary-dark)' }}>AI Assistant</h3>
+                                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: 'var(--primary-dark)' }}>AI Assistant</h3>
                                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                                     {autoReplies.find(r => r.keyword === '*') ? 'Active • Responding to queries' : 'Inactive • Manual mode'}
                                   </p>
@@ -5066,7 +5066,7 @@ Looking forward to connecting!`;
                               </div>
 
                               <div style={{ marginBottom: '20px' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Business Knowledge Base</label>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Business Knowledge Base</label>
                                 <textarea
                                   placeholder="Describe your business, pricing, and FAQs here. The AI will use this to answer customers..."
                                   value={aiContext}
@@ -5109,14 +5109,14 @@ Looking forward to connecting!`;
                           ) : currentBusinessTool === 'broadcast' ? (
                             <>
                               <div style={{ marginBottom: '24px' }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--primary-dark)' }}>Broadcast Center</h3>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: 'var(--primary-dark)' }}>Broadcast Center</h3>
                                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                                   Send a one-time announcement to your entire database.
                                 </p>
                               </div>
 
                               <div style={{ marginBottom: '24px' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', display: 'block' }}>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', display: 'block' }}>
                                   Recipients
                                 </label>
 
@@ -5140,7 +5140,7 @@ Looking forward to connecting!`;
                                 >
                                   <Users size={24} color={selectedBroadcastContacts.length > 0 ? 'var(--primary)' : 'var(--text-muted)'} />
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, color: selectedBroadcastContacts.length > 0 ? 'var(--primary-dark)' : 'var(--text)' }}>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0, color: selectedBroadcastContacts.length > 0 ? 'var(--primary-dark)' : 'var(--text)' }}>
                                       {selectedBroadcastContacts.length > 0 ? `${selectedBroadcastContacts.length} contacts selected` : 'Select Contacts'}
                                     </p>
                                     <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>
@@ -5151,7 +5151,7 @@ Looking forward to connecting!`;
                               </div>
 
                               <div style={{ marginBottom: '20px' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Announcement Message</label>
+                                <label style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Announcement Message</label>
                                 <textarea
                                   placeholder="Type your broadcast message here..."
                                   value={formData.message}
@@ -5207,7 +5207,7 @@ Looking forward to connecting!`;
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '12px',
-                                  fontWeight: 800,
+                                  fontWeight: 600,
                                   fontSize: '0.9rem',
                                   cursor: loading ? 'not-allowed' : 'pointer',
                                   display: 'flex',
@@ -5221,7 +5221,7 @@ Looking forward to connecting!`;
                               </button>
 
                               <div style={{ marginTop: '24px', padding: '16px', background: '#f0fdf4', border: '1px solid #bcf0da', borderRadius: '12px' }}>
-                                <h4 style={{ fontSize: '0.75rem', fontWeight: 800, margin: '0 0 4px 0', color: '#166534' }}>How it works:</h4>
+                                <h4 style={{ fontSize: '0.75rem', fontWeight: 600, margin: '0 0 4px 0', color: '#166534' }}>How it works:</h4>
                                 <p style={{ fontSize: '0.7rem', color: '#166534', margin: 0, lineHeight: 1.5 }}>
                                   Messages are queued and sent individually with a random 5-15 second delay between each one. This ensures your account remains safe and compliant with WhatsApp's anti-spam policies.
                                 </p>
@@ -5240,7 +5240,7 @@ Looking forward to connecting!`;
                                   style={{ background: 'white', width: '100%', maxWidth: '400px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
                                 >
                                   <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Select Recipients</h3>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Select Recipients</h3>
                                     <button onClick={() => setShowContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                                       <X size={20} />
                                     </button>
@@ -5274,7 +5274,7 @@ Looking forward to connecting!`;
                                       <div style={{ width: '20px', height: '20px', border: '2px solid var(--primary)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: selectedBroadcastContacts.length === Object.keys(contacts).length ? 'var(--primary)' : 'transparent' }}>
                                         {selectedBroadcastContacts.length === Object.keys(contacts).length && <Check size={14} color="white" />}
                                       </div>
-                                      <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>Select All ({Object.keys(contacts).length})</span>
+                                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Select All ({Object.keys(contacts).length})</span>
                                     </div>
 
                                     {Object.entries(contacts)
@@ -5314,11 +5314,11 @@ Looking forward to connecting!`;
                                               {contacts[phone]?.photo ? (
                                                 <img src={contacts[phone].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                               ) : (
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isSelected ? 'white' : 'var(--text-muted)' }}>{initial}</span>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: isSelected ? 'white' : 'var(--text-muted)' }}>{initial}</span>
                                               )}
                                             </div>
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                              <div style={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
+                                              <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
                                               {hasName && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatPhone(phone)}</div>}
                                             </div>
                                           </div>
@@ -5329,7 +5329,7 @@ Looking forward to connecting!`;
                                   <div style={{ padding: '16px', background: '#f8fafc', borderTop: '1px solid var(--border)' }}>
                                     <button
                                       onClick={() => setShowContactModal(false)}
-                                      style={{ width: '100%', padding: '12px', background: 'var(--primary-dark)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+                                      style={{ width: '100%', padding: '12px', background: 'var(--primary-dark)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}
                                     >
                                       DONE ({selectedBroadcastContacts.length} SELECTED)
                                     </button>
@@ -5344,7 +5344,7 @@ Looking forward to connecting!`;
                         </motion.div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Business Tools</p>
+                          <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Business Tools</p>
 
                           <motion.div
                             whileHover={{ x: 5 }}
@@ -5364,7 +5364,7 @@ Looking forward to connecting!`;
                               <Zap size={20} />
                             </div>
                             <div style={{ flex: 1 }}>
-                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Auto Reply</h4>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Auto Reply</h4>
                               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Instant replies to keywords</p>
                             </div>
                           </motion.div>
@@ -5387,7 +5387,7 @@ Looking forward to connecting!`;
                               <Send size={20} />
                             </div>
                             <div style={{ flex: 1 }}>
-                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Broadcast</h4>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Broadcast</h4>
                               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Send to all contacts at once</p>
                             </div>
                           </motion.div>
@@ -5410,7 +5410,7 @@ Looking forward to connecting!`;
                               <LayoutList size={20} />
                             </div>
                             <div style={{ flex: 1 }}>
-                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>Content Drip</h4>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>Content Drip</h4>
                               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Automated drip sequences</p>
                             </div>
                           </motion.div>
@@ -5431,12 +5431,12 @@ Looking forward to connecting!`;
                               overflow: 'hidden'
                             }}
                           >
-                            <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 8px', background: 'var(--primary-dark)', color: 'white', fontSize: '0.5rem', fontWeight: 900, textTransform: 'uppercase' }}>New</div>
+                            <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 8px', background: 'var(--primary-dark)', color: 'white', fontSize: '0.5rem', fontWeight: 600, textTransform: 'uppercase' }}>New</div>
                             <div style={{ width: '40px', height: '40px', background: '#faf5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
                               <Bot size={20} />
                             </div>
                             <div style={{ flex: 1 }}>
-                              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>AI Assistant</h4>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>AI Assistant</h4>
                               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Smart AI auto-responder</p>
                             </div>
                           </motion.div>
@@ -5494,7 +5494,7 @@ Looking forward to connecting!`;
                         cursor: 'pointer',
                         borderBottom: queueTab === 'upcoming' ? '3px solid var(--primary-dark)' : '3px solid transparent',
                         color: queueTab === 'upcoming' ? 'var(--primary-dark)' : 'var(--text-muted)',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         fontSize: '0.9rem'
                       }}
                     >
@@ -5509,7 +5509,7 @@ Looking forward to connecting!`;
                         cursor: 'pointer',
                         borderBottom: queueTab === 'history' ? '3px solid var(--primary-dark)' : '3px solid transparent',
                         color: queueTab === 'history' ? 'var(--primary-dark)' : 'var(--text-muted)',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         fontSize: '0.9rem'
                       }}
                     >
@@ -5522,7 +5522,7 @@ Looking forward to connecting!`;
                     display: 'flex',
                     alignItems: 'center',
                     color: 'var(--primary-dark)',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     fontSize: '1rem',
                     textTransform: 'uppercase',
                     letterSpacing: '1px'
@@ -5690,7 +5690,7 @@ Looking forward to connecting!`;
                                 cursor: 'pointer',
                                 fontSize: '0.85rem',
                                 background: historyFilter === f ? '#f0f2f5' : 'transparent',
-                                fontWeight: historyFilter === f ? 'bold' : 'normal'
+                                fontWeight: historyFilter === f ? 600 : 'normal'
                               }}
                             >
                               {f === 'all' ? 'All Status' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -5710,7 +5710,7 @@ Looking forward to connecting!`;
             {showBooking ? (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 'calc(100vh - 120px)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Book a Free Support Call</h3>
+                  <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 600, margin: 0, color: 'var(--text)' }}>Book a Free Support Call</h3>
                   <button
                     onClick={() => { setShowBooking(false); setShowServiceSelector(true); }}
                     style={{
@@ -5765,8 +5765,8 @@ Looking forward to connecting!`;
                     }}>
                       <Coins size={140} color="white" />
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85 }}>Total Later Credits</span>
-                    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '3rem', fontWeight: 800, margin: '8px 0' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85 }}>Total Later Credits</span>
+                    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '3rem', fontWeight: 600, margin: '8px 0' }}>
                       {creditsLoading ? <span className="skeleton-text" style={{ width: '80px', height: '3rem', borderRadius: '8px' }} /> : credits.total_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Available to use across all automations</span>
@@ -5788,11 +5788,11 @@ Looking forward to connecting!`;
                     justifyContent: 'center',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
                   }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Purchased Credits</span>
-                    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Purchased Credits</span>
+                    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '2.5rem', fontWeight: 600, color: 'var(--text)', margin: '8px 0' }}>
                       {creditsLoading ? <span className="skeleton-text" style={{ width: '60px', height: '2.5rem', borderRadius: '8px' }} /> : credits.purchased_balance}
                     </span>
-                    <span style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 600 }}>
                       ✓ Never expires
                     </span>
                   </div>
@@ -5827,7 +5827,7 @@ Looking forward to connecting!`;
                         🔄
                       </div>
                       <div>
-                        <div style={{ fontSize: '1rem', fontWeight: 800 }}>Active Subscription — {credits.subscription_pack}</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 600 }}>Active Subscription — {credits.subscription_pack}</div>
                         <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '2px' }}>
                           {credits.subscription_credits?.toLocaleString()} credits auto-added every month
                         </div>
@@ -5856,7 +5856,7 @@ Looking forward to connecting!`;
                       style={{
                         padding: '8px 16px',
                         fontSize: '0.8rem',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         background: 'rgba(255,255,255,0.1)',
                         color: 'white',
                         border: '1px solid rgba(255,255,255,0.2)',
@@ -5875,7 +5875,7 @@ Looking forward to connecting!`;
                 {/* Pricing / Recharge Packs Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
                   <div>
-                    <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Recharge Later Credits</h3>
+                    <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 600, margin: 0, color: 'var(--text)' }}>Recharge Later Credits</h3>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '4px 0px 18px' }}>Need more automations? Purchase high-speed credit packs that never expire.</p>
                   </div>
 
@@ -5915,7 +5915,7 @@ Looking forward to connecting!`;
                             color: 'white',
                             padding: '4px 12px',
                             fontSize: '0.7rem',
-                            fontWeight: 800,
+                            fontWeight: 600,
                             borderRadius: '0px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px'
@@ -5924,16 +5924,16 @@ Looking forward to connecting!`;
                           </span>
                         )}
 
-                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{pkg.name}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{pkg.name}</span>
 
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '12px 0 6px 0' }}>
-                          <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>
+                          <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '2rem', fontWeight: 600, color: 'var(--text)' }}>
                             {pkg.credits.toLocaleString()}
                           </span>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>credits</span>
                         </div>
 
-                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--primary-dark)' }}>{pkg.price}</span>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--primary-dark)' }}>{pkg.price}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', flex: 1 }}>{pkg.desc}</span>
 
                         <button
@@ -6083,7 +6083,7 @@ Looking forward to connecting!`;
                 {/* Transaction History Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                    <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Usage & Transaction History</h3>
+                    <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 600, margin: 0, color: 'var(--text)' }}>Usage & Transaction History</h3>
                     {credits.transactions.length > 0 && (
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {['all', 'purchase', 'subscription_purchase', 'deduction', 'refund'].map(f => (
@@ -6093,7 +6093,7 @@ Looking forward to connecting!`;
                             style={{
                               padding: '4px 12px',
                               fontSize: '0.75rem',
-                              fontWeight: 700,
+                              fontWeight: 600,
                               textTransform: 'capitalize',
                               border: txnFilter === f ? '2px solid var(--primary)' : '1px solid var(--border)',
                               background: txnFilter === f ? '#eaf2ff' : 'white',
@@ -6125,7 +6125,7 @@ Looking forward to connecting!`;
                         <div style={{ overflowX: 'auto' }}>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                             <thead>
-                              <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-muted)', textAlign: 'left', fontWeight: 700 }}>
+                              <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-muted)', textAlign: 'left', fontWeight: 600 }}>
                                 <th style={{ padding: '12px 8px' }}>Date</th>
                                 <th style={{ padding: '12px 8px' }}>Transaction Details</th>
                                 <th style={{ padding: '12px 8px' }}>Type</th>
@@ -6161,7 +6161,7 @@ Looking forward to connecting!`;
                                     <td style={{ padding: '12px 8px' }}>
                                       <span style={{
                                         fontSize: '0.75rem',
-                                        fontWeight: 800,
+                                        fontWeight: 600,
                                         textTransform: 'uppercase',
                                         padding: '2px 8px',
                                         background: tx.type === 'deduction' ? '#fbf3f2' : tx.type === 'refund' ? '#e2f4e3' : '#eaf2ff',
@@ -6173,7 +6173,7 @@ Looking forward to connecting!`;
                                     <td style={{
                                       padding: '12px 8px',
                                       textAlign: 'right',
-                                      fontWeight: 800,
+                                      fontWeight: 600,
                                       color: isPositive ? '#2e7d32' : '#ea4335'
                                     }}>
                                       {isPositive ? `+${tx.amount} credits` : `${tx.amount} credits`}
@@ -6181,7 +6181,7 @@ Looking forward to connecting!`;
                                     <td style={{
                                       padding: '12px 8px',
                                       textAlign: 'right',
-                                      fontWeight: 700,
+                                      fontWeight: 600,
                                       color: tx.type === 'purchase' || tx.type === 'subscription_purchase' ? 'var(--primary-dark)' : 'var(--text-muted)'
                                     }}>
                                       {amountPaidText}
@@ -6201,7 +6201,7 @@ Looking forward to connecting!`;
                               style={{
                                 padding: '6px 14px',
                                 fontSize: '0.8rem',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 border: '1px solid var(--border)',
                                 background: page <= 1 ? '#f5f5f5' : 'white',
                                 color: page <= 1 ? '#ccc' : 'var(--text)',
@@ -6217,7 +6217,7 @@ Looking forward to connecting!`;
                                   width: '32px',
                                   height: '32px',
                                   fontSize: '0.8rem',
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   border: p === page ? '2px solid var(--primary)' : '1px solid var(--border)',
                                   background: p === page ? '#eaf2ff' : 'white',
                                   color: p === page ? 'var(--primary)' : 'var(--text)',
@@ -6232,7 +6232,7 @@ Looking forward to connecting!`;
                               style={{
                                 padding: '6px 14px',
                                 fontSize: '0.8rem',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 border: '1px solid var(--border)',
                                 background: page >= totalPages ? '#f5f5f5' : 'white',
                                 color: page >= totalPages ? '#ccc' : 'var(--text)',
@@ -6338,7 +6338,7 @@ Looking forward to connecting!`;
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div style={{ minWidth: 0, flex: 1 }}>
-                                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#92400e', margin: '0 0 4px 0', wordBreak: 'break-word', textAlign: 'left' }}>
+                                  <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#92400e', margin: '0 0 4px 0', wordBreak: 'break-word', textAlign: 'left' }}>
                                     {item.title}
                                   </h4>
                                   {item.description && (
@@ -6350,7 +6350,7 @@ Looking forward to connecting!`;
                                     <Clock size={12} />
                                     <span>{format(new Date(item.scheduled_at), 'PPP h:mm aa')}</span>
                                     {item.recurrence !== 'none' && (
-                                      <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#f59e0b', fontWeight: 700 }}>
+                                      <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#f59e0b', fontWeight: 600 }}>
                                         <Repeat size={10} /> {item.recurrence}
                                       </span>
                                     )}
@@ -6469,7 +6469,7 @@ Looking forward to connecting!`;
                                 transition={{ delay: 0.3 }}
                                 style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
                               >
-                                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
+                                <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                   {schedules
                                     .filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed')
@@ -6485,7 +6485,7 @@ Looking forward to connecting!`;
                                           )}
                                         </div>
                                         <div style={{ overflow: 'hidden', flex: 1, textAlign: 'left' }}>
-                                          <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                          <p style={{ fontSize: '0.8rem', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {groups[msg.phone] || getContactName(msg.phone.split('@')[0])}
                                           </p>
                                           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.message}</p>
@@ -6505,7 +6505,7 @@ Looking forward to connecting!`;
                                     border: 'none',
                                     color: 'var(--primary-dark)',
                                     fontSize: '0.75rem',
-                                    fontWeight: 800,
+                                    fontWeight: 600,
                                     cursor: 'pointer',
                                     display: 'block',
                                     margin: '12px auto 0',
@@ -6597,7 +6597,7 @@ Looking forward to connecting!`;
                                     background: '#e8f0fe',
                                     color: '#1a73e8',
                                     border: '1px solid #d2e3fc',
-                                    fontWeight: 800,
+                                    fontWeight: 600,
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '3px',
@@ -6613,7 +6613,7 @@ Looking forward to connecting!`;
                                     background: '#fff0f5',
                                     color: '#e1306c',
                                     border: '1px solid #f7c6d8',
-                                    fontWeight: 800,
+                                    fontWeight: 600,
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '3px',
@@ -6629,7 +6629,7 @@ Looking forward to connecting!`;
                                     background: '#fdf2f2',
                                     color: '#a52a2a',
                                     border: '1px solid #f8d7da',
-                                    fontWeight: 800,
+                                    fontWeight: 600,
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '3px',
@@ -6639,7 +6639,7 @@ Looking forward to connecting!`;
                                   </span>
                                 )}
                                 <span style={{
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   color: item.channel === 'calendar' ? '#1a73e8' : (item.channel === 'email' ? '#a52a2a' : (item.channel === 'instagram' ? '#e1306c' : (item.phone.includes('@g.us') ? '#0057b7' : '#075e54'))),
                                   fontSize: '0.9rem',
                                   display: 'flex',
@@ -6661,7 +6661,7 @@ Looking forward to connecting!`;
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '3px',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     textTransform: 'uppercase'
                                   }}>
                                     <Repeat size={10} /> {item.recurrence}
@@ -6713,7 +6713,7 @@ Looking forward to connecting!`;
                                   padding: '3px 8px',
                                   background: '#e8f0fe',
                                   color: '#1a73e8',
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   borderRadius: '0px',
                                   display: 'flex',
                                   alignItems: 'center',
@@ -6734,7 +6734,7 @@ Looking forward to connecting!`;
                                     padding: '3px 8px',
                                     background: '#f0f2f5',
                                     color: '#667781',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     borderRadius: '0px'
                                   }}>
                                     {item.metadata?.duration} min
@@ -6745,7 +6745,7 @@ Looking forward to connecting!`;
                                   padding: '3px 8px',
                                   background: '#f0f2f5',
                                   color: '#667781',
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   borderRadius: '0px',
                                   display: 'flex',
                                   alignItems: 'center',
@@ -6759,7 +6759,7 @@ Looking forward to connecting!`;
                             {item.channel === 'email' && item.email_subject && (
                               <div style={{
                                 fontSize: '0.82rem',
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 color: '#a52a2a',
                                 marginBottom: '8px',
                                 padding: '6px 10px',
@@ -6767,7 +6767,7 @@ Looking forward to connecting!`;
                                 borderLeft: '3px solid #a52a2a',
                                 borderRadius: '0px'
                               }}>
-                                <span style={{ color: '#7f1d1d', fontWeight: 800 }}>Subject:</span> {item.email_subject}
+                                <span style={{ color: '#7f1d1d', fontWeight: 600 }}>Subject:</span> {item.email_subject}
                               </div>
                             )}
                             {item.channel === 'instagram' && item.metadata?.image_urls?.length > 0 && (
@@ -6828,7 +6828,7 @@ Looking forward to connecting!`;
                                   padding: '8px 14px',
                                   background: '#1a73e8',
                                   color: 'white',
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   fontSize: '0.8rem',
                                   borderRadius: '0px',
                                   textDecoration: 'none',
@@ -6904,12 +6904,12 @@ Looking forward to connecting!`;
                       flexDirection: 'column',
                       gap: '20px'
                     }}>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Enroll Contacts</h3>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>Enroll Contacts</h3>
                       <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>Start a drip campaign for a specific phone number.</p>
 
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
                         <div style={{ flex: 1 }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-dark)' }}>PHONE NUMBER</label>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary-dark)' }}>PHONE NUMBER</label>
                           <input
                             type="text"
                             placeholder="9122500000"
@@ -6918,7 +6918,7 @@ Looking forward to connecting!`;
                           />
                         </div>
                         <div style={{ flex: 1 }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-dark)' }}>SELECT SEQUENCE</label>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary-dark)' }}>SELECT SEQUENCE</label>
                           <select id="enroll-sequence" style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', marginTop: '4px', background: 'white' }}>
                             <option value="">Choose a sequence...</option>
                             {dripSequences.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -6979,13 +6979,13 @@ Looking forward to connecting!`;
                             <div style={{ width: '40px', height: '40px', background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369a1' }}>
                               <LayoutList size={20} />
                             </div>
-                            <h4 style={{ margin: 0, fontWeight: 800 }}>{seq.name}</h4>
+                            <h4 style={{ margin: 0, fontWeight: 600 }}>{seq.name}</h4>
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {seq.steps?.map((step, i) => (
                               <div key={i} style={{ fontSize: '0.85rem', display: 'flex', gap: '8px', color: 'var(--text-muted)' }}>
-                                <span style={{ fontWeight: 700 }}>+{step.delay_days}d:</span>
+                                <span style={{ fontWeight: 600 }}>+{step.delay_days}d:</span>
                                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{step.message}</span>
                               </div>
                             ))}
@@ -7020,7 +7020,7 @@ Looking forward to connecting!`;
                         }}>
                           <Zap size={40} />
                         </div>
-                        <h3 style={{ fontSize: '1.3rem', marginBottom: '12px', fontWeight: 700 }}>Your Bot is Quiet</h3>
+                        <h3 style={{ fontSize: '1.3rem', marginBottom: '12px', fontWeight: 600 }}>Your Bot is Quiet</h3>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                           Create your first auto-reply rule using the tool on the left.
                         </p>
@@ -7058,7 +7058,7 @@ Looking forward to connecting!`;
                                     padding: '4px 12px',
                                     borderRadius: '0px',
                                     fontSize: '0.85rem',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     border: '1px solid #d0e7ff'
                                   }}>
                                     Keyword: "{rule.keyword}"
@@ -7125,7 +7125,7 @@ Looking forward to connecting!`;
                     <Mail size={20} color="white" />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#b31412' }}>Email Integration</h3>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#b31412' }}>Email Integration</h3>
                     <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Choose how to send emails</p>
                   </div>
                 </div>
@@ -7141,7 +7141,7 @@ Looking forward to connecting!`;
                       <Check size={16} color="white" />
                     </div>
                     <div>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#166534', margin: 0 }}>Email Ready (Default Server Engine)</p>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#166534', margin: 0 }}>Email Ready (Default Server Engine)</p>
                       <p style={{ fontSize: '0.7rem', color: '#16a34a', margin: '2px 0 0' }}>
                         Active by default — no setup needed
                       </p>
@@ -7160,7 +7160,7 @@ Looking forward to connecting!`;
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1a73e8', margin: 0 }}>Connect Gmail Account</p>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1a73e8', margin: 0 }}>Connect Gmail Account</p>
                       <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
                         {integrations.find(i => i.provider === 'gmail_oauth')
                           ? `Connected as ${integrations.find(i => i.provider === 'gmail_oauth').email_address}`
@@ -7178,7 +7178,7 @@ Looking forward to connecting!`;
                       }}
                       style={{
                         padding: '8px 16px', border: '1px solid #1a73e8', background: 'white',
-                        color: '#1a73e8', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer',
+                        color: '#1a73e8', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer',
                         borderRadius: '0px', whiteSpace: 'nowrap', flexShrink: 0
                       }}
                     >
@@ -7197,7 +7197,7 @@ Looking forward to connecting!`;
                   </summary>
                   <div style={{ marginTop: '16px', padding: '16px', background: '#fef2f2', border: '1px solid #fecaca' }}>
                     <div className="input-group" style={{ marginBottom: '12px' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b31412' }}>RESEND API KEY</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#b31412' }}>RESEND API KEY</label>
                       <input
                         type="password"
                         placeholder="re_xxxxxxxxxxxx"
@@ -7211,7 +7211,7 @@ Looking forward to connecting!`;
                     </div>
 
                     <div className="input-group" style={{ marginBottom: '16px' }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#b31412' }}>FROM EMAIL ADDRESS</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#b31412' }}>FROM EMAIL ADDRESS</label>
                       <input
                         type="email"
                         placeholder="you@yourdomain.com"
@@ -7245,7 +7245,7 @@ Looking forward to connecting!`;
                         disabled={configSaving}
                         style={{
                           flex: 1, padding: '10px', background: '#ea4335', color: 'white', border: 'none',
-                          borderRadius: '0px', fontWeight: 700, cursor: configSaving ? 'not-allowed' : 'pointer',
+                          borderRadius: '0px', fontWeight: 600, cursor: configSaving ? 'not-allowed' : 'pointer',
                           opacity: configSaving ? 0.7 : 1
                         }}
                       >
@@ -7263,7 +7263,7 @@ Looking forward to connecting!`;
                               alert('Failed to remove');
                             }
                           }}
-                          style={{ flex: 1, padding: '10px', background: 'none', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 700, cursor: 'pointer', borderRadius: '0px' }}
+                          style={{ flex: 1, padding: '10px', background: 'none', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 600, cursor: 'pointer', borderRadius: '0px' }}
                         >
                           Remove
                         </button>
@@ -7315,7 +7315,7 @@ Looking forward to connecting!`;
                   boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
                 }}
               >
-                <h3 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 700 }}>Save Contact</h3>
+                <h3 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 600 }}>Save Contact</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
                   Enter a name for <strong>+91 {formData.phone}</strong>
                 </p>
@@ -7397,7 +7397,7 @@ Looking forward to connecting!`;
                   <WifiOff size={40} />
                 </div>
 
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px', color: '#111b21' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '12px', color: '#111b21' }}>
                   Disconnect WhatsApp?
                 </h2>
 
@@ -7488,7 +7488,7 @@ Looking forward to connecting!`;
                   <LogOut size={40} />
                 </div>
 
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px', color: '#111b21' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '12px', color: '#111b21' }}>
                   Sign Out?
                 </h2>
 
@@ -7579,7 +7579,7 @@ Looking forward to connecting!`;
                   <Trash2 size={40} />
                 </div>
 
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '12px', color: '#111b21' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '12px', color: '#111b21' }}>
                   Clear All History?
                 </h2>
 
@@ -7647,7 +7647,7 @@ Looking forward to connecting!`;
                 {/* Wizard Header */}
                 <div className="wizard-header">
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 600 }}>
                       {channel === 'email' ? 'Schedule Email' : (channel === 'calendar' ? 'Schedule Meeting' : (channel === 'reminders' ? 'Create Reminder' : (channel === 'telegram' ? 'Schedule Telegram Message' : (channel === 'instagram' ? 'Schedule Instagram Post' : 'Schedule Message'))))}
                     </h2>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Step {formStep} of {['reminders', 'telegram', 'instagram'].includes(channel) ? 2 : 3}</span>
@@ -7684,7 +7684,7 @@ Looking forward to connecting!`;
                               <p className="stage-desc">Enter the recipient email and subject line.</p>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ea4335', marginBottom: '8px', display: 'block' }}>TO (EMAIL)</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ea4335', marginBottom: '8px', display: 'block' }}>TO (EMAIL)</label>
                               <input
                                 type="email"
                                 placeholder="user@example.com"
@@ -7694,7 +7694,7 @@ Looking forward to connecting!`;
                               />
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ea4335', marginBottom: '8px', display: 'block' }}>SUBJECT</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ea4335', marginBottom: '8px', display: 'block' }}>SUBJECT</label>
                               <input
                                 type="text"
                                 placeholder="Subject line"
@@ -7711,9 +7711,9 @@ Looking forward to connecting!`;
                               <p className="stage-desc">Who is this meeting with?</p>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>RECIPIENT CONTACT (WHATSAPP)</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>RECIPIENT CONTACT (WHATSAPP)</label>
                               <div style={{ display: 'flex', gap: '10px' }}>
-                                <div style={{ padding: '12px 16px', background: '#f0f2f5', border: '1px solid var(--border)', fontSize: '1rem', fontWeight: 800, color: 'var(--primary-dark)', display: 'flex', alignItems: 'center' }}>+91</div>
+                                <div style={{ padding: '12px 16px', background: '#f0f2f5', border: '1px solid var(--border)', fontSize: '1rem', fontWeight: 600, color: 'var(--primary-dark)', display: 'flex', alignItems: 'center' }}>+91</div>
                                 <input
                                   type="text"
                                   placeholder="e.g. 9122500000"
@@ -7724,7 +7724,7 @@ Looking forward to connecting!`;
                               </div>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>RECIPIENT EMAIL (OPTIONAL)</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>RECIPIENT EMAIL (OPTIONAL)</label>
                               <input
                                 type="email"
                                 placeholder="client@example.com"
@@ -7741,7 +7741,7 @@ Looking forward to connecting!`;
                               <p className="stage-desc">Give your reminder a title and optional description.</p>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>REMINDER TITLE</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>REMINDER TITLE</label>
                               <input
                                 type="text"
                                 placeholder="e.g. Buy groceries"
@@ -7751,7 +7751,7 @@ Looking forward to connecting!`;
                               />
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>DESCRIPTION (OPTIONAL)</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>DESCRIPTION (OPTIONAL)</label>
                               <textarea
                                 placeholder="Add details..."
                                 value={reminderForm.description}
@@ -7770,10 +7770,10 @@ Looking forward to connecting!`;
                               </div>
                             ) : telegramStatus.status !== 'connected' ? (
                               <div style={{ background: '#f8fafc', padding: '16px', border: '1px solid var(--border)' }}>
-                                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>1. Connect Bot Token</h4>
+                                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase' }}>1. Connect Bot Token</h4>
                                 <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
                                   <li style={{ marginBottom: '4px' }}>
-                                    Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.
+                                    Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 600 }}>@BotFather</a> on Telegram.
                                     <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden' }}>
                                       <img src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png" alt="BotFather Guide" style={{ width: '100%', height: 'auto', display: 'block' }} />
                                     </div>
@@ -7814,7 +7814,7 @@ Looking forward to connecting!`;
                                     }
                                   }}
                                   disabled={isTestingTelegramBot}
-                                  style={{ width: '100%', padding: '12px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
+                                  style={{ width: '100%', padding: '12px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
                                 >
                                   {isTestingTelegramBot ? 'Connecting Bot...' : 'Verify & Save Bot'}
                                 </button>
@@ -7822,16 +7822,16 @@ Looking forward to connecting!`;
                             ) : !telegramStatus.config?.chats || telegramStatus.config.chats.length === 0 ? (
                               <div style={{ background: '#f8fafc', padding: '16px', border: '1px solid var(--border)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                  <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0088cc', textTransform: 'uppercase' }}>2. Connect Chat target</h4>
-                                  <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 800 }}>✓ Bot Online</span>
+                                  <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: '#0088cc', textTransform: 'uppercase' }}>2. Connect Chat target</h4>
+                                  <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600 }}>✓ Bot Online</span>
                                 </div>
                                 <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                                  <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username || 'your_bot_username'}</span> to your chat or group.</li>
+                                  <li style={{ marginBottom: '4px' }}>Add your bot <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>@{telegramStatus.config?.bot_username || 'your_bot_username'}</span> to your chat or group.</li>
                                   <li style={{ marginBottom: '4px' }}>Get your chat ID (e.g. forward any message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc' }}>@userinfobot</a>).</li>
                                   <li>Enter chat parameters below:</li>
                                 </ol>
                                 <div className="input-group" style={{ marginBottom: '8px' }}>
-                                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>TELEGRAM CHAT ID</label>
+                                  <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>TELEGRAM CHAT ID</label>
                                   <input
                                     type="text"
                                     placeholder="e.g. 5625755071 or -1001234567"
@@ -7841,7 +7841,7 @@ Looking forward to connecting!`;
                                   />
                                 </div>
                                 <div className="input-group" style={{ marginBottom: '12px' }}>
-                                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>CHAT NAME / LABEL</label>
+                                  <label style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '3px', display: 'block' }}>CHAT NAME / LABEL</label>
                                   <input
                                     type="text"
                                     placeholder="e.g. My Personal Chat or Dev Group"
@@ -7868,7 +7868,7 @@ Looking forward to connecting!`;
                                       }
                                     }}
                                     disabled={isSavingTelegramChat}
-                                    style={{ flex: 2, padding: '12px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
+                                    style={{ flex: 2, padding: '12px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
                                   >
                                     {isSavingTelegramChat ? 'Adding Chat...' : 'Add Chat target'}
                                   </button>
@@ -7880,7 +7880,7 @@ Looking forward to connecting!`;
                                         await fetchTelegramStatus();
                                       }
                                     }}
-                                    style={{ flex: 1, padding: '12px', background: 'none', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
+                                    style={{ flex: 1, padding: '12px', background: 'none', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
                                   >
                                     Reset
                                   </button>
@@ -7893,7 +7893,7 @@ Looking forward to connecting!`;
                                   <p className="stage-desc">Write your scheduled message and select target chat.</p>
                                 </div>
                                 <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', marginBottom: '8px', display: 'block' }}>TARGET CHAT</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0088cc', marginBottom: '8px', display: 'block' }}>TARGET CHAT</label>
                                   <div style={{ display: 'flex', gap: '6px' }}>
                                     <select
                                       value={selectedTelegramChat}
@@ -7907,7 +7907,7 @@ Looking forward to connecting!`;
                                     <button
                                       type="button"
                                       onClick={() => setShowTelegramAddChat(!showTelegramAddChat)}
-                                      style={{ padding: '10px 14px', background: 'white', border: '1px solid var(--border)', color: '#0088cc', fontWeight: 800, cursor: 'pointer' }}
+                                      style={{ padding: '10px 14px', background: 'white', border: '1px solid var(--border)', color: '#0088cc', fontWeight: 600, cursor: 'pointer' }}
                                     >
                                       {showTelegramAddChat ? '✕' : '+ Chat'}
                                     </button>
@@ -7919,7 +7919,7 @@ Looking forward to connecting!`;
                                           await fetchTelegramStatus();
                                         }
                                       }}
-                                      style={{ padding: '10px 14px', background: 'white', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 800, cursor: 'pointer' }}
+                                      style={{ padding: '10px 14px', background: 'white', border: '1px solid #ef4444', color: '#ef4444', fontWeight: 600, cursor: 'pointer' }}
                                     >
                                       Reset
                                     </button>
@@ -7956,7 +7956,7 @@ Looking forward to connecting!`;
                                           alert('Failed to register chat target');
                                         }
                                       }}
-                                      style={{ padding: '8px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                                      style={{ padding: '8px', background: '#0088cc', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer' }}
                                     >
                                       Save Chat
                                     </button>
@@ -7964,7 +7964,7 @@ Looking forward to connecting!`;
                                 )}
 
                                 <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0088cc', marginBottom: '8px', display: 'block' }}>MESSAGE</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0088cc', marginBottom: '8px', display: 'block' }}>MESSAGE</label>
                                   <textarea
                                     placeholder="Write your telegram message here..."
                                     value={formData.message}
@@ -7985,13 +7985,13 @@ Looking forward to connecting!`;
                                   <InstagramIcon size={28} color="white" />
                                 </div>
                                 <div>
-                                  <h3 style={{ fontWeight: 800, fontSize: '1rem', margin: '0 0 6px 0' }}>Connect Instagram First</h3>
+                                  <h3 style={{ fontWeight: 600, fontSize: '1rem', margin: '0 0 6px 0' }}>Connect Instagram First</h3>
                                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>You need a Business or Creator account to schedule posts.</p>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => { setShowMobileForm(false); }}
-                                  style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', width: '100%' }}
+                                  style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', border: 'none', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', width: '100%' }}
                                 >
                                   Go to Instagram Settings
                                 </button>
@@ -8003,7 +8003,7 @@ Looking forward to connecting!`;
                                   <p className="stage-desc">Add your image URL(s) and caption.</p>
                                 </div>
                                 <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', marginBottom: '8px', display: 'block' }}>IMAGE URL(S)</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', marginBottom: '8px', display: 'block' }}>IMAGE URL(S)</label>
                                   <textarea
                                     placeholder="Paste image URL(s), one per line. Up to 10 for a carousel."
                                     value={igMobileForm.image_urls_raw}
@@ -8013,7 +8013,7 @@ Looking forward to connecting!`;
                                   />
                                 </div>
                                 <div className="input-group">
-                                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', marginBottom: '8px', display: 'block' }}>CAPTION</label>
+                                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', marginBottom: '8px', display: 'block' }}>CAPTION</label>
                                   <textarea
                                     placeholder="Write your caption with hashtags..."
                                     value={igMobileForm.caption}
@@ -8040,7 +8040,7 @@ Looking forward to connecting!`;
                                   borderRadius: '0px',
                                   border: '1px solid var(--border)',
                                   fontSize: '1rem',
-                                  fontWeight: 800,
+                                  fontWeight: 600,
                                   color: 'var(--primary-dark)',
                                   display: 'flex',
                                   alignItems: 'center'
@@ -8063,7 +8063,7 @@ Looking forward to connecting!`;
                             </div>
 
                             <div style={{ marginTop: '10px' }}>
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Recent Contacts</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Recent Contacts</label>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {Object.entries(contacts).slice(0, 5).map(([id, name]) => {
                                   const displayName = getContactName(id);
@@ -8084,7 +8084,7 @@ Looking forward to connecting!`;
                                         textAlign: 'left'
                                       }}
                                     >
-                                      <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: 'var(--primary-light)', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem' }}>
+                                      <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: 'var(--primary-light)', color: 'var(--primary-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.8rem' }}>
                                         {hasSavedName ? displayName[0].toUpperCase() : '#'}
                                       </div>
                                       <span style={{ fontWeight: 600 }}>{displayName}</span>
@@ -8113,7 +8113,7 @@ Looking forward to connecting!`;
                               <p className="stage-desc">Configure meeting details, platform, and date.</p>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>MEETING TITLE</label>
                               <input
                                 type="text"
                                 placeholder="e.g. 30-Min Strategy Call"
@@ -8123,7 +8123,7 @@ Looking forward to connecting!`;
                               />
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>PLATFORM</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>PLATFORM</label>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' }}>
                                 <button
                                   type="button"
@@ -8134,7 +8134,7 @@ Looking forward to connecting!`;
                                     borderRadius: '0px',
                                     background: meetingPlatform === 'google_meet' ? '#e8f0fe' : 'white',
                                     color: meetingPlatform === 'google_meet' ? '#1a73e8' : 'var(--text-main)',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     fontSize: '0.8rem',
                                     cursor: 'pointer'
                                   }}
@@ -8150,7 +8150,7 @@ Looking forward to connecting!`;
                                     borderRadius: '0px',
                                     background: meetingPlatform === 'custom' ? '#e8f0fe' : 'white',
                                     color: meetingPlatform === 'custom' ? '#1a73e8' : 'var(--text-main)',
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     fontSize: '0.8rem',
                                     cursor: 'pointer'
                                   }}
@@ -8169,7 +8169,7 @@ Looking forward to connecting!`;
                               )}
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>PICK DATE & TIME</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>PICK DATE & TIME</label>
                               <DatePicker
                                 selected={scheduledDate}
                                 onChange={(date) => setScheduledDate(date)}
@@ -8183,7 +8183,7 @@ Looking forward to connecting!`;
                               />
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>DURATION (MINUTES)</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '6px', display: 'block' }}>DURATION (MINUTES)</label>
                               <select
                                 value={meetingDuration}
                                 onChange={e => setMeetingDuration(parseInt(e.target.value))}
@@ -8203,7 +8203,7 @@ Looking forward to connecting!`;
                               <p className="stage-desc">Pick a date and time for your post.</p>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e1306c', marginBottom: '8px', display: 'block' }}>PICK DATE & TIME</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e1306c', marginBottom: '8px', display: 'block' }}>PICK DATE & TIME</label>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <input
                                   type="date"
@@ -8248,7 +8248,7 @@ Looking forward to connecting!`;
                             </div>
 
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: channel === 'reminders' ? '#f59e0b' : (channel === 'email' ? '#ea4335' : 'var(--primary-dark)'), marginBottom: '8px', display: 'block' }}>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: channel === 'reminders' ? '#f59e0b' : (channel === 'email' ? '#ea4335' : 'var(--primary-dark)'), marginBottom: '8px', display: 'block' }}>
                                 {channel === 'reminders' ? 'REMINDER DATE & TIME' : 'PICK DATE & TIME'}
                               </label>
                               {channel === 'reminders' ? (
@@ -8326,7 +8326,7 @@ Looking forward to connecting!`;
 
                             {channel === 'reminders' && (
                               <div className="input-group">
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>REPEAT</label>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b', marginBottom: '8px', display: 'block' }}>REPEAT</label>
                                 <select
                                   value={reminderForm.recurrence}
                                   onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
@@ -8342,7 +8342,7 @@ Looking forward to connecting!`;
 
                             {channel !== 'reminders' && (
                               <div className="input-group">
-                                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}><Repeat size={14} /> REPEAT CYCLE</label>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}><Repeat size={14} /> REPEAT CYCLE</label>
                                 <select
                                   value={formData.recurrence}
                                   onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
@@ -8375,7 +8375,7 @@ Looking forward to connecting!`;
                               <p className="stage-desc">Review the invitation message that will be scheduled.</p>
                             </div>
                             <div className="input-group">
-                              <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>ADDITIONAL NOTES / CUSTOM MESSAGE</label>
+                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a73e8', marginBottom: '8px', display: 'block' }}>ADDITIONAL NOTES / CUSTOM MESSAGE</label>
                               <div style={{ position: 'relative', width: '100%' }}>
                                 <textarea
                                   placeholder="Type any custom meeting details..."
@@ -8429,7 +8429,7 @@ Join Link: [Auto-generated after scheduling]`}
 
                             <div className="input-group">
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                <p className="stage-desc" style={{ margin: 0, fontWeight: 700 }}>Craft your message</p>
+                                <p className="stage-desc" style={{ margin: 0, fontWeight: 600 }}>Craft your message</p>
                                 <button
                                   type="button"
                                   onClick={() => setShowAiPrompt(!showAiPrompt)}
@@ -8627,7 +8627,7 @@ Join Link: [Auto-generated after scheduling]`}
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         fontSize: '0.8rem',
-                        fontWeight: 700
+                        fontWeight: 600
                       }}>
                         <span style={{ color: 'var(--text-muted)' }}>
                           Credits Required: <span style={{ color: 'var(--primary-dark)' }}>{getEstimatedCredits()}</span>
@@ -8658,7 +8658,7 @@ Join Link: [Auto-generated after scheduling]`}
                       <button
                         onClick={() => { triggerSelection(); setFormStep(prev => prev - 1); }}
                         className="btn-secondary"
-                        style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 800 }}
+                        style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 600 }}
                       >
                         Back
                       </button>
@@ -8799,7 +8799,7 @@ Join Link: [Auto-generated after scheduling]`}
                         flex: 2,
                         padding: '16px',
                         borderRadius: '0px',
-                        fontWeight: 800,
+                        fontWeight: 600,
                         background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : 'var(--primary)')))),
                         color: 'white',
                         border: 'none',
@@ -8879,7 +8879,7 @@ Join Link: [Auto-generated after scheduling]`}
                   <CheckCircle2 size={44} />
                 </motion.div>
 
-                <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.6rem', fontWeight: 800, margin: '0 0 8px 0', color: 'var(--text)' }}>
+                <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.6rem', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--text)' }}>
                   {paymentSuccessModal.subscription ? 'Subscription Active! 🎉' : 'Payment Successful! 🎉'}
                 </h3>
 
@@ -8900,8 +8900,8 @@ Join Link: [Auto-generated after scheduling]`}
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>Credits Added</span>
-                  <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>Credits Added</span>
+                  <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, color: '#15803d' }}>
                     +{(paymentSuccessModal.credits || 0).toLocaleString()}
                   </span>
                 </div>
@@ -8916,7 +8916,7 @@ Join Link: [Auto-generated after scheduling]`}
                     background: 'var(--primary)',
                     color: 'white',
                     border: 'none',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     fontSize: '0.95rem',
                     cursor: 'pointer',
                     borderRadius: '0px',
