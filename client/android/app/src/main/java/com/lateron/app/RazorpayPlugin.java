@@ -16,6 +16,7 @@ import org.json.JSONException;
 public class RazorpayPlugin extends Plugin {
 
     private PluginCall savedCall;
+    private String pendingSubscriptionId;
 
     @PluginMethod
     public void openCheckout(PluginCall call) {
@@ -29,6 +30,8 @@ public class RazorpayPlugin extends Plugin {
         String currency       = call.getString("currency", "INR");
         String name           = call.getString("name", "LaterOn");
         String description    = call.getString("description", "Credit Pack");
+
+        pendingSubscriptionId = subscriptionId;
 
         Activity activity = getActivity();
 
@@ -69,9 +72,11 @@ public class RazorpayPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("razorpay_payment_id", razorpayPaymentId != null ? razorpayPaymentId : (paymentData != null ? paymentData.getPaymentId() : ""));
         result.put("razorpay_order_id",   paymentData != null ? paymentData.getOrderId() : "");
+        result.put("razorpay_subscription_id", pendingSubscriptionId != null ? pendingSubscriptionId : "");
         result.put("razorpay_signature",  paymentData != null ? paymentData.getSignature() : "");
         savedCall.resolve(result);
         savedCall = null;
+        pendingSubscriptionId = null;
     }
 
     /** Called by MainActivity when payment fails */
@@ -79,5 +84,6 @@ public class RazorpayPlugin extends Plugin {
         if (savedCall == null) return;
         savedCall.reject("Payment failed (code " + code + "): " + description);
         savedCall = null;
+        pendingSubscriptionId = null;
     }
 }
