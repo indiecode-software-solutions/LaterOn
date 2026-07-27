@@ -5478,14 +5478,6 @@ Looking forward to connecting!`;
                     padding: '8px 0'
                   }}
                 />
-                <X
-                  size={20}
-                  style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
-                  onClick={() => {
-                    setIsSearching(false);
-                    setSearchQuery('');
-                  }}
-                />
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '32px', height: '100%', flex: 1 }}>
@@ -5546,12 +5538,23 @@ Looking forward to connecting!`;
 
 
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <Search
-                size={20}
-                color="#54656f"
-                style={{ cursor: 'pointer' }}
-                onClick={() => { triggerSelection(); setIsSearching(true); }}
-              />
+              {isSearching ? (
+                <X
+                  size={20}
+                  style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
+                  onClick={() => {
+                    setIsSearching(false);
+                    setSearchQuery('');
+                  }}
+                />
+              ) : (
+                <Search
+                  size={20}
+                  color="#54656f"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { triggerSelection(); setIsSearching(true); }}
+                />
+              )}
               <div style={{ position: 'relative' }}>
                 <MoreVertical
                   size={20}
@@ -6260,6 +6263,7 @@ Looking forward to connecting!`;
                         const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (r.description || '').toLowerCase().includes(searchQuery.toLowerCase());
                         if (!matchesSearch) return false;
+                        if (searchQuery) return true;
                         if (queueTab === 'upcoming') return r.status === 'pending';
                         return r.status !== 'pending';
                       }).length === 0 ? (
@@ -6366,6 +6370,7 @@ Looking forward to connecting!`;
                         (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                         getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                       if (!matchesSearch) return false;
+                      if (searchQuery) return true;
                       if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled';
                       if (historyFilter !== 'all' && s.status !== historyFilter) return false;
                       return s.status !== 'pending' && s.status !== 'scheduled';
@@ -6520,6 +6525,7 @@ Looking forward to connecting!`;
                             (s.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                             getContactName((s.phone || '').split('@')[0]).toLowerCase().includes(searchQuery.toLowerCase());
                           if (!matchesSearch) return false;
+                          if (searchQuery) return true;
                           if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled';
                           // history tab — exclude pending/scheduled, then apply status filter
                           if (s.status === 'pending' || s.status === 'scheduled') return false;
