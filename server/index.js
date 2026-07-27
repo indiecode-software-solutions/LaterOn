@@ -1699,8 +1699,8 @@ app.delete('/api/schedules/:id', verifyToken, async (req, res) => {
         .select('id');
 
     if (error) return res.status(500).json({ error: error.message });
-    if (!data || data.length === 0) return res.status(404).json({ error: 'Schedule not found or access denied' });
-    res.json({ success: true });
+    // If no row was deleted it may still be a success (already deleted or belongs to another user)
+    res.json({ success: true, deleted: !!(data && data.length) });
 });
 
 app.post('/api/bulk/retry-failed', verifyToken, async (req, res) => {
@@ -2528,14 +2528,15 @@ app.put('/api/reminders/:id', verifyToken, async (req, res) => {
 
 app.delete('/api/reminders/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const { error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
         .from('reminders')
         .delete()
         .eq('id', id)
-        .eq('user_id', req.userId);
+        .eq('user_id', req.userId)
+        .select('id');
 
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ success: true });
+    res.json({ success: true, deleted: !!(data && data.length) });
 });
 
 // Device Registration API for Push Notifications
@@ -3021,8 +3022,7 @@ app.delete('/api/instagram/posts/:id', verifyToken, async (req, res) => {
             .eq('status', 'scheduled')
             .select('id');
         if (error) return res.status(500).json({ error: error.message });
-        if (!data || data.length === 0) return res.status(404).json({ error: 'Post not found or already published' });
-        res.json({ success: true });
+        res.json({ success: true, deleted: !!(data && data.length) });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

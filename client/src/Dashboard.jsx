@@ -160,7 +160,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
   const [igConnecting, setIgConnecting] = React.useState(false);
   const [igStatusLoading, setIgStatusLoading] = React.useState(true);
 
-  const authToken = token;
+  const getAuthToken = () => localStorage.getItem('token');
 
   const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
     <button type="button" className="datepicker-custom-input" onClick={onClick} ref={ref} style={{ border: '1px solid var(--border)', color: 'var(--text-main)' }}>
@@ -171,26 +171,26 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   React.useEffect(() => {
     setIgStatusLoading(true);
-    fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } })
+    fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
       .then(r => r.json()).then(d => { setInstagramStatus(d); setIgStatusLoading(false); })
       .catch(() => setIgStatusLoading(false));
   }, [channel]);
 
   React.useEffect(() => {
     if (instagramStatus?.status !== 'connected') return;
-    fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
+    fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => { });
   }, [instagramStatus]);
 
   const handleIgConnect = async () => {
     setIgConnecting(true);
     try {
-      const r = await fetch(`${API_URL}/api/instagram/auth-url`, { headers: { Authorization: `Bearer ${authToken}` } });
+      const r = await fetch(`${API_URL}/api/instagram/auth-url`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
       const { url, error } = await r.json();
       if (error) { alert(error); setIgConnecting(false); return; }
       window.open(url, '_blank', 'width=600,height=700');
       const poll = setInterval(async () => {
-        const sr = await fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } });
+        const sr = await fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
         const sd = await sr.json();
         if (sd.status === 'connected') { setInstagramStatus(sd); clearInterval(poll); setIgConnecting(false); }
       }, 2000);
@@ -200,7 +200,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   const handleIgDisconnect = async () => {
     if (!confirm('Disconnect Instagram?')) return;
-    await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
+    await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${getAuthToken()}` } });
     setInstagramStatus({ status: 'disconnected' });
     setIgRules([]);
   };
@@ -217,7 +217,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
     try {
       const r = await fetch(`${API_URL}/api/instagram/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
         body: JSON.stringify({ caption: igPostForm.caption, image_urls: urls, scheduled_at: utcScheduledAt })
       });
       const d = await r.json();
@@ -236,7 +236,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
     try {
       const r = await fetch(`${API_URL}/api/instagram/auto-rules`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
         body: JSON.stringify(igRuleForm)
       });
       const d = await r.json();
@@ -249,7 +249,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
   const toggleRule = async (rule) => {
     await fetch(`${API_URL}/api/instagram/auto-rules/${rule.id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
       body: JSON.stringify({ is_active: !rule.is_active })
     });
     setIgRules(prev => prev.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
@@ -257,7 +257,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   const deleteRule = async (id) => {
     if (!confirm('Delete this rule?')) return;
-    await fetch(`${API_URL}/api/instagram/auto-rules/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
+    await fetch(`${API_URL}/api/instagram/auto-rules/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${getAuthToken()}` } });
     setIgRules(prev => prev.filter(r => r.id !== id));
   };
 
@@ -414,11 +414,14 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
 function Dashboard() {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Set global axios auth header
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  // Set global axios auth header (reads fresh token on each request)
+  axios.interceptors.request.use(config => {
+    const t = localStorage.getItem('token');
+    if (t) config.headers.Authorization = `Bearer ${t}`;
+    return config;
+  }, error => Promise.reject(error));
 
   const [status, setStatus] = useState('connecting');
   const [statusLoading, setStatusLoading] = useState(true);
@@ -1660,7 +1663,6 @@ Looking forward to connecting!`;
       }
     } catch (err) {
       console.error('Failed to delete schedule', err);
-      setSchedules(prev => [...prev, itemOrId].sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt)));
     }
   };
 
