@@ -28,33 +28,6 @@ const ProtectedRoute = ({ children, loading, session }) => {
   return children;
 };
 
-function CookieConsent() {
-  const [dismissed, setDismissed] = useState(() => localStorage.getItem('cookie-consent') === 'true');
-
-  if (dismissed || Capacitor.isNativePlatform()) return null;
-
-  return (
-    <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10000,
-      background: '#1a1a2e', color: '#e0e0e0', padding: '12px 24px',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: '16px', fontSize: '0.82rem', flexWrap: 'wrap',
-      fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, sans-serif"
-    }}>
-      <span>We use cookies to enhance your experience. By using LaterOn, you agree to our use of cookies.</span>
-      <button
-        onClick={() => { localStorage.setItem('cookie-consent', 'true'); setDismissed(true); }}
-        style={{
-          padding: '8px 20px', background: '#25d366', color: 'white', border: 'none',
-          fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap'
-        }}
-      >
-        Got it
-      </button>
-    </div>
-  );
-}
-
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -129,7 +102,6 @@ function App() {
           element={<Terms />} 
         />
       </Routes>
-      <CookieConsent />
     </Router>
   );
 }
