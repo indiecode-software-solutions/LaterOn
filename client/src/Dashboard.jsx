@@ -1804,7 +1804,7 @@ Looking forward to connecting!`;
   };
 
   return (
-    <div className={`dashboard-container channel-${channel}`}>
+    <div className={`dashboard-container${showServiceSelector ? '' : ` channel-${channel}`}`}>
       {!showServiceSelector && (
         <div className="right-channel-dock">
           <button
