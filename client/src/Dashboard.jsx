@@ -1899,7 +1899,7 @@ Looking forward to connecting!`;
           <header className="header">
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <h1 style={{
-                fontFamily: "'Outfit', sans-serif",
+                fontFamily: "'Poppins', sans-serif",
                 fontSize: '1.5rem',
                 fontWeight: 800,
                 color: 'var(--text)',
@@ -2159,7 +2159,7 @@ Looking forward to connecting!`;
               </div>
             ) : showServiceSelector ? (
               <div style={{ padding: isMobile ? '16px' : '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 800 }}>Select a Service</h2></div>}
+                {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 800 }}>Select a Service</h2></div>}
                 <div className="service-grid">
                   {/* WhatsApp Card */}
                   <div className={channel === 'whatsapp' ? 'active' : ''} style={{ borderColor: channel === 'whatsapp' ? '#25d366' : 'var(--border)', background: channel === 'whatsapp' ? '#f0fff4' : 'white' }}
@@ -5710,7 +5710,7 @@ Looking forward to connecting!`;
             {showBooking ? (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 'calc(100vh - 120px)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Book a Free Support Call</h3>
+                  <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Book a Free Support Call</h3>
                   <button
                     onClick={() => { setShowBooking(false); setShowServiceSelector(true); }}
                     style={{
@@ -5766,7 +5766,7 @@ Looking forward to connecting!`;
                       <Coins size={140} color="white" />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85 }}>Total Later Credits</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '3rem', fontWeight: 800, margin: '8px 0' }}>
+                    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '3rem', fontWeight: 800, margin: '8px 0' }}>
                       {creditsLoading ? <span className="skeleton-text" style={{ width: '80px', height: '3rem', borderRadius: '8px' }} /> : credits.total_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Available to use across all automations</span>
@@ -5789,7 +5789,7 @@ Looking forward to connecting!`;
                     boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
                   }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Purchased Credits</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
+                    <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
                       {creditsLoading ? <span className="skeleton-text" style={{ width: '60px', height: '2.5rem', borderRadius: '8px' }} /> : credits.purchased_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 700 }}>
@@ -5875,7 +5875,7 @@ Looking forward to connecting!`;
                 {/* Pricing / Recharge Packs Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
                   <div>
-                    <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Recharge Later Credits</h3>
+                    <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Recharge Later Credits</h3>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '4px 0px 18px' }}>Need more automations? Purchase high-speed credit packs that never expire.</p>
                   </div>
 
@@ -5927,7 +5927,7 @@ Looking forward to connecting!`;
                         <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{pkg.name}</span>
 
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '12px 0 6px 0' }}>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>
+                          <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>
                             {pkg.credits.toLocaleString()}
                           </span>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>credits</span>
@@ -6083,7 +6083,7 @@ Looking forward to connecting!`;
                 {/* Transaction History Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                    <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Usage & Transaction History</h3>
+                    <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Usage & Transaction History</h3>
                     {credits.transactions.length > 0 && (
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {['all', 'purchase', 'subscription_purchase', 'deduction', 'refund'].map(f => (
@@ -8879,7 +8879,7 @@ Join Link: [Auto-generated after scheduling]`}
                   <CheckCircle2 size={44} />
                 </motion.div>
 
-                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 800, margin: '0 0 8px 0', color: 'var(--text)' }}>
+                <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.6rem', fontWeight: 800, margin: '0 0 8px 0', color: 'var(--text)' }}>
                   {paymentSuccessModal.subscription ? 'Subscription Active! 🎉' : 'Payment Successful! 🎉'}
                 </h3>
 
@@ -8901,7 +8901,7 @@ Join Link: [Auto-generated after scheduling]`}
                   alignItems: 'center'
                 }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#166534' }}>Credits Added</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
+                  <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: '#15803d' }}>
                     +{(paymentSuccessModal.credits || 0).toLocaleString()}
                   </span>
                 </div>
