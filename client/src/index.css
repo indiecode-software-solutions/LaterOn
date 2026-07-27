@@ -256,7 +256,7 @@ button {
   border-radius: 6px;
   display: flex;
   align-items: center;
-  justifyContent: center;
+  justify-Content: center;
   transition: all 0.2s ease;
   border: 1px solid transparent;
 }
@@ -541,6 +541,7 @@ body:has(.landing-container)::before {
 .gradient-text {
   background: linear-gradient(90deg, var(--primary), var(--primary-dark));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -1590,6 +1591,7 @@ body:has(.landing-container)::before {
   align-items: center;
   justify-content: center;
   color: white;
+  border-radius: 6px;
 }
 
 .service-grid > div > div:first-child svg {
@@ -2413,4 +2415,113 @@ body:has(.landing-container)::before {
 
 .channel-strip:hover .strip-icon {
   background: white;
+}
+
+/* Theme loader — from Uiverse.io by reglobby */
+.pl1 {
+  display: block;
+  width: 12em;
+  height: 12em;
+}
+
+.pl1__g,
+.pl1__rect {
+  animation: pl1-a 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.pl1__g {
+  transform-origin: 64px 64px;
+}
+
+.pl1__rect:first-child {
+  animation-name: pl1-b;
+}
+
+.pl1__rect:nth-child(2) {
+  animation-name: pl1-c;
+}
+
+@keyframes pl1-a {
+  from { transform: rotate(0); }
+  80%, to {
+    animation-timing-function: steps(1, start);
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes pl1-b {
+  from {
+    animation-timing-function: cubic-bezier(0.33, 0, 0.67, 0);
+    width: 40px;
+    height: 40px;
+  }
+  20% {
+    animation-timing-function: steps(1, start);
+    width: 40px;
+    height: 0;
+  }
+  60% {
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+    width: 0;
+    height: 40px;
+  }
+  80%, to {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@keyframes pl1-c {
+  from {
+    animation-timing-function: cubic-bezier(0.33, 0, 0.67, 0);
+    width: 40px;
+    height: 40px;
+    transform: translate(0, 48px);
+  }
+  20% {
+    animation-timing-function: cubic-bezier(0.33, 1, 0.67, 1);
+    width: 40px;
+    height: 88px;
+    transform: translate(0, 0);
+  }
+  40% {
+    animation-timing-function: cubic-bezier(0.33, 0, 0.67, 0);
+    width: 40px;
+    height: 40px;
+    transform: translate(0, 0);
+  }
+  60% {
+    animation-timing-function: cubic-bezier(0.33, 1, 0.67, 1);
+    width: 88px;
+    height: 40px;
+    transform: translate(0, 0);
+  }
+  80%, to {
+    width: 40px;
+    height: 40px;
+    transform: translate(48px, 0);
+  }
+}
+
+/* ---- Skeleton Shimmer Loading ---- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-text {
+  display: inline-block;
+  height: 1em;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  vertical-align: middle;
+}
+.skeleton-block {
+  display: block;
+  height: 1em;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }

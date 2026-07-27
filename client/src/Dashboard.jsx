@@ -421,11 +421,13 @@ function Dashboard() {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
   const [status, setStatus] = useState('connecting');
+  const [statusLoading, setStatusLoading] = useState(true);
   const statusRef = useRef('connecting');
   const pairingCodeTimeoutRef = useRef(null);
   const [qrCode, setQrCode] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [schedules, setSchedules] = useState([]);
+  const [schedulesLoading, setSchedulesLoading] = useState(true);
   const [contacts, setContacts] = useState({});
   const [groups, setGroups] = useState({});
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -481,6 +483,7 @@ function Dashboard() {
   const [formStep, setFormStep] = useState(1);
   const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
   const [credits, setCredits] = useState({ free_balance: 0, purchased_balance: 0, total_balance: 0, next_refill_date: null, transactions: [] });
+  const [creditsLoading, setCreditsLoading] = useState(true);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
   const [purchasingPack, setPurchasingPack] = useState(null);
   const [isAiUsed, setIsAiUsed] = useState(false);
@@ -503,15 +506,19 @@ function Dashboard() {
 
   // Instagram Integration States
   const [instagramStatus, setInstagramStatus] = useState({ provider: 'instagram', status: 'disconnected', config: {} });
+  const [isInstagramStatusLoading, setIsInstagramStatusLoading] = useState(true);
   const [igMobileForm, setIgMobileForm] = useState({ image_urls_raw: '', caption: '' });
   const [igMobileDate, setIgMobileDate] = useState(new Date());
   const [igMobileLoading, setIgMobileLoading] = useState(false);
   const fetchInstagramStatus = async () => {
     try {
+      setIsInstagramStatusLoading(true);
       const res = await axios.get(`${API_URL}/api/instagram/status`);
       setInstagramStatus(res.data);
     } catch (err) {
       console.error('Failed to fetch Instagram status:', err.message);
+    } finally {
+      setIsInstagramStatusLoading(false);
     }
   };
   const [showTelegramConfig, setShowTelegramConfig] = useState(false);
@@ -704,6 +711,7 @@ function Dashboard() {
 
     socket.on('status', (newStatus) => {
       const appliedStatus = applyConnectionStatus(newStatus);
+      setStatusLoading(false);
       if (appliedStatus !== newStatus) return;
       if (appliedStatus === 'connected') {
         setQrCode(null);
@@ -891,6 +899,7 @@ function Dashboard() {
 
   const fetchStatus = async () => {
     try {
+      setStatusLoading(true);
       const res = await axios.get(`${API_URL}/api/status`);
       const nextStatus = res.data.status || 'disconnected';
       const currentStatus = statusRef.current;
@@ -901,6 +910,8 @@ function Dashboard() {
       setUserInfo(res.data.userInfo || null);
     } catch (err) {
       applyConnectionStatus('disconnected');
+    } finally {
+      setStatusLoading(false);
     }
   };
 
@@ -958,6 +969,7 @@ function Dashboard() {
 
   const fetchSchedules = async () => {
     try {
+      setSchedulesLoading(true);
       const res = await axios.get(`${API_URL}/api/schedules`);
       const data = res.data || [];
 
@@ -968,15 +980,20 @@ function Dashboard() {
       });
     } catch (err) {
       console.error('Failed to fetch schedules:', err.message);
+    } finally {
+      setSchedulesLoading(false);
     }
   };
 
   const fetchCredits = async () => {
     try {
+      setCreditsLoading(true);
       const res = await axios.get(`${API_URL}/api/credits`);
       setCredits(res.data);
     } catch (err) {
       console.error('Failed to fetch credits:', err.message);
+    } finally {
+      setCreditsLoading(false);
     }
   };
 
@@ -1922,7 +1939,7 @@ Looking forward to connecting!`;
                     title="View Later Credits Balance"
                   >
                     <Coins size={14} color="var(--primary)" />
-                    <span>{credits.total_balance}</span>
+                    {creditsLoading ? <span className="skeleton-text" style={{width:'30px',height:'0.8rem'}} /> : <span>{credits.total_balance}</span>}
                   </div>
 
                   {/* Profile Photo or Initials */}
@@ -2112,7 +2129,7 @@ Looking forward to connecting!`;
                     <div>
                       <h4 style={{ color: '#1a5c3e' }}>WhatsApp</h4>
                       <p style={{ color: '#4a7c62' }}>
-                        {userInfo ? 'Connected' : 'Connect QR / Pairing Code'}
+                        {statusLoading ? <span className="skeleton-text" style={{width:'140px'}} /> : (userInfo ? 'Connected' : 'Connect QR / Pairing Code')}
                       </p>
                     </div>
                   </div>
@@ -2161,7 +2178,7 @@ Looking forward to connecting!`;
                     <div>
                       <h4 style={{ color: '#005f9e' }}>Telegram</h4>
                       <p style={{ color: '#0088cc' }}>
-                        {telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
+                        {isTelegramStatusLoading ? <span className="skeleton-text" style={{width:'100px'}} /> : (telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
                       </p>
                     </div>
                   </div>
@@ -2178,7 +2195,7 @@ Looking forward to connecting!`;
                     <div>
                       <h4 style={{ color: '#a81c4e' }}>Instagram</h4>
                       <p style={{ color: '#e1306c' }}>
-                        {instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
+                        {isInstagramStatusLoading ? <span className="skeleton-text" style={{width:'100px'}} /> : (instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
                       </p>
                     </div>
                   </div>
@@ -5635,7 +5652,7 @@ Looking forward to connecting!`;
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85 }}>Total Later Credits</span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '3rem', fontWeight: 800, margin: '8px 0' }}>
-                      {credits.total_balance}
+                      {creditsLoading ? <span className="skeleton-text" style={{width:'80px',height:'3rem',borderRadius:'8px'}} /> : credits.total_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Available to use across all automations</span>
                     {credits.next_refill_date && (
@@ -5658,7 +5675,7 @@ Looking forward to connecting!`;
                   }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Purchased Credits</span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
-                      {credits.purchased_balance}
+                      {creditsLoading ? <span className="skeleton-text" style={{width:'60px',height:'2.5rem',borderRadius:'8px'}} /> : credits.purchased_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 700 }}>
                       ✓ Never expires
@@ -6089,9 +6106,53 @@ Looking forward to connecting!`;
                       if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled';
                       if (historyFilter !== 'all' && s.status !== historyFilter) return false;
                       return s.status !== 'pending' && s.status !== 'scheduled';
-                    }).length === 0 ? (
+                    }                    ).length === 0 ? (
                       <>
-                        <motion.div
+                        {schedulesLoading ? (
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 240px)', width: '100%' }}>
+                            <svg height="128px" width="128px" viewBox="0 0 128 128" className="pl1">
+                              <defs>
+                                <linearGradient y2="1" x2="1" y1="0" x1="0" id="pl-grad">
+                                  <stop stopColor="#000" offset="0%" />
+                                  <stop stopColor="#fff" offset="100%" />
+                                </linearGradient>
+                                <mask id="pl-mask">
+                                  <rect fill="url(#pl-grad)" height="128" width="128" y="0" x="0" />
+                                </mask>
+                              </defs>
+                              <g fill="var(--primary)">
+                                <g className="pl1__g">
+                                  <g transform="translate(20,20) rotate(0,44,44)">
+                                    <g className="pl1__rect-g">
+                                      <rect height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                      <rect transform="translate(0,48)" height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                    </g>
+                                    <g transform="rotate(180,44,44)" className="pl1__rect-g">
+                                      <rect height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                      <rect transform="translate(0,48)" height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                    </g>
+                                  </g>
+                                </g>
+                              </g>
+                              <g mask="url(#pl-mask)" fill="#e1306c">
+                                <g className="pl1__g">
+                                  <g transform="translate(20,20) rotate(0,44,44)">
+                                    <g className="pl1__rect-g">
+                                      <rect height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                      <rect transform="translate(0,48)" height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                    </g>
+                                    <g transform="rotate(180,44,44)" className="pl1__rect-g">
+                                      <rect height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                      <rect transform="translate(0,48)" height="40" width="40" ry="8" rx="8" className="pl1__rect" />
+                                    </g>
+                                  </g>
+                                </g>
+                              </g>
+                            </svg>
+                          </div>
+                        ) : (
+                          <>
+                          <motion.div
                           key="empty-state"
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -6185,8 +6246,10 @@ Looking forward to connecting!`;
                             </button>
                           </motion.div>
                         )}
-                      </>
-                    ) : (
+                        </>
+                      )}
+                    </>
+                  ) : (
                       schedules
                         .filter(s => {
                           if (!showServiceSelector && s.channel !== channel) return false;
