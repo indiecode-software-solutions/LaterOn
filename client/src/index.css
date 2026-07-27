@@ -1586,6 +1586,12 @@ body:has(.landing-container)::before {
   background: linear-gradient(135deg, var(--card-bg, white), color-mix(in srgb, var(--card-accent) 12%, var(--card-bg, white)));
 }
 
+.service-grid > div.active:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--card-bg);
+}
+
 .service-grid > div > div {
   flex-direction: column;
   align-items: center;
