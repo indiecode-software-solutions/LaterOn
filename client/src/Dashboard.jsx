@@ -2222,20 +2222,11 @@ Looking forward to connecting!`;
 
                 {/* Free Consultation */}
                 <div
-                  onClick={async () => {
-                    if (!window.Cal) {
-                      const s = document.createElement('script');
-                      s.src = 'https://app.cal.com/embed.js';
-                      s.async = true;
-                      document.body.appendChild(s);
-                      await new Promise(resolve => { s.onload = resolve; });
-                    }
-                    window.Cal('init', { calLink: 'pranavscalendar/free-lateron-consultation' });
-                    window.Cal('modal', { calLink: 'pranavscalendar/free-lateron-consultation' });
-                  }}
+                  onClick={() => window.open('https://cal.com/pranavscalendar/free-lateron-consultation', '_blank')}
                   style={{
                     background: '#1a1a1a',
                     border: '1px solid #333',
+                    borderRadius: '6px',
                     padding: '12px 16px',
                     display: 'flex',
                     alignItems: 'center',
@@ -2252,7 +2243,7 @@ Looking forward to connecting!`;
                     <span style={{ fontSize: '1.1rem' }}>🎙️</span>
                     <div>
                       <div style={{ color: 'white', fontWeight: 700, fontSize: '0.85rem' }}>Book a Free Support Call</div>
-                      <div style={{ color: '#ccc', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
+                      <div style={{ color: '#ccc', marginTop: '4px', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
                     </div>
                   </div>
                   <span style={{
