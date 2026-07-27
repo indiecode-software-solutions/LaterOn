@@ -486,7 +486,7 @@ function Dashboard() {
   const [txnFilter, setTxnFilter] = useState('all');
   const [txnPage, setTxnPage] = useState(1);
   const TXN_PER_PAGE = 10;
-  const [showCalModal, setShowCalModal] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
   const [purchasingPack, setPurchasingPack] = useState(null);
@@ -2223,7 +2223,7 @@ Looking forward to connecting!`;
 
                 {/* Free Consultation */}
                 <div
-                  onClick={() => setShowCalModal(true)}
+                  onClick={() => { setShowServiceSelector(false); setShowBooking(true); }}
                   style={{
                     background: '#1a1a1a',
                     border: '1px solid #333',
@@ -5665,7 +5665,37 @@ Looking forward to connecting!`;
 
 
           <div style={{ flex: 1, overflowY: 'auto', padding: queueTab === 'calendar' ? '0' : '30px 5%' }}>
-            {activeView === 'credits' ? (
+            {showBooking ? (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 'calc(100vh - 120px)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Book a Free Support Call</h3>
+                  <button
+                    onClick={() => setShowBooking(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      padding: '6px 12px',
+                      borderBottom: '1px solid var(--border)'
+                    }}
+                  >
+                    ← Back
+                  </button>
+                </div>
+                <div style={{ flex: 1, minHeight: '600px' }}>
+                  <iframe
+                    src="https://cal-meet.vercel.app/indiecode/free-lateron-consultation?embed=true"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 'none', minHeight: '600px' }}
+                    title="Book a Consultation"
+                  />
+                </div>
+              </div>
+            ) : activeView === 'credits' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', flex: 1, paddingBottom: '40px' }}>
                 {/* Balance Cards Header */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
@@ -8848,80 +8878,6 @@ Join Link: [Auto-generated after scheduling]`}
                 >
                   Got It, Continue →
                 </motion.button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Cal.com Booking Modal */}
-        <AnimatePresence>
-          {showCalModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 99999,
-                background: 'rgba(0, 0, 0, 0.65)',
-                backdropFilter: 'blur(8px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px'
-              }}
-              onClick={() => setShowCalModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.85, opacity: 0, y: 20 }}
-                transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-                onClick={e => e.stopPropagation()}
-                style={{
-                  background: 'white',
-                  borderRadius: '0px',
-                  width: '100%',
-                  maxWidth: '720px',
-                  height: '85vh',
-                  maxHeight: '700px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
-                  border: '1px solid var(--border)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-              >
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  borderBottom: '1px solid var(--border)',
-                  background: '#1a1a1a'
-                }}>
-                  <span style={{ color: 'white', fontWeight: 700, fontSize: '0.85rem' }}>Book a Free Support Call</span>
-                  <button
-                    onClick={() => setShowCalModal(false)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#888',
-                      fontSize: '1.2rem',
-                      cursor: 'pointer',
-                      padding: '4px'
-                    }}
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-                <iframe
-                  src="https://cal.com/pranavscalendar/free-lateron-consultation?embed=true"
-                  style={{ flex: 1, width: '100%', border: 'none' }}
-                  title="Book a Consultation"
-                />
               </motion.div>
             </motion.div>
           )}
