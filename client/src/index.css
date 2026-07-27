@@ -100,23 +100,23 @@ body {
 }
 
 .dashboard-container.channel-whatsapp::before {
-  background-color: #128c7e !important;
+  background: #128c7e !important;
 }
 
 .dashboard-container.channel-email::before {
-  background-color: #b91c1c !important;
+  background: #b91c1c !important;
 }
 
 .dashboard-container.channel-calendar::before {
-  background-color: #1557b0 !important;
+  background: #1557b0 !important;
 }
 
 .dashboard-container.channel-telegram::before {
-  background-color: #0077b5 !important;
+  background: #0077b5 !important;
 }
 
 .dashboard-container.channel-reminders::before {
-  background-color: #d97706 !important;
+  background: #d97706 !important;
 }
 
 .dashboard-container.channel-instagram::before {
