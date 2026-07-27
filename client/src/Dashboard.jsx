@@ -6,6 +6,7 @@ import { triggerLight, triggerMedium, triggerSuccess, triggerError, triggerSelec
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { App } from '@capacitor/app';
 
 // Native Razorpay plugin — only available on Android
 const RazorpayNative = registerPlugin('RazorpayPlugin');
@@ -459,6 +460,8 @@ function Dashboard() {
   const [historyFilter, setHistoryFilter] = useState('all'); // 'all', 'sent', 'delivered', 'read'
   const [showMenu, setShowMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showSocialDropdown, setShowSocialDropdown] = useState(false);
+  const [showWhatsAppManage, setShowWhatsAppManage] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -486,6 +489,7 @@ function Dashboard() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
+  const backStateRef = useRef({});
   const [hoveredSchedule, setHoveredSchedule] = useState(null);
   const [editingSequenceId, setEditingSequenceId] = useState(null);
   const [aiContext, setAiContext] = useState('');
@@ -639,6 +643,45 @@ function Dashboard() {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Keep ref up to date for back button handler
+  backStateRef.current = {
+    showMobileForm, showSocialDropdown, showWhatsAppManage,
+    showMenu, showFilterMenu, showDisconnectModal, showSignOutModal,
+    showClearHistoryModal, paymentSuccessModal, showContactModal,
+    showEmailConfig, showTelegramConfig, showAiPrompt, showServiceSelector
+  };
+
+  // Android back button — navigate within the app instead of exiting
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let handle;
+    (async () => {
+      try {
+        handle = await App.addListener('backButton', () => {
+          const s = backStateRef.current;
+          if (s.showMobileForm) { setShowMobileForm(false); return; }
+          if (s.showSocialDropdown) { setShowSocialDropdown(false); return; }
+          if (s.showWhatsAppManage) { setShowWhatsAppManage(false); return; }
+          if (s.showMenu) { setShowMenu(false); return; }
+          if (s.showFilterMenu) { setShowFilterMenu(false); return; }
+          if (s.showDisconnectModal) { setShowDisconnectModal(false); return; }
+          if (s.showSignOutModal) { setShowSignOutModal(false); return; }
+          if (s.showClearHistoryModal) { setShowClearHistoryModal(false); return; }
+          if (s.paymentSuccessModal) { setPaymentSuccessModal(null); return; }
+          if (s.showContactModal) { setShowContactModal(false); return; }
+          if (s.showEmailConfig) { setShowEmailConfig(false); return; }
+          if (s.showTelegramConfig) { setShowTelegramConfig(false); return; }
+          if (s.showAiPrompt) { setShowAiPrompt(false); return; }
+          if (s.showServiceSelector) { setShowServiceSelector(false); return; }
+          App.exitApp();
+        });
+      } catch (e) {
+        console.warn('Back button listener failed:', e);
+      }
+    })();
+    return () => { if (handle) handle.remove(); };
   }, []);
 
   useEffect(() => {
@@ -1791,7 +1834,7 @@ Looking forward to connecting!`;
       <div className="brand-tagline">Messages, Scheduled.</div>
       <div className="app-wrapper">
         {/* Left Sidebar */}
-        <aside className="sidebar">
+        <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
           <header className="header">
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <h1 style={{
@@ -1917,10 +1960,59 @@ Looking forward to connecting!`;
             </div>
           </header>
 
+          {/* Mobile Profile Strip — visible on mobile when a channel is active */}
+          {isMobile && !showServiceSelector && !showMobileForm && channel && (
+            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : (channel === 'telegram' ? '#e6f3ff' : (channel === 'instagram' ? '#fff0f5' : (channel === 'reminders' ? '#fffbeb' : '#f8fafc')))), display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')))), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', overflow: 'hidden', flexShrink: 0 }}>
+                {channel === 'email' ? <Mail size={16} /> : channel === 'calendar' ? <Calendar size={16} /> : channel === 'telegram' ? <TelegramIcon size={16} color="white" /> : channel === 'instagram' ? <InstagramIcon size={16} color="white" /> : channel === 'reminders' ? <Bell size={16} /> : userInfo?.photo ? <img src={userInfo.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Check size={16} strokeWidth={3} />}
+              </div>
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <p style={{ fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+                  {channel === 'email' ? 'Email' : channel === 'calendar' ? 'Meetings' : channel === 'telegram' ? 'Telegram' : channel === 'instagram' ? (instagramStatus.config?.name || 'Instagram') : channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'WhatsApp')}
+                </p>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>
+                  {channel === 'email' ? (user?.email || 'Active') : channel === 'calendar' ? 'Event Sync Active' : channel === 'telegram' ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'bot'}` : 'Ready to Connect') : channel === 'instagram' ? (instagramStatus.status === 'connected' ? `@${instagramStatus.config?.username || 'account'}` : 'Ready to Connect') : channel === 'reminders' ? 'Reminders Active' : (status === 'connected' ? (userInfo?.id ? `+${userInfo.id}` : 'Connected') : 'Reconnecting...')}
+                </p>
+              </div>
+              {channel === 'whatsapp' && status === 'connected' && (
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowWhatsAppManage(prev => !prev)}
+                    style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 700, borderRadius: '0px' }}
+                  >
+                    <Settings size={12} />
+                    Manage
+                  </button>
+                  {showWhatsAppManage && (
+                    <>
+                      <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowWhatsAppManage(false)} />
+                      <div style={{ position: 'absolute', bottom: '100%', right: 0, zIndex: 100, background: 'white', border: '1px solid var(--border)', boxShadow: '0 -4px 16px rgba(0,0,0,0.1)', minWidth: '160px', padding: '6px', marginBottom: '4px' }}>
+                        <div onClick={() => { handleSyncContacts(); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: isContactSyncing ? 'wait' : 'pointer', fontSize: '0.75rem', fontWeight: 600, color: isContactSyncing ? 'var(--primary)' : 'var(--text)' }}>
+                          <RefreshCcw size={13} className={isContactSyncing ? 'spin' : ''} />
+                          Sync Contacts
+                        </div>
+                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                        <div onClick={() => { setShowWhatsAppManage(false); handleDisconnectWhatsApp(); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: '#ef4444' }}>
+                          <WifiOff size={13} />
+                          Disconnect
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Connection & Form Area */}
           <div className="sidebar-form-container" style={{
             flex: 1,
-            display: (isMobile && !showServiceSelector && (channel !== 'whatsapp' || status === 'connected')) ? 'none' : 'flex',
+            display: (isMobile && (showMobileForm || (!showServiceSelector && (
+              (channel !== 'whatsapp' && channel !== 'telegram' && channel !== 'instagram') ||
+              (channel === 'whatsapp' && status === 'connected') ||
+              (channel === 'telegram' && telegramStatus.status === 'connected') ||
+              (channel === 'instagram' && instagramStatus.status === 'connected')
+            )))) ? 'none' : 'flex',
             flexDirection: 'column',
             overflowY: 'auto'
           }}>
@@ -2005,8 +2097,9 @@ Looking forward to connecting!`;
                 </motion.div>
               </div>
             ) : showServiceSelector ? (
-              <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              <div style={{ padding: isMobile ? '16px' : '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 800 }}>Select a Service</h2></div>}
+                <div className={isMobile ? 'service-grid' : ''} style={isMobile ? {} : { display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
                   {/* WhatsApp Card */}
                   <div style={{
                     padding: '20px',
@@ -2015,7 +2108,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerMedium(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    onClick={() => { triggerMedium(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
                   >
@@ -2047,7 +2140,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerMedium(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    onClick={() => { triggerMedium(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
                   >
@@ -2075,7 +2168,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerMedium(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    onClick={() => { triggerMedium(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
                   >
@@ -2107,7 +2200,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerMedium(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    onClick={() => { triggerMedium(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'telegram') e.currentTarget.style.borderColor = '#0088cc'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'telegram' ? '#0088cc' : 'var(--border)'; }}
                   >
@@ -2139,7 +2232,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerMedium(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    onClick={() => { triggerMedium(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'instagram') e.currentTarget.style.borderColor = '#e1306c'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'instagram' ? '#e1306c' : 'var(--border)'; }}
                   >
@@ -2171,7 +2264,7 @@ Looking forward to connecting!`;
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                    onClick={() => { triggerMedium(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    onClick={() => { triggerMedium(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'reminders') e.currentTarget.style.borderColor = '#f59e0b'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'reminders' ? '#f59e0b' : 'var(--border)'; }}
                   >
@@ -2502,30 +2595,66 @@ Looking forward to connecting!`;
                       Settings
                     </button>
                   ) : status === 'connected' && channel === 'whatsapp' && (
-                    <button
-                      onClick={handleSyncContacts}
-                      disabled={isContactSyncing}
-                      title="Sync WhatsApp contacts"
-                      style={{
-                        height: '32px',
-                        padding: '0 10px',
-                        border: '1px solid var(--border)',
-                        background: 'white',
-                        color: isContactSyncing ? 'var(--primary)' : 'var(--text-muted)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        cursor: isContactSyncing ? 'wait' : 'pointer',
-                        flexShrink: 0,
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        borderRadius: '0px'
-                      }}
-                    >
-                      <RefreshCcw size={15} className={isContactSyncing ? 'spin' : ''} />
-                      Sync
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setShowWhatsAppManage(prev => !prev)}
+                        style={{
+                          height: '32px',
+                          padding: '0 10px',
+                          border: '1px solid var(--border)',
+                          background: 'white',
+                          color: 'var(--text-muted)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          borderRadius: '0px'
+                        }}
+                      >
+                        <Settings size={14} />
+                        Manage
+                      </button>
+                      {showWhatsAppManage && (
+                        <>
+                          <div
+                            style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                            onClick={() => setShowWhatsAppManage(false)}
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            zIndex: 100,
+                            background: 'white',
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                            minWidth: '180px',
+                            padding: '6px',
+                            marginTop: '4px'
+                          }}>
+                            <div
+                              onClick={() => { handleSyncContacts(); setShowWhatsAppManage(false); }}
+                              style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: isContactSyncing ? 'wait' : 'pointer', fontSize: '0.8rem', fontWeight: 600, color: isContactSyncing ? 'var(--primary)' : 'var(--text)' }}
+                            >
+                              <RefreshCcw size={15} className={isContactSyncing ? 'spin' : ''} />
+                              Sync Contacts
+                            </div>
+                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                            <div
+                              onClick={() => { setShowWhatsAppManage(false); handleDisconnectWhatsApp(); }}
+                              style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: '#ef4444' }}
+                            >
+                              <WifiOff size={15} />
+                              Disconnect
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                   {channel === 'whatsapp' && status !== 'connected' && (
                     <div className="pulse" style={{ width: '8px', height: '8px', background: '#eab308', borderRadius: '50%', position: 'absolute', top: '12px', right: '12px' }} />
@@ -5488,13 +5617,6 @@ Looking forward to connecting!`;
                         </div>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                         <div
-                          onClick={() => { triggerLight(); handleDisconnectWhatsApp(); setShowMenu(false); }}
-                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
-                        >
-                          <WifiOff size={14} /> Disconnect WhatsApp
-                        </div>
-                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-                        <div
                           onClick={() => { triggerLight(); handleSignOut(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
                         >
@@ -7254,8 +7376,8 @@ Looking forward to connecting!`;
             </div>
           )}
         </AnimatePresence>
-        {/* Mobile Floating Action Button (FAB) */}
-        {isMobile && !showServiceSelector && !showMobileForm && (channel !== 'whatsapp' || status === 'connected') && (
+        {/* Desktop Floating Action Button (FAB) — hidden on mobile, replaced by bottom nav plus */}
+        {!isMobile && !showServiceSelector && !showMobileForm && (channel !== 'whatsapp' || status === 'connected') && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -8576,6 +8698,104 @@ Join Link: [Auto-generated after scheduling]`}
           )}
         </AnimatePresence>
 
+        {/* Bottom Navigation Bar (Mobile) — hidden when service selector is open */}
+        {isMobile && !showServiceSelector && (
+          <>
+            {/* Backdrop for social dropdown */}
+            {showSocialDropdown && (
+              <div className="bottom-nav-backdrop" onClick={() => setShowSocialDropdown(false)} />
+            )}
+
+            {/* Social Dropdown */}
+            <AnimatePresence>
+              {showSocialDropdown && (
+                <motion.div
+                  className="social-dropdown"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                >
+                  <button
+                    className={`social-dropdown-item ${channel === 'whatsapp' ? 'active' : ''}`}
+                    onClick={() => { triggerMedium(); setChannel('whatsapp'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                  >
+                    <WhatsAppIcon size={18} color="#25D366" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    className={`social-dropdown-item ${channel === 'instagram' ? 'active' : ''}`}
+                    onClick={() => { triggerMedium(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                  >
+                    <InstagramIcon size={18} color="#e1306c" />
+                    <span>Instagram</span>
+                  </button>
+                  <button
+                    className={`social-dropdown-item ${channel === 'telegram' ? 'active' : ''}`}
+                    onClick={() => { triggerMedium(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                  >
+                    <TelegramIcon size={18} color="#0088cc" />
+                    <span>Telegram</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Bottom Nav */}
+            <nav className="bottom-nav">
+              {/* Social */}
+              <button
+                className={`bottom-nav-item ${['whatsapp', 'instagram', 'telegram'].includes(channel) ? 'active' : ''}`}
+                onClick={() => setShowSocialDropdown(prev => !prev)}
+              >
+                <MessageSquare size={20} />
+                <span className="nav-label">{channel === 'whatsapp' ? 'WhatsApp' : channel === 'instagram' ? 'Instagram' : channel === 'telegram' ? 'Telegram' : 'Social'}</span>
+              </button>
+
+              {/* Emails */}
+              <button
+                className={`bottom-nav-item ${channel === 'email' ? 'active' : ''}`}
+                onClick={() => { triggerMedium(); setChannel('email'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+              >
+                <Mail size={20} />
+                <span className="nav-label">Emails</span>
+              </button>
+
+              {/* Plus Button */}
+              <button
+                className="bottom-nav-plus"
+                style={{
+                  background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
+                  boxShadow: channel === 'email' ? '0 4px 16px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 4px 16px rgba(26, 115, 230, 0.4)' : (channel === 'reminders' ? '0 4px 16px rgba(245, 158, 11, 0.4)' : '0 4px 16px rgba(37, 211, 102, 0.4)'))
+                }}
+                onClick={() => {
+                  triggerLight();
+                  setFormStep(1);
+                  setShowMobileForm(true);
+                }}
+              >
+                <Plus size={28} />
+              </button>
+
+              {/* Meetings */}
+              <button
+                className={`bottom-nav-item ${channel === 'calendar' ? 'active' : ''}`}
+                onClick={() => { triggerMedium(); setChannel('calendar'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+              >
+                <Calendar size={20} />
+                <span className="nav-label">Meetings</span>
+              </button>
+
+              {/* Personal Reminders */}
+              <button
+                className={`bottom-nav-item ${channel === 'reminders' ? 'active' : ''}`}
+                onClick={() => { triggerMedium(); setChannel('reminders'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+              >
+                <Bell size={20} />
+                <span className="nav-label">Reminders</span>
+              </button>
+            </nav>
+          </>
+        )}
 
       </div>
     </div>

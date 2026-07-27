@@ -1494,6 +1494,10 @@ body:has(.landing-container)::before {
     max-height: 65vh;
   }
   
+  .app-wrapper {
+    padding-bottom: 64px;
+  }
+  
   .header h1 {
     font-size: 1.2rem !important;
   }
@@ -1519,20 +1523,81 @@ body:has(.landing-container)::before {
 
 /* Mobile Wizard & Professional Structure Styles */
 @media (max-width: 768px) {
-  /* When not connected, sidebar takes full screen */
   .sidebar {
     max-height: none !important;
     height: auto !important;
+    flex: none !important;
   }
 
-  /* Connection panel (QR/pairing) fills available space */
+  .sidebar.sidebar-fullscreen {
+    height: 100% !important;
+    flex: 1 !important;
+  }
+
+  /* Connection panel */
   .sidebar-form-container {
-    flex: 1;
+    flex: none;
+    height: auto;
     overflow-y: auto;
   }
 
   /* Hide floating channel dock on mobile to avoid overlapping */
   .right-channel-dock {
+    display: none !important;
+  }
+
+  /* Service selector as 2-column grid */
+  .service-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    flex: 1;
+    align-content: start;
+  }
+
+  .service-grid {
+    align-content: center !important;
+  }
+
+  .service-grid > div {
+    padding: 24px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .service-grid > div > div {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .service-grid > div > div > div:first-child {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .service-grid > div > div > div:first-child svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .service-grid > div > div > div:nth-child(2) {
+    text-align: center !important;
+    flex: none !important;
+  }
+
+  .service-grid > div > div > div:nth-child(2) h4 {
+    font-size: 1rem !important;
+  }
+
+  .service-grid > div > div > div:nth-child(2) p {
+    font-size: 0.7rem !important;
+  }
+
+  .service-grid > div > div > div:last-child {
     display: none !important;
   }
 }
@@ -1558,6 +1623,160 @@ body:has(.landing-container)::before {
 
 .fab:active {
   transform: scale(0.9) rotate(90deg);
+}
+
+/* ── Bottom Navigation Bar (Mobile) ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: white;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 1500;
+  padding: 0 4px;
+  box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 6px 4px;
+  position: relative;
+  color: #94a3b8;
+  transition: color 0.2s;
+  flex: 1;
+  height: 100%;
+}
+
+.bottom-nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--primary);
+  transition: width 0.2s ease;
+}
+
+.bottom-nav-item.active {
+  color: var(--primary);
+}
+
+.bottom-nav-item.active::before {
+  width: 28px;
+}
+
+.bottom-nav-item:active {
+  opacity: 0.7;
+}
+
+.bottom-nav-item svg {
+  transition: transform 0.2s ease;
+}
+
+.bottom-nav-item.active svg {
+  transform: scale(1.1);
+}
+
+.bottom-nav-item .nav-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+/* Center Plus Button */
+.bottom-nav-plus {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  margin-top: -20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.bottom-nav-plus::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.bottom-nav-plus:active {
+  transform: scale(0.88) rotate(90deg);
+}
+
+/* Social Dropdown */
+.social-dropdown {
+  position: fixed;
+  bottom: 72px;
+  left: 8px;
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+  min-width: 180px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1600;
+  border-radius: 0px;
+}
+
+.social-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.social-dropdown-item:active {
+  background: var(--bg);
+}
+
+.social-dropdown-item.active {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* Bottom nav backdrop */
+.bottom-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: transparent;
 }
 
 .mobile-modal-overlay {
