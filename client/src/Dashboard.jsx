@@ -11,6 +11,17 @@ import { App } from '@capacitor/app';
 // Native Razorpay plugin — only available on Android
 const RazorpayNative = registerPlugin('RazorpayPlugin');
 import { motion, AnimatePresence } from 'framer-motion';
+
+let axiosInterceptorSet = false;
+function ensureAxiosInterceptor() {
+  if (axiosInterceptorSet) return;
+  axiosInterceptorSet = true;
+  axios.interceptors.request.use(config => {
+    const t = localStorage.getItem('token');
+    if (t) config.headers.Authorization = `Bearer ${t}`;
+    return config;
+  }, error => Promise.reject(error));
+}
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -415,13 +426,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-  // Set global axios auth header (reads fresh token on each request)
-  axios.interceptors.request.use(config => {
-    const t = localStorage.getItem('token');
-    if (t) config.headers.Authorization = `Bearer ${t}`;
-    return config;
-  }, error => Promise.reject(error));
+  ensureAxiosInterceptor();
 
   const [status, setStatus] = useState('connecting');
   const [statusLoading, setStatusLoading] = useState(true);
