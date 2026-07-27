@@ -2118,11 +2118,15 @@ Looking forward to connecting!`;
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#005f9e' }}>Telegram</h4>
                         <p style={{ fontSize: '0.75rem', color: '#0088cc', margin: 0 }}>
-                          Coming Soon!
+                          {telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
                         </p>
                       </div>
                       <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Plus size={20} color="#94a3b8" />
+                        {telegramStatus.status === 'connected' ? (
+                          <Check size={20} color="#0088cc" />
+                        ) : (
+                          <Plus size={20} color="#94a3b8" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -2146,11 +2150,15 @@ Looking forward to connecting!`;
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#a81c4e' }}>Instagram</h4>
                         <p style={{ fontSize: '0.75rem', color: '#e1306c', margin: 0 }}>
-                          Coming Soon!
+                          {instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
                         </p>
                       </div>
                       <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Plus size={20} color="#94a3b8" />
+                        {instagramStatus.status === 'connected' ? (
+                          <Check size={20} color="#e1306c" />
+                        ) : (
+                          <Plus size={20} color="#94a3b8" />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -6058,7 +6066,7 @@ Looking forward to connecting!`;
                             padding: '40px',
                             borderRadius: '0px',
                             boxShadow: 'var(--shadow)',
-                            margin: '100px auto',
+                            margin: '80px auto',
                             maxWidth: '400px'
                           }}>
                           <div style={{
