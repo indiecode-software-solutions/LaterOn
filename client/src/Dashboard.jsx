@@ -270,7 +270,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   if (instagramStatus?.status !== 'connected') return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ padding: '20px', background: 'linear-gradient(135deg, #e1306c, #f77737)', borderRadius: '0px', textAlign: 'center', color: 'white' }}>
+      <div style={{ padding: '20px', background: 'linear-gradient(135deg, #e1306c, #f77737)', borderRadius: '6px', textAlign: 'center', color: 'white' }}>
         <InstagramIcon size={32} color="white" />
         <p style={{ fontWeight: 800, fontSize: '1rem', margin: '8px 0 4px 0' }}>Connect Instagram</p>
         <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.9 }}>Business or Creator account required</p>
@@ -288,7 +288,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
           </div>
         ))}
       </div>
-      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
+      <button onClick={handleIgConnect} disabled={igConnecting} style={{ width: '100%', padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '6px', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1, letterSpacing: '0.4px' }}>
         {igConnecting ? 'Waiting for login...' : 'Connect Instagram'}
       </button>
     </div>
@@ -298,7 +298,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {/* Tab switcher */}
-      <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}>
         {[{ k: 'schedule', label: 'Schedule Post' }, { k: 'rules', label: 'Auto-Replies' }].map(t => (
           <button key={t.k} onClick={() => setIgTab(t.k)} style={{ flex: 1, padding: '9px 4px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer', background: igTab === t.k ? '#e1306c' : 'white', color: igTab === t.k ? 'white' : 'var(--text-muted)', transition: 'all 0.2s' }}>{t.label}</button>
         ))}
@@ -314,7 +314,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               value={igPostForm.image_urls_raw}
               onChange={e => setIgPostForm(p => ({ ...p, image_urls_raw: e.target.value }))}
               rows={3}
-              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
           </div>
           <div>
@@ -324,7 +324,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               value={igPostForm.caption}
               onChange={e => setIgPostForm(p => ({ ...p, caption: e.target.value }))}
               rows={3}
-              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '14px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
           </div>
           <div className="input-group">
@@ -341,7 +341,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               minDate={new Date()}
             />
           </div>
-          <button type="submit" disabled={igLoading} style={{ padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '0px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
+          <button type="submit" disabled={igLoading} style={{ padding: '14px', background: '#e1306c', color: 'white', fontWeight: 800, fontSize: '0.88rem', border: 'none', borderRadius: '6px', cursor: igLoading ? 'not-allowed' : 'pointer', opacity: igLoading ? 0.7 : 1 }}>
             {igLoading ? 'Scheduling...' : 'Schedule Post'}
           </button>
         </form>
@@ -350,19 +350,19 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
       {/* Auto-Rules tab */}
       {igTab === 'rules' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <form onSubmit={handleAddRule} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '0px' }}>
+          <form onSubmit={handleAddRule} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: '#fff0f5', border: '1px solid #f7c6d8', borderRadius: '6px' }}>
             <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#e1306c', margin: 0, textTransform: 'uppercase' }}>New Auto-Reply Rule</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
               <div>
                 <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Reply to</label>
-                <select value={igRuleForm.rule_type} onChange={e => setIgRuleForm(p => ({ ...p, rule_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.78rem', outline: 'none' }}>
+                <select value={igRuleForm.rule_type} onChange={e => setIgRuleForm(p => ({ ...p, rule_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.78rem', outline: 'none' }}>
                   <option value="dm">💬 DMs</option>
                   <option value="comment">🖼 Comments</option>
                 </select>
               </div>
               <div>
                 <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>Trigger</label>
-                <select value={igRuleForm.trigger_type} onChange={e => setIgRuleForm(p => ({ ...p, trigger_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.78rem', outline: 'none' }}>
+                <select value={igRuleForm.trigger_type} onChange={e => setIgRuleForm(p => ({ ...p, trigger_type: e.target.value }))} style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.78rem', outline: 'none' }}>
                   <option value="keyword">Keyword match</option>
                   <option value="any">Any message</option>
                 </select>
@@ -373,7 +373,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
                 placeholder="Trigger keyword (e.g. price, info)"
                 value={igRuleForm.trigger_keyword}
                 onChange={e => setIgRuleForm(p => ({ ...p, trigger_keyword: e.target.value }))}
-                style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box' }}
               />
             )}
             <textarea
@@ -381,9 +381,9 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               value={igRuleForm.reply_message}
               onChange={e => setIgRuleForm(p => ({ ...p, reply_message: e.target.value }))}
               rows={2}
-              style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '7px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
             />
-            <button type="submit" disabled={igLoading} style={{ padding: '9px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.8rem', border: 'none', borderRadius: '0px', cursor: 'pointer' }}>
+            <button type="submit" disabled={igLoading} style={{ padding: '9px', background: 'linear-gradient(135deg, #e1306c, #f77737)', color: 'white', fontWeight: 800, fontSize: '0.8rem', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
               {igLoading ? 'Adding…' : '+ Add Rule'}
             </button>
           </form>
@@ -391,7 +391,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '280px', overflowY: 'auto' }}>
             {igRules.length === 0 && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>No rules yet. Add your first auto-reply above.</p>}
             {igRules.map(rule => (
-              <div key={rule.id} style={{ padding: '10px 12px', border: `1px solid ${rule.is_active ? '#f7c6d8' : 'var(--border)'}`, background: rule.is_active ? '#fff0f5' : '#f8fafc', borderRadius: '0px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+              <div key={rule.id} style={{ padding: '10px 12px', border: `1px solid ${rule.is_active ? '#f7c6d8' : 'var(--border)'}`, background: rule.is_active ? '#fff0f5' : '#f8fafc', borderRadius: '6px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 700, background: rule.rule_type === 'dm' ? '#dbeafe' : '#fef9c3', color: rule.rule_type === 'dm' ? '#1d4ed8' : '#854d0e' }}>{rule.rule_type === 'dm' ? '💬 DM' : '🖼 Comment'}</span>
@@ -1963,7 +1963,7 @@ Looking forward to connecting!`;
           {/* Mobile Profile Strip — visible on mobile when a channel is active */}
           {isMobile && !showServiceSelector && !showMobileForm && channel && (
             <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : (channel === 'telegram' ? '#e6f3ff' : (channel === 'instagram' ? '#fff0f5' : (channel === 'reminders' ? '#fffbeb' : '#f8fafc')))), display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')))), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')))), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', overflow: 'hidden', flexShrink: 0 }}>
                 {channel === 'email' ? <Mail size={16} /> : channel === 'calendar' ? <Calendar size={16} /> : channel === 'telegram' ? <TelegramIcon size={16} color="white" /> : channel === 'instagram' ? <InstagramIcon size={16} color="white" /> : channel === 'reminders' ? <Bell size={16} /> : userInfo?.photo ? <img src={userInfo.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Check size={16} strokeWidth={3} />}
               </div>
               <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -1978,7 +1978,7 @@ Looking forward to connecting!`;
                 <div style={{ position: 'relative' }}>
                   <button
                     onClick={() => setShowWhatsAppManage(prev => !prev)}
-                    style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 700, borderRadius: '0px' }}
+                    style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 700, borderRadius: '6px' }}
                   >
                     <Settings size={12} />
                     Manage
@@ -2024,7 +2024,7 @@ Looking forward to connecting!`;
                   style={{
                     background: 'white',
                     padding: '24px',
-                    borderRadius: '0px',
+                    borderRadius: '6px',
                     border: '1px solid var(--border)',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                     display: 'flex',
@@ -2234,7 +2234,7 @@ Looking forward to connecting!`;
                         <div style={{
                           background: 'white',
                           padding: '24px',
-                          borderRadius: '0px',
+                          borderRadius: '6px',
                           boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
                           marginBottom: '24px',
                           display: 'inline-block',
@@ -2251,10 +2251,10 @@ Looking forward to connecting!`;
                     ) : (
                       <div style={{ marginBottom: '24px', width: '100%', maxWidth: '280px', margin: '0 auto 24px' }}>
                         {!pairingCode ? (
-                          <div style={{ background: 'white', padding: '24px', borderRadius: '0px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                          <div style={{ background: 'white', padding: '24px', borderRadius: '6px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                             <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', display: 'block', textAlign: 'left', marginBottom: '8px' }}>ENTER PHONE NUMBER</label>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', background: '#f0f2f5', borderRadius: '0px', border: '1px solid var(--border)', padding: '0 8px', minWidth: '76px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', background: '#f0f2f5', borderRadius: '6px', border: '1px solid var(--border)', padding: '0 8px', minWidth: '76px' }}>
                                 <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: '0.9rem' }}>+</span>
                                 <input
                                   type="text"
@@ -2271,7 +2271,7 @@ Looking forward to connecting!`;
                                 placeholder="Phone number"
                                 value={pairingPhone}
                                 onChange={e => setPairingPhone(e.target.value)}
-                                style={{ flex: 1, padding: '10px', borderRadius: '0px', border: '1px solid var(--border)', outline: 'none' }}
+                                style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', outline: 'none' }}
                               />
                             </div>
                             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'left', margin: '-8px 0 16px', lineHeight: '1.4' }}>
@@ -2281,14 +2281,14 @@ Looking forward to connecting!`;
                               onClick={handleRequestPairingCode}
                               disabled={pairingLoading}
                               className="btn-primary"
-                              style={{ width: '100%', padding: '12px', borderRadius: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                              style={{ width: '100%', padding: '12px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                             >
                               {pairingLoading ? <RefreshCcw size={16} className="spin" /> : <Zap size={16} />}
                               {pairingLoading ? 'Generating...' : 'Get Pairing Code'}
                             </button>
                           </div>
                         ) : (
-                          <div style={{ background: 'white', padding: '24px', borderRadius: '0px', border: '2px solid var(--primary)', boxShadow: '0 8px 30px rgba(37, 211, 102, 0.15)' }}>
+                          <div style={{ background: 'white', padding: '24px', borderRadius: '6px', border: '2px solid var(--primary)', boxShadow: '0 8px 30px rgba(37, 211, 102, 0.15)' }}>
                             <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '12px' }}>YOUR PAIRING CODE</p>
                             {pairingCodePhone && (
                               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
@@ -2305,7 +2305,7 @@ Looking forward to connecting!`;
                                 fontFamily: 'monospace',
                                 background: '#f0fff4',
                                 padding: '16px',
-                                borderRadius: '0px',
+                                borderRadius: '6px',
                                 border: '1px dashed var(--primary)',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease',
@@ -2323,7 +2323,7 @@ Looking forward to connecting!`;
                                   color: 'white',
                                   fontSize: '0.6rem',
                                   padding: '4px 8px',
-                                  borderRadius: '0px',
+                                  borderRadius: '6px',
                                   letterSpacing: 'normal',
                                   fontWeight: 600
                                 }}>
@@ -2422,7 +2422,7 @@ Looking forward to connecting!`;
                     <WifiOff size={40} color="#ef4444" style={{ marginBottom: '12px' }} />
                     <h4 style={{ fontWeight: 700 }}>Connection Lost</h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Reconnecting to WhatsApp server...</p>
-                    <button onClick={fetchStatus} className="btn-primary" style={{ padding: '8px 20px', borderRadius: '0px' }}>Retry Now</button>
+                    <button onClick={fetchStatus} className="btn-primary" style={{ padding: '8px 20px', borderRadius: '6px' }}>Retry Now</button>
                   </div>
                 )}
               </div>
@@ -2433,7 +2433,7 @@ Looking forward to connecting!`;
                   <div style={{
                     width: '36px',
                     height: '36px',
-                    borderRadius: '0px',
+                    borderRadius: '6px',
                     background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : (status === 'connected' ? 'var(--primary)' : '#e2e8f0'))))),
                     display: 'flex',
                     alignItems: 'center',
@@ -2449,7 +2449,7 @@ Looking forward to connecting!`;
                       <TelegramIcon size={18} color="white" />
                     ) : channel === 'instagram' ? (
                       instagramStatus.status === 'connected' && instagramStatus.config?.profile_picture_url ? (
-                        <img src={instagramStatus.config.profile_picture_url} alt={instagramStatus.config.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0px' }} />
+                        <img src={instagramStatus.config.profile_picture_url} alt={instagramStatus.config.username} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} />
                       ) : (
                         <InstagramIcon size={18} color="white" />
                       )
@@ -2502,7 +2502,7 @@ Looking forward to connecting!`;
                         flexShrink: 0,
                         fontSize: '0.72rem',
                         fontWeight: 800,
-                        borderRadius: '0px'
+                        borderRadius: '6px'
                       }}
                     >
                       <Mail size={14} />
@@ -2526,7 +2526,7 @@ Looking forward to connecting!`;
                           flexShrink: 0,
                           fontSize: '0.72rem',
                           fontWeight: 800,
-                          borderRadius: '0px'
+                          borderRadius: '6px'
                         }}
                       >
                         <Settings size={14} />
@@ -2591,7 +2591,7 @@ Looking forward to connecting!`;
                           style={{
                             background: 'white',
                             padding: '24px',
-                            borderRadius: '0px',
+                            borderRadius: '6px',
                             border: '1px solid var(--border)',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                             marginBottom: '20px'
@@ -2601,7 +2601,7 @@ Looking forward to connecting!`;
                             <div style={{
                               width: '40px',
                               height: '40px',
-                              borderRadius: '0px',
+                              borderRadius: '6px',
                               background: '#e7f3ff',
                               display: 'flex',
                               alignItems: 'center',
@@ -2616,13 +2616,13 @@ Looking forward to connecting!`;
                             </div>
                           </div>
 
-                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '0px', marginBottom: '16px' }}>
+                          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '6px', marginBottom: '16px' }}>
                             <p style={{ fontSize: '0.85rem', color: '#111b21', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
                               {hoveredSchedule.message}
                             </p>
 
                             {(hoveredSchedule.media_url || hoveredSchedule.mediaUrl) && (
-                              <div style={{ marginTop: '12px', borderRadius: '0px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                              <div style={{ marginTop: '12px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border)' }}>
                                 {(hoveredSchedule.media_type || hoveredSchedule.mediaType)?.startsWith('image/') ? (
                                   <img src={hoveredSchedule.media_url || hoveredSchedule.mediaUrl} alt="Preview" style={{ width: '100%', display: 'block' }} />
                                 ) : (hoveredSchedule.media_type || hoveredSchedule.mediaType)?.startsWith('video/') ? (
@@ -2691,7 +2691,7 @@ Looking forward to connecting!`;
                                     <ol style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '16px', margin: '0 0 12px 0', lineHeight: '1.4' }}>
                                       <li style={{ marginBottom: '4px' }}>
                                         Search for <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" style={{ color: '#0088cc', fontWeight: 700 }}>@BotFather</a> on Telegram.
-                                        <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '0px', overflow: 'hidden', maxWidth: '100%' }}>
+                                        <div style={{ margin: '8px 0 12px 0', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden', maxWidth: '100%' }}>
                                           <img
                                             src="https://miro.medium.com/v2/resize:fit:1400/1*DIdtNFdMj2QovbC7NXAvTw.png"
                                             alt="Search BotFather on Telegram"
@@ -2710,7 +2710,7 @@ Looking forward to connecting!`;
                                       placeholder="e.g. 123456789:ABCdef..."
                                       value={customTelegramToken}
                                       onChange={e => setCustomTelegramToken(e.target.value)}
-                                      style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.85rem', marginBottom: '8px', boxSizing: 'border-box' }}
+                                      style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '8px', boxSizing: 'border-box' }}
                                     />
 
                                     {telegramTestBotResult && (
@@ -2785,7 +2785,7 @@ Looking forward to connecting!`;
                                         placeholder="e.g. 5625755071 or -1001234567"
                                         value={telegramNewChatId}
                                         onChange={e => setTelegramNewChatId(e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.85rem', boxSizing: 'border-box' }}
                                       />
                                     </div>
 
@@ -2796,7 +2796,7 @@ Looking forward to connecting!`;
                                         placeholder="e.g. My Personal Chat or Dev Group"
                                         value={telegramNewChatTitle}
                                         onChange={e => setTelegramNewChatTitle(e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.85rem', boxSizing: 'border-box' }}
                                       />
                                     </div>
 
@@ -2862,7 +2862,7 @@ Looking forward to connecting!`;
                                         <select
                                           value={selectedTelegramChat}
                                           onChange={e => setSelectedTelegramChat(e.target.value)}
-                                          style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                          style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                                         >
                                           {(telegramStatus.config?.chats || []).map(c => (
                                             <option key={c.id} value={c.id}>{c.title}</option>
@@ -2958,7 +2958,7 @@ Looking forward to connecting!`;
                                         value={formData.message}
                                         onChange={e => setFormData({ ...formData, message: e.target.value })}
                                         rows={4}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
                                         required
                                       />
                                     </div>
@@ -2983,7 +2983,7 @@ Looking forward to connecting!`;
                                       <select
                                         value={formData.recurrence}
                                         onChange={e => setFormData({ ...formData, recurrence: e.target.value })}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                                       >
                                         <option value="none">Does not repeat</option>
                                         <option value="daily">Every day</option>
@@ -3003,7 +3003,7 @@ Looking forward to connecting!`;
                                         fontWeight: 800,
                                         fontSize: '0.9rem',
                                         border: 'none',
-                                        borderRadius: '0px',
+                                        borderRadius: '6px',
                                         cursor: loading ? 'not-allowed' : 'pointer',
                                         textTransform: 'uppercase',
                                         letterSpacing: '0.5px',
@@ -3039,7 +3039,7 @@ Looking forward to connecting!`;
                                     placeholder="Reminder title"
                                     value={reminderForm.title}
                                     onChange={e => setReminderForm({ ...reminderForm, title: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem' }}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', outline: 'none', fontSize: '0.85rem' }}
                                   />
                                 </div>
 
@@ -3050,7 +3050,7 @@ Looking forward to connecting!`;
                                     value={reminderForm.description}
                                     onChange={e => setReminderForm({ ...reminderForm, description: e.target.value })}
                                     rows={2}
-                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', outline: 'none', fontSize: '0.85rem', resize: 'vertical' }}
                                   />
                                 </div>
 
@@ -3074,7 +3074,7 @@ Looking forward to connecting!`;
                                   <select
                                     value={reminderForm.recurrence}
                                     onChange={e => setReminderForm({ ...reminderForm, recurrence: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '0px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                    style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', background: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
                                   >
                                     <option value="none">Does not repeat</option>
                                     <option value="daily">Every day</option>
@@ -3095,7 +3095,7 @@ Looking forward to connecting!`;
                                       fontWeight: 800,
                                       fontSize: '1rem',
                                       border: 'none',
-                                      borderRadius: '0px',
+                                      borderRadius: '6px',
                                       cursor: isSubmittingReminder ? 'not-allowed' : 'pointer',
                                       transition: 'all 0.2s',
                                       textTransform: 'uppercase',
@@ -3150,7 +3150,7 @@ Looking forward to connecting!`;
                               marginBottom: '20px',
                               background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : '#f8fafc'),
                               padding: '10px 16px',
-                              borderRadius: '0px',
+                              borderRadius: '6px',
                               border: '1px solid var(--border)'
                             }}>
                               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), textTransform: 'uppercase' }}>
@@ -3159,8 +3159,8 @@ Looking forward to connecting!`;
                                   : (sidebarStep === 1 ? '1. Scheduling' : '2. Message')}
                               </span>
                               <div style={{ display: 'flex', gap: '6px' }}>
-                                <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 1 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
-                                <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '0px', background: sidebarStep >= 2 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
+                                <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '6px', background: sidebarStep >= 1 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
+                                <div style={{ width: channel === 'calendar' ? '16px' : '24px', height: '4px', borderRadius: '6px', background: sidebarStep >= 2 ? (channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary)')) : 'var(--border)' }} />
                                 {channel === 'calendar' && (
                                   <div style={{ width: '16px', height: '4px', borderRadius: '0px', background: sidebarStep >= 3 ? '#1a73e8' : 'var(--border)' }} />
                                 )}
@@ -3185,7 +3185,7 @@ Looking forward to connecting!`;
                                           padding: '12px 16px',
                                           background: '#f0f2f5',
                                           border: '1px solid var(--border)',
-                                          borderRadius: '0px',
+                                          borderRadius: '6px',
                                           fontSize: '0.9rem',
                                           fontWeight: 600,
                                           color: '#54656f',
@@ -3201,7 +3201,7 @@ Looking forward to connecting!`;
                                           alignItems: 'center',
                                           background: 'white',
                                           border: '1px solid var(--border)',
-                                          borderRadius: '0px',
+                                          borderRadius: '6px',
                                           padding: '0 12px',
                                           gap: '8px',
                                           transition: 'border-color 0.2s',
@@ -3217,7 +3217,7 @@ Looking forward to connecting!`;
                                               background: groups[formData.phone] ? '#e8f0fe' : '#e8f0fe',
                                               color: '#1a73e8',
                                               padding: '2px 8px',
-                                              borderRadius: '0px',
+                                              borderRadius: '6px',
                                               fontSize: '0.8rem',
                                               fontWeight: 700,
                                               whiteSpace: 'nowrap',
@@ -3256,7 +3256,7 @@ Looking forward to connecting!`;
                                               left: 0,
                                               right: 0,
                                               background: 'white',
-                                              borderRadius: '0px',
+                                              borderRadius: '6px',
                                               boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                                               zIndex: 100,
                                               maxHeight: '250px',
@@ -6100,7 +6100,7 @@ Looking forward to connecting!`;
                             textAlign: 'center',
                             background: 'rgba(255, 255, 255, 0.9)',
                             padding: '40px',
-                            borderRadius: '0px',
+                            borderRadius: '6px',
                             boxShadow: 'var(--shadow)',
                             margin: '80px auto',
                             maxWidth: '400px'
@@ -6109,7 +6109,7 @@ Looking forward to connecting!`;
                             width: '64px',
                             height: '64px',
                             background: '#f0f2f5',
-                            borderRadius: '0px',
+                            borderRadius: '6px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
