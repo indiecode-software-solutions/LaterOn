@@ -483,6 +483,9 @@ function Dashboard() {
   const [formStep, setFormStep] = useState(1);
   const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
   const [credits, setCredits] = useState({ free_balance: 0, purchased_balance: 0, total_balance: 0, next_refill_date: null, transactions: [], subscription_id: null, subscription_pack: null, subscription_credits: null, subscription_status: null, subscription_period: 'monthly' });
+  const [txnFilter, setTxnFilter] = useState('all');
+  const [txnPage, setTxnPage] = useState(1);
+  const TXN_PER_PAGE = 10;
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
   const [purchasingPack, setPurchasingPack] = useState(null);
@@ -5967,82 +5970,169 @@ Looking forward to connecting!`;
 
                 {/* Transaction History Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
-                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: '0 0 16px 0', color: 'var(--text)' }}>Usage & Transaction History</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Usage & Transaction History</h3>
+                    {credits.transactions.length > 0 && (
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {['all', 'purchase', 'subscription_purchase', 'deduction', 'refund'].map(f => (
+                          <button
+                            key={f}
+                            onClick={() => { setTxnFilter(f); setTxnPage(1); }}
+                            style={{
+                              padding: '4px 12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              textTransform: 'capitalize',
+                              border: txnFilter === f ? '2px solid var(--primary)' : '1px solid var(--border)',
+                              background: txnFilter === f ? '#eaf2ff' : 'white',
+                              color: txnFilter === f ? 'var(--primary)' : 'var(--text-muted)',
+                              borderRadius: '0px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {f === 'all' ? 'All' : f === 'subscription_purchase' ? 'Subscribed' : f}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                  {credits.transactions.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                      No credit transactions recorded yet.
-                    </div>
-                  ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-muted)', textAlign: 'left', fontWeight: 700 }}>
-                            <th style={{ padding: '12px 8px' }}>Date</th>
-                            <th style={{ padding: '12px 8px' }}>Transaction Details</th>
-                            <th style={{ padding: '12px 8px' }}>Type</th>
-                            <th style={{ padding: '12px 8px', textAlign: 'right' }}>Credits</th>
-                            <th style={{ padding: '12px 8px', textAlign: 'right' }}>Amount Paid</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {credits.transactions.map(tx => {
-                            const isPositive = tx.amount > 0;
-                            let amountPaidText = '—';
-                            if (tx.type === 'purchase') {
-                              if ((tx.description || '').includes('Mini')) amountPaidText = '₹1';
-                              else if ((tx.description || '').includes('Starter')) amountPaidText = '₹49';
-                              else if ((tx.description || '').includes('Popular')) amountPaidText = '₹99';
-                              else if ((tx.description || '').includes('Pro')) amountPaidText = '₹199';
-                              else if ((tx.description || '').includes('Business')) amountPaidText = '₹499';
-                              else amountPaidText = 'Paid';
-                            } else if (tx.type === 'monthly_refill') {
-                              amountPaidText = 'Free';
-                            }
+                  {(() => {
+                    const filtered = credits.transactions.filter(tx => txnFilter === 'all' || tx.type === txnFilter);
+                    const totalPages = Math.max(1, Math.ceil(filtered.length / TXN_PER_PAGE));
+                    const page = Math.min(txnPage, totalPages);
+                    const start = (page - 1) * TXN_PER_PAGE;
+                    const pageRows = filtered.slice(start, start + TXN_PER_PAGE);
 
-                            return (
-                              <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>
-                                  {new Date(tx.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </td>
-                                <td style={{ padding: '12px 8px', fontWeight: 600, color: 'var(--text)' }}>
-                                  {tx.description || 'Automation Transaction'}
-                                </td>
-                                <td style={{ padding: '12px 8px' }}>
-                                  <span style={{
-                                    fontSize: '0.75rem',
-                                    fontWeight: 800,
-                                    textTransform: 'uppercase',
-                                    padding: '2px 8px',
-                                    background: tx.type === 'deduction' ? '#fbf3f2' : tx.type === 'refund' ? '#e2f4e3' : '#eaf2ff',
-                                    color: tx.type === 'deduction' ? '#ea4335' : tx.type === 'refund' ? '#2e7d32' : '#1a73e8'
-                                  }}>
-                                    {tx.type}
-                                  </span>
-                                </td>
-                                <td style={{
-                                  padding: '12px 8px',
-                                  textAlign: 'right',
-                                  fontWeight: 800,
-                                  color: isPositive ? '#2e7d32' : '#ea4335'
-                                }}>
-                                  {isPositive ? `+${tx.amount} credits` : `${tx.amount} credits`}
-                                </td>
-                                <td style={{
-                                  padding: '12px 8px',
-                                  textAlign: 'right',
-                                  fontWeight: 700,
-                                  color: tx.type === 'purchase' ? 'var(--primary-dark)' : 'var(--text-muted)'
-                                }}>
-                                  {amountPaidText}
-                                </td>
+                    return filtered.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                        {credits.transactions.length === 0 ? 'No credit transactions recorded yet.' : 'No transactions match this filter.'}
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '2px solid var(--border)', color: 'var(--text-muted)', textAlign: 'left', fontWeight: 700 }}>
+                                <th style={{ padding: '12px 8px' }}>Date</th>
+                                <th style={{ padding: '12px 8px' }}>Transaction Details</th>
+                                <th style={{ padding: '12px 8px' }}>Type</th>
+                                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Credits</th>
+                                <th style={{ padding: '12px 8px', textAlign: 'right' }}>Amount Paid</th>
                               </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                            </thead>
+                            <tbody>
+                              {pageRows.map(tx => {
+                                const isPositive = tx.amount > 0;
+                                let amountPaidText = '—';
+                                if (tx.type === 'purchase') {
+                                  if ((tx.description || '').includes('Mini')) amountPaidText = '₹79';
+                                  else if ((tx.description || '').includes('Starter')) amountPaidText = '₹149';
+                                  else if ((tx.description || '').includes('Popular')) amountPaidText = '₹299';
+                                  else if ((tx.description || '').includes('Pro')) amountPaidText = '₹699';
+                                  else if ((tx.description || '').includes('Business')) amountPaidText = '₹1,499';
+                                  else amountPaidText = 'Paid';
+                                } else if (tx.type === 'subscription_purchase' || tx.type === 'subscription_charge') {
+                                  amountPaidText = 'Subscription';
+                                } else if (tx.type === 'monthly_refill') {
+                                  amountPaidText = 'Free';
+                                }
+
+                                return (
+                                  <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                    <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>
+                                      {new Date(tx.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </td>
+                                    <td style={{ padding: '12px 8px', fontWeight: 600, color: 'var(--text)' }}>
+                                      {tx.description || 'Automation Transaction'}
+                                    </td>
+                                    <td style={{ padding: '12px 8px' }}>
+                                      <span style={{
+                                        fontSize: '0.75rem',
+                                        fontWeight: 800,
+                                        textTransform: 'uppercase',
+                                        padding: '2px 8px',
+                                        background: tx.type === 'deduction' ? '#fbf3f2' : tx.type === 'refund' ? '#e2f4e3' : '#eaf2ff',
+                                        color: tx.type === 'deduction' ? '#ea4335' : tx.type === 'refund' ? '#2e7d32' : '#1a73e8'
+                                      }}>
+                                        {tx.type === 'subscription_purchase' ? 'subscribed' : tx.type === 'subscription_charge' ? 'auto-charge' : tx.type}
+                                      </span>
+                                    </td>
+                                    <td style={{
+                                      padding: '12px 8px',
+                                      textAlign: 'right',
+                                      fontWeight: 800,
+                                      color: isPositive ? '#2e7d32' : '#ea4335'
+                                    }}>
+                                      {isPositive ? `+${tx.amount} credits` : `${tx.amount} credits`}
+                                    </td>
+                                    <td style={{
+                                      padding: '12px 8px',
+                                      textAlign: 'right',
+                                      fontWeight: 700,
+                                      color: tx.type === 'purchase' || tx.type === 'subscription_purchase' ? 'var(--primary-dark)' : 'var(--text-muted)'
+                                    }}>
+                                      {amountPaidText}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {totalPages > 1 && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+                            <button
+                              disabled={page <= 1}
+                              onClick={() => setTxnPage(page - 1)}
+                              style={{
+                                padding: '6px 14px',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                border: '1px solid var(--border)',
+                                background: page <= 1 ? '#f5f5f5' : 'white',
+                                color: page <= 1 ? '#ccc' : 'var(--text)',
+                                cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                                borderRadius: '0px'
+                              }}
+                            >← Prev</button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                              <button
+                                key={p}
+                                onClick={() => setTxnPage(p)}
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  border: p === page ? '2px solid var(--primary)' : '1px solid var(--border)',
+                                  background: p === page ? '#eaf2ff' : 'white',
+                                  color: p === page ? 'var(--primary)' : 'var(--text)',
+                                  cursor: 'pointer',
+                                  borderRadius: '0px'
+                                }}
+                              >{p}</button>
+                            ))}
+                            <button
+                              disabled={page >= totalPages}
+                              onClick={() => setTxnPage(page + 1)}
+                              style={{
+                                padding: '6px 14px',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                border: '1px solid var(--border)',
+                                background: page >= totalPages ? '#f5f5f5' : 'white',
+                                color: page >= totalPages ? '#ccc' : 'var(--text)',
+                                cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+                                borderRadius: '0px'
+                              }}
+                            >Next →</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
               </div>
