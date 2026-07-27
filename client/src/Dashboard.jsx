@@ -2162,7 +2162,7 @@ Looking forward to connecting!`;
                 {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 600 }}>Select a Service</h2></div>}
                 <div className="service-grid">
                   {/* WhatsApp Card */}
-                  <div className={channel === 'whatsapp' ? 'active' : ''} style={{ '--card-accent': '#25d366', '--card-bg': channel === 'whatsapp' ? '#f0fff4' : 'white' }}
+                  <div className={channel === 'whatsapp' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#25d366', '--card-bg': channel === 'whatsapp' && !showServiceSelector ? '#f0fff4' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <div style={{ background: '#25d366' }}>
@@ -2177,7 +2177,7 @@ Looking forward to connecting!`;
                   </div>
 
                   {/* Email Card */}
-                  <div className={channel === 'email' ? 'active' : ''} style={{ '--card-accent': '#ea4335', '--card-bg': channel === 'email' ? '#fdf2f2' : 'white' }}
+                  <div className={channel === 'email' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#ea4335', '--card-bg': channel === 'email' && !showServiceSelector ? '#fdf2f2' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <div style={{ background: '#ea4335', color: 'white' }}>
@@ -2190,7 +2190,7 @@ Looking forward to connecting!`;
                   </div>
 
                   {/* Google Calendar Card */}
-                  <div className={channel === 'calendar' ? 'active' : ''} style={{ '--card-accent': '#1a73e8', '--card-bg': channel === 'calendar' ? '#e8f0fe' : 'white' }}
+                  <div className={channel === 'calendar' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#1a73e8', '--card-bg': channel === 'calendar' && !showServiceSelector ? '#e8f0fe' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <div style={{ background: '#1a73e8' }}>
@@ -2205,7 +2205,7 @@ Looking forward to connecting!`;
                   </div>
 
                   {/* Telegram Card */}
-                  <div className={channel === 'telegram' ? 'active' : ''} style={{ '--card-accent': '#0088cc', '--card-bg': channel === 'telegram' ? '#e6f3ff' : 'white' }}
+                  <div className={channel === 'telegram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#0088cc', '--card-bg': channel === 'telegram' && !showServiceSelector ? '#e6f3ff' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <div style={{ background: '#0088cc' }}>
@@ -2220,7 +2220,7 @@ Looking forward to connecting!`;
                   </div>
 
                   {/* Instagram Card */}
-                  <div className={channel === 'instagram' ? 'active' : ''} style={{ '--card-accent': '#e1306c', '--card-bg': channel === 'instagram' ? '#fff0f5' : 'white' }}
+                  <div className={channel === 'instagram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#e1306c', '--card-bg': channel === 'instagram' && !showServiceSelector ? '#fff0f5' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <div style={{ background: '#e1306c' }}>
@@ -2235,7 +2235,7 @@ Looking forward to connecting!`;
                   </div>
 
                   {/* Personal Reminders Card */}
-                  <div className={channel === 'reminders' ? 'active' : ''} style={{ '--card-accent': '#f59e0b', '--card-bg': channel === 'reminders' ? '#fffbeb' : 'white' }}
+                  <div className={channel === 'reminders' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#f59e0b', '--card-bg': channel === 'reminders' && !showServiceSelector ? '#fffbeb' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <div style={{ background: '#f59e0b' }}>
