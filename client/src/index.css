@@ -93,10 +93,14 @@ body {
   left: 0;
   width: 100%;
   height: 127px;
-  background-color: var(--primary-dark);
+  background: linear-gradient(135deg, #2d3748, #4a5568);
   border-bottom: 1px solid #000000;
   z-index: 0;
   transition: background-color 0.3s ease;
+}
+
+.dashboard-container.channel-whatsapp::before {
+  background-color: #128c7e !important;
 }
 
 .dashboard-container.channel-email::before {
