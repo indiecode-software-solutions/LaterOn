@@ -6001,13 +6001,14 @@ Looking forward to connecting!`;
                               };
 
                               if (Capacitor.isNativePlatform()) {
-                                try {
-                                  const response = await RazorpayNative.openCheckout({
-                                    subscriptionId: subData.subscriptionId,
-                                    key: subData.key,
-                                    name: 'LaterOn',
-                                    description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
-                                  });
+      try {
+        const response = await RazorpayNative.openCheckout({
+          subscriptionId: subData.subscriptionId,
+          key: subData.key,
+          amount: amountPaise,
+          name: 'LaterOn',
+          description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
+        });
                                   if (response && response.razorpay_payment_id) {
                                     await verifySubscription(response);
                                   } else {

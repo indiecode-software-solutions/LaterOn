@@ -22,12 +22,13 @@ public class RazorpayPlugin extends Plugin {
         this.savedCall = call;
         saveCall(call);
 
-        String orderId     = call.getString("orderId");
-        String key         = call.getString("key");
-        Integer amount     = call.getInt("amount");     // in paise
-        String currency    = call.getString("currency", "INR");
-        String name        = call.getString("name", "LaterOn");
-        String description = call.getString("description", "Credit Pack");
+        String subscriptionId = call.getString("subscriptionId");
+        String orderId        = call.getString("orderId");
+        String key            = call.getString("key");
+        Integer amount        = call.getInt("amount");     // in paise
+        String currency       = call.getString("currency", "INR");
+        String name           = call.getString("name", "LaterOn");
+        String description    = call.getString("description", "Credit Pack");
 
         Activity activity = getActivity();
 
@@ -45,10 +46,15 @@ public class RazorpayPlugin extends Plugin {
                 JSONObject options = new JSONObject();
                 options.put("name", name);
                 options.put("description", description);
-                options.put("order_id", orderId);
                 options.put("currency", currency);
                 options.put("amount", amount);
                 options.put("theme.color", "#1a73e8");
+
+                if (subscriptionId != null) {
+                    options.put("subscription_id", subscriptionId);
+                } else if (orderId != null) {
+                    options.put("order_id", orderId);
+                }
 
                 co.open(activity, options);
             } catch (JSONException e) {
