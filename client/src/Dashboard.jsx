@@ -1806,63 +1806,63 @@ Looking forward to connecting!`;
   return (
     <div className={`dashboard-container channel-${channel}`}>
       {!showServiceSelector && (
-      <div className="right-channel-dock">
-        <button
-          className={`channel-strip ${channel === 'whatsapp' ? 'active' : ''}`}
-          style={{ '--strip-accent': '#25d366' }}
-          onClick={() => { setChannel('whatsapp'); }}
-        >
-          <span className="strip-label">WhatsApp</span>
-          <span className="strip-icon"><WhatsAppIcon size={18} color="#25D366" /></span>
-        </button>
-        <button
-          className={`channel-strip ${channel === 'email' ? 'active' : ''}`}
-          style={{ '--strip-accent': '#ea4335' }}
-          onClick={() => { setChannel('email'); setActiveView('scheduler'); }}
-        >
-          <span className="strip-label">Email</span>
-          <span className="strip-icon"><Mail size={18} /></span>
-        </button>
-        <button
-          className={`channel-strip ${channel === 'calendar' ? 'active' : ''}`}
-          style={{ '--strip-accent': '#4285f4' }}
-          onClick={() => { setChannel('calendar'); setActiveView('scheduler'); }}
-        >
-          <span className="strip-label">Meetings</span>
-          <span className="strip-icon"><Calendar size={18} /></span>
-        </button>
-        <button
-          className={`channel-strip ${channel === 'telegram' ? 'active' : ''}`}
-          style={{ '--strip-accent': '#0088cc' }}
-          onClick={() => { setChannel('telegram'); setActiveView('scheduler'); }}
-        >
-          <span className="strip-label">Telegram</span>
-          <span className="strip-icon"><TelegramIcon size={18} /></span>
-        </button>
-        <button
-          className={`channel-strip ${channel === 'instagram' ? 'active' : ''}`}
-          style={{ '--strip-accent': '#e1306c' }}
-          onClick={() => { setChannel('instagram'); setActiveView('scheduler'); }}
-        >
-          <span className="strip-label">Instagram</span>
-          <span className="strip-icon"><InstagramIcon size={18} /></span>
-        </button>
-        <button
-          className={`channel-strip ${channel === 'reminders' ? 'active' : ''}`}
-          style={{ '--strip-accent': '#f59e0b' }}
-          onClick={() => { setChannel('reminders'); setActiveView('scheduler'); }}
-        >
-          <span className="strip-label">Reminders</span>
-          <span className="strip-icon"><Bell size={18} /></span>
-        </button>
-      </div>
+        <div className="right-channel-dock">
+          <button
+            className={`channel-strip ${channel === 'whatsapp' ? 'active' : ''}`}
+            style={{ '--strip-accent': '#25d366' }}
+            onClick={() => { setChannel('whatsapp'); }}
+          >
+            <span className="strip-label">WhatsApp</span>
+            <span className="strip-icon"><WhatsAppIcon size={18} color="#25D366" /></span>
+          </button>
+          <button
+            className={`channel-strip ${channel === 'email' ? 'active' : ''}`}
+            style={{ '--strip-accent': '#ea4335' }}
+            onClick={() => { setChannel('email'); setActiveView('scheduler'); }}
+          >
+            <span className="strip-label">Email</span>
+            <span className="strip-icon"><Mail size={18} /></span>
+          </button>
+          <button
+            className={`channel-strip ${channel === 'calendar' ? 'active' : ''}`}
+            style={{ '--strip-accent': '#4285f4' }}
+            onClick={() => { setChannel('calendar'); setActiveView('scheduler'); }}
+          >
+            <span className="strip-label">Meetings</span>
+            <span className="strip-icon"><Calendar size={18} /></span>
+          </button>
+          <button
+            className={`channel-strip ${channel === 'telegram' ? 'active' : ''}`}
+            style={{ '--strip-accent': '#0088cc' }}
+            onClick={() => { setChannel('telegram'); setActiveView('scheduler'); }}
+          >
+            <span className="strip-label">Telegram</span>
+            <span className="strip-icon"><TelegramIcon size={18} /></span>
+          </button>
+          <button
+            className={`channel-strip ${channel === 'instagram' ? 'active' : ''}`}
+            style={{ '--strip-accent': '#e1306c' }}
+            onClick={() => { setChannel('instagram'); setActiveView('scheduler'); }}
+          >
+            <span className="strip-label">Instagram</span>
+            <span className="strip-icon"><InstagramIcon size={18} /></span>
+          </button>
+          <button
+            className={`channel-strip ${channel === 'reminders' ? 'active' : ''}`}
+            style={{ '--strip-accent': '#f59e0b' }}
+            onClick={() => { setChannel('reminders'); setActiveView('scheduler'); }}
+          >
+            <span className="strip-label">Reminders</span>
+            <span className="strip-icon"><Bell size={18} /></span>
+          </button>
+        </div>
       )}
       <div className="brand-tagline">Messages, Scheduled.</div>
       <div className="app-wrapper">
         {showBooking && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #333', background: '#1a1a1a', flexShrink: 0 }}>
-              <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>Book a Free Support Call</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #333', background: '#ffffff', flexShrink: 0 }}>
+              <span style={{ color: '#333333', fontWeight: 600, fontSize: '0.9rem' }}>Book a Free Support Call</span>
               <button onClick={() => { setShowBooking(false); setShowServiceSelector(true); }} style={{ padding: '6px 14px', fontSize: '0.75rem', fontWeight: 600, background: 'white', color: '#1a1a1a', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
                 ← Back to App
               </button>
@@ -2162,100 +2162,88 @@ Looking forward to connecting!`;
                 {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.4rem', fontWeight: 600 }}>Select a Service</h2></div>}
                 <div className="service-grid">
                   {/* WhatsApp Card */}
-                  <div className={channel === 'whatsapp' ? 'active' : ''} style={{ borderColor: channel === 'whatsapp' ? '#25d366' : 'var(--border)', background: channel === 'whatsapp' ? '#f0fff4' : 'white' }}
+                  <div className={channel === 'whatsapp' ? 'active' : ''} style={{ background: channel === 'whatsapp' ? '#f0fff4' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
-                    onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
                   >
                     <div style={{ background: '#25d366' }}>
                       <WhatsAppIcon size={24} color="white" />
                     </div>
                     <div>
-                      <h4 style={{ color: '#1a5c3e' }}>WhatsApp</h4>
-                      <p style={{ color: '#4a7c62' }}>
+                      <h4>WhatsApp</h4>
+                      <p>
                         {statusLoading ? <span className="skeleton-text" style={{ width: '140px' }} /> : (userInfo ? 'Connected' : 'Connect QR / Pairing Code')}
                       </p>
                     </div>
                   </div>
 
                   {/* Email Card */}
-                  <div className={channel === 'email' ? 'active' : ''} style={{ borderColor: channel === 'email' ? '#ea4335' : 'var(--border)', background: channel === 'email' ? '#fdf2f2' : 'white' }}
+                  <div className={channel === 'email' ? 'active' : ''} style={{ background: channel === 'email' ? '#fdf2f2' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
-                    onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
                   >
                     <div style={{ background: '#ea4335', color: 'white' }}>
                       <Mail size={24} />
                     </div>
                     <div>
-                      <h4 style={{ color: '#b91c1c' }}>Email</h4>
-                      <p style={{ color: '#dc2626' }}>Connected</p>
+                      <h4>Email</h4>
+                      <p>Connected</p>
                     </div>
                   </div>
 
                   {/* Google Calendar Card */}
-                  <div className={channel === 'calendar' ? 'active' : ''} style={{ borderColor: channel === 'calendar' ? '#1a73e8' : 'var(--border)', background: channel === 'calendar' ? '#e8f0fe' : 'white' }}
+                  <div className={channel === 'calendar' ? 'active' : ''} style={{ background: channel === 'calendar' ? '#e8f0fe' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
-                    onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
                   >
                     <div style={{ background: '#1a73e8' }}>
                       <Calendar size={24} />
                     </div>
                     <div>
-                      <h4 style={{ color: '#174ea6' }}>Meetings</h4>
-                      <p style={{ color: '#1a73e8' }}>
+                      <h4>Meetings</h4>
+                      <p>
                         {integrations.some(i => i.provider === 'gmail_oauth') ? 'Connected' : 'Configure Google Meet'}
                       </p>
                     </div>
                   </div>
 
                   {/* Telegram Card */}
-                  <div className={channel === 'telegram' ? 'active' : ''} style={{ borderColor: channel === 'telegram' ? '#0088cc' : 'var(--border)', background: channel === 'telegram' ? '#e6f3ff' : 'white' }}
+                  <div className={channel === 'telegram' ? 'active' : ''} style={{ background: channel === 'telegram' ? '#e6f3ff' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
-                    onMouseOver={e => { if (channel !== 'telegram') e.currentTarget.style.borderColor = '#0088cc'; }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'telegram' ? '#0088cc' : 'var(--border)'; }}
                   >
                     <div style={{ background: '#0088cc' }}>
                       <TelegramIcon size={24} color="white" />
                     </div>
                     <div>
-                      <h4 style={{ color: '#005f9e' }}>Telegram</h4>
-                      <p style={{ color: '#0088cc' }}>
+                      <h4>Telegram</h4>
+                      <p>
                         {isTelegramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
                       </p>
                     </div>
                   </div>
 
                   {/* Instagram Card */}
-                  <div className={channel === 'instagram' ? 'active' : ''} style={{ borderColor: channel === 'instagram' ? '#e1306c' : 'var(--border)', background: channel === 'instagram' ? '#fff0f5' : 'white' }}
+                  <div className={channel === 'instagram' ? 'active' : ''} style={{ background: channel === 'instagram' ? '#fff0f5' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
-                    onMouseOver={e => { if (channel !== 'instagram') e.currentTarget.style.borderColor = '#e1306c'; }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'instagram' ? '#e1306c' : 'var(--border)'; }}
                   >
                     <div style={{ background: '#e1306c' }}>
                       <InstagramIcon size={24} color="white" />
                     </div>
                     <div>
-                      <h4 style={{ color: '#a81c4e' }}>Instagram</h4>
-                      <p style={{ color: '#e1306c' }}>
+                      <h4>Instagram</h4>
+                      <p>
                         {isInstagramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
                       </p>
                     </div>
                   </div>
 
                   {/* Personal Reminders Card */}
-                  <div className={channel === 'reminders' ? 'active' : ''} style={{ borderColor: channel === 'reminders' ? '#f59e0b' : 'var(--border)', background: channel === 'reminders' ? '#fffbeb' : 'white' }}
+                  <div className={channel === 'reminders' ? 'active' : ''} style={{ background: channel === 'reminders' ? '#fffbeb' : 'white' }}
                     onClick={() => { triggerSelection(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
-                    onMouseOver={e => { if (channel !== 'reminders') e.currentTarget.style.borderColor = '#f59e0b'; }}
-                    onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'reminders' ? '#f59e0b' : 'var(--border)'; }}
                   >
                     <div style={{ background: '#f59e0b' }}>
                       <Bell size={24} />
                     </div>
                     <div>
-                      <h4 style={{ color: '#b45309' }}>Personal Reminders</h4>
-                      <p style={{ color: '#d97706' }}>Never Forget</p>
+                      <h4>Personal Reminders</h4>
+                      <p>Never Forget</p>
                     </div>
                   </div>
                 </div>
@@ -2264,7 +2252,7 @@ Looking forward to connecting!`;
                 <div
                   onClick={() => { setShowServiceSelector(false); setShowBooking(true); setBookingLoaded(false); setBookingKey(k => k + 1); }}
                   style={{
-                    background: '#1a1a1a',
+                    background: '#ffffff',
                     border: '1px solid #333',
                     borderRadius: '6px',
                     padding: '12px 16px',
@@ -2276,25 +2264,14 @@ Looking forward to connecting!`;
                     gridColumn: '1 / -1',
                     marginTop: '16px'
                   }}
-                  onMouseOver={e => { e.currentTarget.style.background = '#222'; }}
-                  onMouseOut={e => { e.currentTarget.style.background = '#1a1a1a'; }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '1.1rem' }}>🎙️</span>
+                    <span style={{ fontSize: '1.1rem' }}><Calendar size={24} /></span>
                     <div>
-                      <div style={{ color: 'white', fontWeight: 600, fontSize: '0.85rem' }}>Book a Free Support Call</div>
-                      <div style={{ color: '#ccc', marginTop: '4px', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
+                      <div style={{ color: '#333333', fontWeight: 600, fontSize: '0.85rem' }}>Book a Free Support Call</div>
+                      <div style={{ color: '#333333', marginTop: '4px', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
                     </div>
                   </div>
-                  <span style={{
-                    padding: '5px 12px',
-                    background: 'white',
-                    color: '#1a1a1a',
-                    fontWeight: 600,
-                    fontSize: '0.75rem'
-                  }}>
-                    Book
-                  </span>
                 </div>
                 {isMobile && (
                   <div style={{
@@ -6001,14 +5978,14 @@ Looking forward to connecting!`;
                               };
 
                               if (Capacitor.isNativePlatform()) {
-      try {
-        const response = await RazorpayNative.openCheckout({
-          subscriptionId: subData.subscriptionId,
-          key: subData.key,
-          amount: amountPaise,
-          name: 'LaterOn',
-          description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
-        });
+                                try {
+                                  const response = await RazorpayNative.openCheckout({
+                                    subscriptionId: subData.subscriptionId,
+                                    key: subData.key,
+                                    amount: amountPaise,
+                                    name: 'LaterOn',
+                                    description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
+                                  });
                                   if (response && response.razorpay_payment_id) {
                                     await verifySubscription(response);
                                   } else {
