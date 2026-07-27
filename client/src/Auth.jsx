@@ -5,7 +5,7 @@ import { Mail, Lock, ArrowRight, MessageSquare, Loader2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
-import { triggerLight, triggerMedium, triggerSuccess, triggerError } from './haptics';
+import { triggerSelection } from './haptics';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,7 +26,7 @@ const Auth = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    triggerMedium();
+    triggerSelection();
     setLoading(true);
     setError('');
 
@@ -38,7 +38,7 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        triggerSuccess();
+        triggerSelection();
         localStorage.setItem('token', data.session.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/dashboard');
@@ -49,7 +49,7 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        triggerSuccess();
+        triggerSelection();
         // After signup, switch to login
         setIsLogin(true);
         setEmail('');
@@ -57,7 +57,7 @@ const Auth = () => {
         setError('Account created! Please login.');
       }
     } catch (err) {
-      triggerError();
+      triggerSelection();
       setError(err.message);
     } finally {
       setLoading(false);
@@ -65,7 +65,7 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    triggerMedium();
+    triggerSelection();
     setLoading(true);
     setError('');
     try {
@@ -81,7 +81,7 @@ const Auth = () => {
         });
         if (error) throw error;
         
-        triggerSuccess();
+        triggerSelection();
         localStorage.setItem('token', data.session.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/dashboard');
@@ -93,7 +93,7 @@ const Auth = () => {
         if (error) throw error;
       }
     } catch (err) {
-      triggerError();
+      triggerSelection();
       setError(err.message || 'Google Sign-in failed');
     } finally {
       setLoading(false);
@@ -187,7 +187,7 @@ const Auth = () => {
         <div className="auth-footer">
           <p>
             {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-            <button onClick={() => { triggerLight(); setIsLogin(!isLogin); }} className="toggle-auth-btn noticeable-link">
+            <button onClick={() => { triggerSelection(); setIsLogin(!isLogin); }} className="toggle-auth-btn noticeable-link">
               {isLogin ? 'Sign Up for FREE' : 'Log In'}
             </button>
           </p>

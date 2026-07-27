@@ -5,7 +5,7 @@ ADD COLUMN IF NOT EXISTS credits_charged INTEGER DEFAULT 5;
 -- 2. Create user_credits table
 CREATE TABLE IF NOT EXISTS user_credits (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  free_balance INTEGER DEFAULT 500 NOT NULL,
+  free_balance INTEGER DEFAULT 250 NOT NULL,
   purchased_balance INTEGER DEFAULT 0 NOT NULL,
   last_refill_date TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   next_refill_date TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '1 month') NOT NULL,
@@ -43,7 +43,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user_credits()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.user_credits (user_id, free_balance, purchased_balance, last_refill_date, next_refill_date)
-  VALUES (NEW.id, 500, 0, NOW(), NOW() + INTERVAL '1 month')
+  VALUES (NEW.id, 250, 0, NOW(), NOW() + INTERVAL '1 month')
   ON CONFLICT (user_id) DO NOTHING;
   RETURN NEW;
 END;
@@ -55,6 +55,6 @@ CREATE OR REPLACE TRIGGER on_auth_user_created_credits
 
 -- Backfill credits table for existing users
 INSERT INTO public.user_credits (user_id, free_balance, purchased_balance, last_refill_date, next_refill_date)
-SELECT id, 500, 0, NOW(), NOW() + INTERVAL '1 month'
+SELECT id, 250, 0, NOW(), NOW() + INTERVAL '1 month'
 FROM auth.users
 ON CONFLICT (user_id) DO NOTHING;

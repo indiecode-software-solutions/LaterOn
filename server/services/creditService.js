@@ -24,7 +24,7 @@ function calculateCredits({ mediaUrl = null, usedAi = false }) {
 }
 
 /**
- * Fetch the credit record for a given user, auto-creating it if missing (500 free).
+ * Fetch the credit record for a given user, auto-creating it if missing (250 free).
  * @param {Object} supabaseAdmin
  * @param {string} userId
  * @returns {{ data: Object|null, error: Object|null }}
@@ -45,7 +45,7 @@ async function getUserCredits(supabaseAdmin, userId) {
       .from('user_credits')
       .insert({
         user_id: userId,
-        free_balance: 500,
+        free_balance: 250,
         purchased_balance: 0,
         last_refill_date: now.toISOString(),
         next_refill_date: nextRefill.toISOString()
@@ -60,7 +60,7 @@ async function getUserCredits(supabaseAdmin, userId) {
 }
 
 /**
- * Check if a monthly refill is due, and if so, reset free_balance to 500.
+ * Check if a monthly refill is due, and if so, reset free_balance to 250.
  * @param {Object} supabaseAdmin
  * @param {string} userId
  * @param {Object} creditRecord - The current user_credits row
@@ -74,7 +74,7 @@ async function maybeRefillCredits(supabaseAdmin, userId, creditRecord) {
     await supabaseAdmin
       .from('user_credits')
       .update({
-        free_balance: 500,
+        free_balance: 250,
         last_refill_date: now.toISOString(),
         next_refill_date: targetFirstOfNextMonth.toISOString(),
         updated_at: now.toISOString()
@@ -84,12 +84,12 @@ async function maybeRefillCredits(supabaseAdmin, userId, creditRecord) {
     // Log the refill transaction
     await supabaseAdmin.from('credit_transactions').insert({
       user_id: userId,
-      amount: 500,
+      amount: 250,
       type: 'monthly_refill',
       description: 'Monthly free credit refill'
     });
 
-    creditRecord.free_balance = 500;
+    creditRecord.free_balance = 250;
     creditRecord.next_refill_date = targetFirstOfNextMonth.toISOString();
   } else if (currentNextRefill.getDate() !== 1) {
     // Legacy normalization: align to 1st of next month

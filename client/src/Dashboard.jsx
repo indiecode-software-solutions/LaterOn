@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { format } from 'date-fns';
-import { triggerLight, triggerMedium, triggerSuccess, triggerError, triggerSelection } from './haptics';
+import { triggerSelection } from './haptics';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -845,9 +845,9 @@ function Dashboard() {
   };
 
   const handleSyncContacts = async () => {
-    triggerMedium();
+    triggerSelection();
     if (status !== 'connected') {
-      triggerError();
+      triggerSelection();
       alert('Connect WhatsApp before syncing contacts.');
       return;
     }
@@ -866,9 +866,9 @@ function Dashboard() {
       if (photos) parts.push(`${photos} photos`);
       if (removed) parts.push(`${removed} invalid entries cleaned`);
       setContactSyncMessage(parts.length ? `Synced ${parts.join(', ')}.` : 'Contacts are already up to date.');
-      triggerSuccess();
+      triggerSelection();
     } catch (err) {
-      triggerError();
+      triggerSelection();
       setContactSyncMessage('');
       alert(err.response?.data?.error || 'Failed to sync contacts');
     } finally {
@@ -1149,9 +1149,9 @@ function Dashboard() {
   const handleCreateReminder = async (e) => {
     e.preventDefault();
     if (isSubmittingReminder) return;
-    triggerMedium();
+    triggerSelection();
     if (!reminderForm.title.trim()) {
-      triggerError();
+      triggerSelection();
       alert('Please enter a reminder title');
       return;
     }
@@ -1166,12 +1166,12 @@ function Dashboard() {
       const newReminder = res.data;
       setReminderForm({ title: '', description: '', scheduled_at: new Date(), recurrence: 'none' });
       fetchReminders();
-      triggerSuccess();
+      triggerSelection();
       if (newReminder && new Date(newReminder.scheduled_at).getTime() > Date.now()) {
         scheduleCapacitorNotification(newReminder);
       }
     } catch (err) {
-      triggerError();
+      triggerSelection();
       alert('Failed to create reminder: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsSubmittingReminder(false);
@@ -1269,7 +1269,7 @@ function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    triggerMedium();
+    triggerSelection();
     setLoading(true);
 
     try {
@@ -1291,7 +1291,7 @@ function Dashboard() {
 
       if (channel === 'calendar') {
         if (!meetingTitle.trim()) {
-          triggerError();
+          triggerSelection();
           alert('Please fill in meeting title');
           setLoading(false);
           return;
@@ -1351,7 +1351,7 @@ Looking forward to connecting!`;
         fetchSchedules();
         fetchCredits();
         setLoading(false);
-        triggerSuccess();
+        triggerSelection();
         return;
       }
 
@@ -1359,7 +1359,7 @@ Looking forward to connecting!`;
         const targetEmail = (formData.emailTo || emailTo || '').trim();
         const targetSubject = (formData.emailSubject || emailSubject || '').trim();
         if (!targetEmail || !targetSubject) {
-          triggerError();
+          triggerSelection();
           alert('Please fill in email recipient and subject');
           setLoading(false);
           return;
@@ -1402,7 +1402,7 @@ Looking forward to connecting!`;
         fetchSchedules();
         fetchCredits();
         setLoading(false);
-        triggerSuccess();
+        triggerSelection();
         return;
       }
 
@@ -1440,7 +1440,7 @@ Looking forward to connecting!`;
         fetchSchedules();
         fetchCredits();
         setLoading(false);
-        triggerSuccess();
+        triggerSelection();
         return;
       }
 
@@ -1467,7 +1467,7 @@ Looking forward to connecting!`;
       }
 
       if (recipientsToProcess.length === 0) {
-        triggerError();
+        triggerSelection();
         alert('Please add at least one recipient');
         setLoading(false);
         return;
@@ -1511,9 +1511,9 @@ Looking forward to connecting!`;
       setSidebarStep(1);
       fetchSchedules();
       fetchCredits();
-      triggerSuccess();
+      triggerSelection();
     } catch (err) {
-      triggerError();
+      triggerSelection();
       if (err.response?.status === 402) {
         const d = err.response.data;
         alert(`⚠️ Not enough Later Credits!\n\nYou need ${d.credits_required} credits but have ${d.credits_available}.\n\nPlease purchase more credits from the Credits section.`);
@@ -1856,7 +1856,7 @@ Looking forward to connecting!`;
                 <button
                   className="btn-icon"
                   onClick={() => {
-                    triggerLight();
+                    triggerSelection();
                     setShowServiceSelector(true);
                     setSidebarStep(1);
                     setActiveView('scheduler');
@@ -1870,7 +1870,7 @@ Looking forward to connecting!`;
                 <button
                   className={`btn-icon ${activeView === 'credits' ? 'active' : ''}`}
                   onClick={() => {
-                    triggerLight();
+                    triggerSelection();
                     setActiveView(activeView === 'credits' ? 'scheduler' : 'credits');
                   }}
                   style={{
@@ -1885,7 +1885,7 @@ Looking forward to connecting!`;
                 <button
                   className={`btn-icon ${activeView === 'business' ? 'active' : ''}`}
                   onClick={() => {
-                    triggerLight();
+                    triggerSelection();
                     setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler');
                     setCurrentBusinessTool(null);
                     setSidebarStep(1);
@@ -1897,7 +1897,7 @@ Looking forward to connecting!`;
               )}
 
               {!showServiceSelector && channel === 'whatsapp' && (
-                <button className="btn-icon" onClick={() => { triggerLight(); fetchStatus(); }} title="Refresh Connection Status">
+                <button className="btn-icon" onClick={() => { triggerSelection(); fetchStatus(); }} title="Refresh Connection Status">
                   <RefreshCcw size={18} color={status === 'connected' ? '#25d366' : '#667781'} />
                 </button>
               )}
@@ -1905,7 +1905,7 @@ Looking forward to connecting!`;
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {/* Credit Balance Badge */}
                   <div
-                    onClick={() => { triggerLight(); setActiveView('credits'); setShowServiceSelector(false); }}
+                    onClick={() => { triggerSelection(); setActiveView('credits'); setShowServiceSelector(false); }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -2102,7 +2102,7 @@ Looking forward to connecting!`;
                 <div className="service-grid">
                   {/* WhatsApp Card */}
                   <div className={channel === 'whatsapp' ? 'active' : ''} style={{ borderColor: channel === 'whatsapp' ? '#25d366' : 'var(--border)', background: channel === 'whatsapp' ? '#f0fff4' : 'white' }}
-                    onClick={() => { triggerMedium(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
                   >
@@ -2119,7 +2119,7 @@ Looking forward to connecting!`;
 
                   {/* Email Card */}
                   <div className={channel === 'email' ? 'active' : ''} style={{ borderColor: channel === 'email' ? '#ea4335' : 'var(--border)', background: channel === 'email' ? '#fdf2f2' : 'white' }}
-                    onClick={() => { triggerMedium(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
                   >
@@ -2134,7 +2134,7 @@ Looking forward to connecting!`;
 
                   {/* Google Calendar Card */}
                   <div className={channel === 'calendar' ? 'active' : ''} style={{ borderColor: channel === 'calendar' ? '#1a73e8' : 'var(--border)', background: channel === 'calendar' ? '#e8f0fe' : 'white' }}
-                    onClick={() => { triggerMedium(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
                   >
@@ -2151,7 +2151,7 @@ Looking forward to connecting!`;
 
                   {/* Telegram Card */}
                   <div className={channel === 'telegram' ? 'active' : ''} style={{ borderColor: channel === 'telegram' ? '#0088cc' : 'var(--border)', background: channel === 'telegram' ? '#e6f3ff' : 'white' }}
-                    onClick={() => { triggerMedium(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'telegram') e.currentTarget.style.borderColor = '#0088cc'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'telegram' ? '#0088cc' : 'var(--border)'; }}
                   >
@@ -2168,7 +2168,7 @@ Looking forward to connecting!`;
 
                   {/* Instagram Card */}
                   <div className={channel === 'instagram' ? 'active' : ''} style={{ borderColor: channel === 'instagram' ? '#e1306c' : 'var(--border)', background: channel === 'instagram' ? '#fff0f5' : 'white' }}
-                    onClick={() => { triggerMedium(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'instagram') e.currentTarget.style.borderColor = '#e1306c'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'instagram' ? '#e1306c' : 'var(--border)'; }}
                   >
@@ -2185,7 +2185,7 @@ Looking forward to connecting!`;
 
                   {/* Personal Reminders Card */}
                   <div className={channel === 'reminders' ? 'active' : ''} style={{ borderColor: channel === 'reminders' ? '#f59e0b' : 'var(--border)', background: channel === 'reminders' ? '#fffbeb' : 'white' }}
-                    onClick={() => { triggerMedium(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'reminders') e.currentTarget.style.borderColor = '#f59e0b'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'reminders' ? '#f59e0b' : 'var(--border)'; }}
                   >
@@ -3753,10 +3753,10 @@ Looking forward to connecting!`;
                                   type="button"
                                   className="btn"
                                   onClick={() => {
-                                    triggerLight();
+                                    triggerSelection();
                                     if (channel === 'calendar') {
                                       if (!formData.phone?.trim() && !formData.emailTo?.trim()) {
-                                        triggerError();
+                                        triggerSelection();
                                         alert('Please enter a recipient phone number or email address');
                                         return;
                                       }
@@ -3765,19 +3765,19 @@ Looking forward to connecting!`;
                                     } else if (channel === 'email') {
                                       const targetEmail = formData.emailTo || emailTo;
                                       if (!targetEmail || !targetEmail.trim() || !targetEmail.includes('@')) {
-                                        triggerError();
+                                        triggerSelection();
                                         alert('Please enter a valid recipient email address');
                                         return;
                                       }
                                       const targetSubject = formData.emailSubject || emailSubject;
                                       if (!targetSubject || !targetSubject.trim()) {
-                                        triggerError();
+                                        triggerSelection();
                                         alert('Please enter an email subject');
                                         return;
                                       }
                                     } else {
                                       if (selectedRecipients.length === 0 && (!formData.phone || formData.phone.length < 10)) {
-                                        triggerError();
+                                        triggerSelection();
                                         alert('Please enter a valid phone number');
                                         return;
                                       }
@@ -3941,7 +3941,7 @@ Looking forward to connecting!`;
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '12px', marginBottom: '20px' }}>
                                       <button
                                         type="button"
-                                        onClick={() => { triggerLight(); setSidebarStep(1); }}
+                                        onClick={() => { triggerSelection(); setSidebarStep(1); }}
                                         style={{
                                           padding: '12px 16px',
                                           background: '#f0f2f5',
@@ -3962,14 +3962,14 @@ Looking forward to connecting!`;
                                         type="button"
                                         className="btn"
                                         onClick={() => {
-                                          triggerLight();
+                                          triggerSelection();
                                           if (!meetingTitle.trim()) {
-                                            triggerError();
+                                            triggerSelection();
                                             alert('Please enter a meeting title');
                                             return;
                                           }
                                           if (meetingPlatform === 'custom' && !formData.customLink?.trim()) {
-                                            triggerError();
+                                            triggerSelection();
                                             alert('Please enter a meeting link');
                                             return;
                                           }
@@ -4114,7 +4114,7 @@ Looking forward to connecting!`;
                                         />
                                         <button
                                           type="button"
-                                          onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_desktop' ? null : 'meeting_desktop'); }}
+                                          onClick={() => { triggerSelection(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_desktop' ? null : 'meeting_desktop'); }}
                                           style={{
                                             position: 'absolute',
                                             bottom: '10px',
@@ -4296,7 +4296,7 @@ Looking forward to connecting!`;
                                         />
                                         <button
                                           type="button"
-                                          onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_desktop' ? null : 'schedule_desktop'); }}
+                                          onClick={() => { triggerSelection(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_desktop' ? null : 'schedule_desktop'); }}
                                           style={{
                                             position: 'absolute',
                                             bottom: '10px',
@@ -4407,7 +4407,7 @@ Looking forward to connecting!`;
                                       <button
                                         type="button"
                                         className="btn"
-                                        onClick={() => { triggerLight(); setSidebarStep(1); }}
+                                        onClick={() => { triggerSelection(); setSidebarStep(1); }}
                                         style={{ flex: 1, background: '#f0f2f5', color: 'var(--text-muted)', borderRadius: '0px' }}
                                       >
                                         Back
@@ -5454,14 +5454,14 @@ Looking forward to connecting!`;
                 size={20}
                 color="#54656f"
                 style={{ cursor: 'pointer' }}
-                onClick={() => { triggerLight(); setIsSearching(true); }}
+                onClick={() => { triggerSelection(); setIsSearching(true); }}
               />
               <div style={{ position: 'relative' }}>
                 <MoreVertical
                   size={20}
                   color="#54656f"
                   style={{ cursor: 'pointer' }}
-                  onClick={() => { triggerLight(); setShowMenu(!showMenu); }}
+                  onClick={() => { triggerSelection(); setShowMenu(!showMenu); }}
                 />
 
                 <AnimatePresence>
@@ -5494,14 +5494,14 @@ Looking forward to connecting!`;
                           <>
                             {queueTab === 'calendar' ? (
                               <div
-                                onClick={() => { triggerLight(); setQueueTab('upcoming'); setShowMenu(false); }}
+                                onClick={() => { triggerSelection(); setQueueTab('upcoming'); setShowMenu(false); }}
                                 style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                               >
                                 <LayoutList size={14} /> Switch to List View
                               </div>
                             ) : (
                               <div
-                                onClick={() => { triggerLight(); setQueueTab('calendar'); setShowMenu(false); }}
+                                onClick={() => { triggerSelection(); setQueueTab('calendar'); setShowMenu(false); }}
                                 style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                               >
                                 <Calendar size={14} /> Switch to Calendar View
@@ -5511,27 +5511,27 @@ Looking forward to connecting!`;
                           </>
                         )}
                         <div
-                          onClick={() => { triggerLight(); handleRetryFailed(); setShowMenu(false); }}
+                          onClick={() => { triggerSelection(); handleRetryFailed(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                         >
                           <RefreshCcw size={14} /> Retry All Failed
                         </div>
                         <div
-                          onClick={() => { triggerLight(); handleExportCSV(); setShowMenu(false); }}
+                          onClick={() => { triggerSelection(); handleExportCSV(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                         >
                           <Download size={14} /> Export CSV
                         </div>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                         <div
-                          onClick={() => { triggerLight(); handleClearHistory(); setShowMenu(false); }}
+                          onClick={() => { triggerSelection(); handleClearHistory(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
                         >
                           <Trash2 size={14} /> Clear History
                         </div>
                         <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                         <div
-                          onClick={() => { triggerLight(); handleSignOut(); setShowMenu(false); }}
+                          onClick={() => { triggerSelection(); handleSignOut(); setShowMenu(false); }}
                           style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
                         >
                           <LogOut size={14} /> Sign Out
@@ -5548,7 +5548,7 @@ Looking forward to connecting!`;
                     size={20}
                     color="#54656f"
                     style={{ cursor: 'pointer' }}
-                    onClick={() => { triggerLight(); triggerLight(); setShowFilterMenu(!showFilterMenu); }}
+                    onClick={() => { triggerSelection(); triggerSelection(); setShowFilterMenu(!showFilterMenu); }}
                   />
 
                   <AnimatePresence>
@@ -5580,7 +5580,7 @@ Looking forward to connecting!`;
                           {['all', 'sent', 'delivered', 'read'].map(f => (
                             <div
                               key={f}
-                              onClick={() => { triggerLight(); setHistoryFilter(f); setShowFilterMenu(false); }}
+                              onClick={() => { triggerSelection(); setHistoryFilter(f); setShowFilterMenu(false); }}
                               style={{
                                 padding: '10px 16px',
                                 display: 'flex',
@@ -5782,7 +5782,7 @@ Looking forward to connecting!`;
                                   });
                                   const result = await verifyRes.json();
                                   if (verifyRes.ok) {
-                                    triggerSuccess();
+                                    triggerSelection();
                                     setPaymentSuccessModal({ credits: result.credits_added, packageName: pkg.name });
                                     fetchCredits();
                                   } else {
@@ -8050,7 +8050,7 @@ Looking forward to connecting!`;
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_mobile' ? null : 'meeting_mobile'); }}
+                                  onClick={() => { triggerSelection(); setActiveEmojiPicker(activeEmojiPicker === 'meeting_mobile' ? null : 'meeting_mobile'); }}
                                   style={{
                                     position: 'absolute',
                                     bottom: '10px',
@@ -8201,7 +8201,7 @@ Join Link: [Auto-generated after scheduling]`}
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => { triggerLight(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_mobile' ? null : 'schedule_mobile'); }}
+                                  onClick={() => { triggerSelection(); setActiveEmojiPicker(activeEmojiPicker === 'schedule_mobile' ? null : 'schedule_mobile'); }}
                                   style={{
                                     position: 'absolute',
                                     bottom: '10px',
@@ -8321,7 +8321,7 @@ Join Link: [Auto-generated after scheduling]`}
                   <div className="wizard-footer" style={{ borderTop: 'none', padding: 0, marginTop: '8px' }}>
                     {formStep > 1 && (
                       <button
-                        onClick={() => { triggerLight(); setFormStep(prev => prev - 1); }}
+                        onClick={() => { triggerSelection(); setFormStep(prev => prev - 1); }}
                         className="btn-secondary"
                         style={{ flex: 1, padding: '16px', borderRadius: '0px', fontWeight: 800 }}
                       >
@@ -8330,59 +8330,59 @@ Join Link: [Auto-generated after scheduling]`}
                     )}
                     <button
                       onClick={async () => {
-                        triggerLight();
+                        triggerSelection();
                         if (formStep === 1) {
                           if (channel === 'reminders' && !reminderForm.title.trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter a reminder title');
                             return;
                           }
                           if (channel === 'whatsapp' && !formData.phone.trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter a phone number');
                             return;
                           }
                           if (channel === 'email' && !(formData.emailTo || '').trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter recipient email');
                             return;
                           }
                           if (channel === 'email' && !(formData.emailSubject || '').trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter subject line');
                             return;
                           }
                           if (channel === 'calendar' && !formData.phone.trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter recipient phone number');
                             return;
                           }
                           if (channel === 'telegram') {
                             if (telegramStatus.status !== 'connected') {
-                              triggerError();
+                              triggerSelection();
                               alert('Please connect your Telegram Bot first');
                               return;
                             }
                             if (!telegramStatus.config?.chats?.length) {
-                              triggerError();
+                              triggerSelection();
                               alert('Please add at least one chat target first');
                               return;
                             }
                             if (!formData.message.trim()) {
-                              triggerError();
+                              triggerSelection();
                               alert('Please write your message');
                               return;
                             }
                           }
                           if (channel === 'instagram') {
                             if (instagramStatus.status !== 'connected') {
-                              triggerError();
+                              triggerSelection();
                               alert('Please connect your Instagram account first');
                               return;
                             }
                             const urls = igMobileForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
                             if (!urls.length) {
-                              triggerError();
+                              triggerSelection();
                               alert('Please add at least one image URL');
                               return;
                             }
@@ -8390,13 +8390,13 @@ Join Link: [Auto-generated after scheduling]`}
                           setFormStep(2);
                         } else if (formStep === 2) {
                           if (channel === 'calendar' && !meetingTitle.trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter meeting title');
                             return;
                           }
                           if (channel === 'reminders') {
                             if (!reminderForm.title.trim()) {
-                              triggerError();
+                              triggerSelection();
                               alert('Please enter a reminder title');
                               return;
                             }
@@ -8415,7 +8415,7 @@ Join Link: [Auto-generated after scheduling]`}
                           }
                           if (channel === 'instagram') {
                             const urls = igMobileForm.image_urls_raw.split('\n').map(u => u.trim()).filter(Boolean);
-                            if (!igMobileDate) { triggerError(); alert('Please pick a date and time'); return; }
+                            if (!igMobileDate) { triggerSelection(); alert('Please pick a date and time'); return; }
                             setIgMobileLoading(true);
                             try {
                               const r = await fetch(`${API_URL}/api/instagram/posts`, {
@@ -8437,17 +8437,17 @@ Join Link: [Auto-generated after scheduling]`}
                         } else {
                           // Validate final step inputs
                           if (channel === 'whatsapp' && !formData.phone.trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please enter a phone number');
                             return;
                           }
                           if (channel === 'email' && (!(formData.emailTo || '').trim() || !(formData.emailSubject || '').trim())) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please fill in email recipient and subject');
                             return;
                           }
                           if (channel === 'calendar' && !meetingTitle.trim()) {
-                            triggerError();
+                            triggerSelection();
                             alert('Please fill in meeting title');
                             return;
                           }
@@ -8571,7 +8571,7 @@ Join Link: [Auto-generated after scheduling]`}
                 <motion.button
                   whileHover={{ scale: 1.02, backgroundColor: 'var(--primary-dark)' }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => { triggerLight(); setPaymentSuccessModal(null); }}
+                  onClick={() => { triggerSelection(); setPaymentSuccessModal(null); }}
                   style={{
                     width: '100%',
                     padding: '14px',
@@ -8611,21 +8611,21 @@ Join Link: [Auto-generated after scheduling]`}
                 >
                   <button
                     className={`social-dropdown-item ${channel === 'whatsapp' ? 'active' : ''}`}
-                    onClick={() => { triggerMedium(); setChannel('whatsapp'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('whatsapp'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <WhatsAppIcon size={18} color="#25D366" />
                     <span>WhatsApp</span>
                   </button>
                   <button
                     className={`social-dropdown-item ${channel === 'instagram' ? 'active' : ''}`}
-                    onClick={() => { triggerMedium(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <InstagramIcon size={18} color="#e1306c" />
                     <span>Instagram</span>
                   </button>
                   <button
                     className={`social-dropdown-item ${channel === 'telegram' ? 'active' : ''}`}
-                    onClick={() => { triggerMedium(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                   >
                     <TelegramIcon size={18} color="#0088cc" />
                     <span>Telegram</span>
@@ -8648,7 +8648,7 @@ Join Link: [Auto-generated after scheduling]`}
               {/* Emails */}
               <button
                 className={`bottom-nav-item ${channel === 'email' ? 'active' : ''}`}
-                onClick={() => { triggerMedium(); setChannel('email'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                onClick={() => { triggerSelection(); setChannel('email'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
               >
                 <Mail size={20} />
                 <span className="nav-label">Emails</span>
@@ -8662,7 +8662,7 @@ Join Link: [Auto-generated after scheduling]`}
                   boxShadow: channel === 'email' ? '0 4px 16px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 4px 16px rgba(26, 115, 230, 0.4)' : (channel === 'reminders' ? '0 4px 16px rgba(245, 158, 11, 0.4)' : '0 4px 16px rgba(37, 211, 102, 0.4)'))
                 }}
                 onClick={() => {
-                  triggerLight();
+                  triggerSelection();
                   setFormStep(1);
                   setShowMobileForm(true);
                 }}
@@ -8673,7 +8673,7 @@ Join Link: [Auto-generated after scheduling]`}
               {/* Meetings */}
               <button
                 className={`bottom-nav-item ${channel === 'calendar' ? 'active' : ''}`}
-                onClick={() => { triggerMedium(); setChannel('calendar'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                onClick={() => { triggerSelection(); setChannel('calendar'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
               >
                 <Calendar size={20} />
                 <span className="nav-label">Meetings</span>
@@ -8682,7 +8682,7 @@ Join Link: [Auto-generated after scheduling]`}
               {/* Personal Reminders */}
               <button
                 className={`bottom-nav-item ${channel === 'reminders' ? 'active' : ''}`}
-                onClick={() => { triggerMedium(); setChannel('reminders'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                onClick={() => { triggerSelection(); setChannel('reminders'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
               >
                 <Bell size={20} />
                 <span className="nav-label">Reminders</span>
