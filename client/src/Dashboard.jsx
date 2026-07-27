@@ -2219,6 +2219,67 @@ Looking forward to connecting!`;
                     </div>
                   </div>
                 </div>
+
+                {/* Free Consultation Card */}
+                <div
+                  onClick={async () => {
+                    if (!window.Cal) {
+                      const s = document.createElement('script');
+                      s.src = 'https://app.cal.com/embed.js';
+                      s.async = true;
+                      document.body.appendChild(s);
+                      await new Promise(resolve => { s.onload = resolve; });
+                    }
+                    window.Cal('init', { calLink: 'pranavscalendar/free-lateron-consultation' });
+                    window.Cal('modal', { calLink: 'pranavscalendar/free-lateron-consultation' });
+                  }}
+                  style={{
+                    border: '2px dashed #7c3aed',
+                    background: '#f5f3ff',
+                    borderRadius: '0px',
+                    padding: '24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    gap: '10px',
+                    transition: 'all 0.2s',
+                    gridColumn: '1 / -1'
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = '#ede9fe'; e.currentTarget.style.borderColor = '#6d28d9'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = '#f5f3ff'; e.currentTarget.style.borderColor = '#7c3aed'; }}
+                >
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    background: '#7c3aed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '1.4rem'
+                  }}>
+                    🎙️
+                  </div>
+                  <h4 style={{ margin: 0, color: '#5b21b6', fontSize: '1rem', fontWeight: 800 }}>Free Consultation Call</h4>
+                  <p style={{ margin: 0, color: '#6d28d9', fontSize: '0.8rem', maxWidth: '400px' }}>
+                    Book a free 30-minute consultation to get help with LaterOn. Whether you need assistance with setup, automations, pricing, integrations, or have feature requests, I'm here to help.
+                  </p>
+                  <span style={{
+                    padding: '6px 16px',
+                    background: '#7c3aed',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    borderRadius: '0px',
+                    marginTop: '4px'
+                  }}>
+                    Book Now — Free
+                  </span>
+                </div>
                 {isMobile && (
                   <div style={{
                     textAlign: 'center',
