@@ -406,7 +406,8 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
               </div>
             ))}
           </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -488,6 +489,7 @@ function Dashboard() {
   const [showBooking, setShowBooking] = useState(false);
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
+  const [bookingLoaded, setBookingLoaded] = useState(false);
   const [purchasingPack, setPurchasingPack] = useState(null);
 
   const [isAiUsed, setIsAiUsed] = useState(false);
@@ -1856,14 +1858,29 @@ Looking forward to connecting!`;
       <div className="app-wrapper">
         {showBooking && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border)', background: '#1a1a1a' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #333', background: '#1a1a1a', flexShrink: 0 }}>
               <span style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem' }}>Book a Free Support Call</span>
-              <button onClick={() => setShowBooking(false)} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+              <button onClick={() => { setShowBooking(false); setShowServiceSelector(true); }} style={{ padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, background: 'white', color: '#1a1a1a', border: 'none', cursor: 'pointer', borderRadius: '4px' }}>
                 ← Back to App
               </button>
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+              {!bookingLoaded && (
+                <div style={{ position: 'absolute', inset: 0, background: '#f5f5f5', overflow: 'hidden' }}>
+                  <div className="loader">
+                    <span><span></span><span></span><span></span><span></span></span>
+                    <div className="base">
+                      <span></span>
+                      <div className="face"></div>
+                    </div>
+                  </div>
+                  <div className="longfazers">
+                    <span></span><span></span><span></span><span></span>
+                  </div>
+                </div>
+              )}
               <iframe
+                onLoad={() => setBookingLoaded(true)}
                 src="https://cal-meet.vercel.app/indiecode/free-lateron-consultation?embed=true"
                 width="100%"
                 height="100%"
@@ -5688,7 +5705,7 @@ Looking forward to connecting!`;
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Book a Free Support Call</h3>
                   <button
-                    onClick={() => setShowBooking(false)}
+                    onClick={() => { setShowBooking(false); setShowServiceSelector(true); }}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -8999,9 +9016,7 @@ Join Link: [Auto-generated after scheduling]`}
             </nav>
           </>
         )}
-
       </div>
-      )}
     </div>
   );
 }
