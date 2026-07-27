@@ -1203,10 +1203,9 @@ function Dashboard() {
   };
 
   const handleDeleteReminder = async (id) => {
+    setReminders(prev => prev.filter(r => r.id !== id));
     try {
       await axios.delete(`${API_URL}/api/reminders/${id}`);
-      fetchReminders();
-      // Cancel any local scheduled notification
       if (Capacitor.isNativePlatform()) {
         try {
           const notifId = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -1214,7 +1213,7 @@ function Dashboard() {
         } catch (e) { /* ignore */ }
       }
     } catch (err) {
-      alert('Failed to delete reminder');
+      console.error('Failed to delete reminder', err);
     }
   };
 
@@ -1650,15 +1649,16 @@ Looking forward to connecting!`;
     const id = isObject ? itemOrId.id : itemOrId;
     const isInstagram = isObject && itemOrId.channel === 'instagram';
 
+    setSchedules(prev => prev.filter(s => s.id !== id));
+
     try {
       if (isInstagram) {
         await axios.delete(`${API_URL}/api/instagram/posts/${id}`);
       } else {
         await axios.delete(`${API_URL}/api/schedules/${id}`);
       }
-      fetchSchedules();
     } catch (err) {
-      alert('Failed to delete schedule');
+      console.error('Failed to delete schedule', err);
     }
   };
 
@@ -6411,7 +6411,7 @@ Looking forward to connecting!`;
                                 padding: '40px',
                                 borderRadius: '6px',
                                 boxShadow: 'var(--shadow)',
-                                margin: '60px auto',
+                                margin: '50px auto',
                                 maxWidth: '400px'
                               }}>
                               <div style={{
@@ -6453,7 +6453,7 @@ Looking forward to connecting!`;
                                     .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
                                     .slice(0, 3)
                                     .map(msg => (
-                                      <div key={msg.id} style={{ background: 'white', padding: '10px 15px', borderRadius: '0px', boxShadow: '0 2px 5px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--border)' }}>
+                                      <div key={msg.id} style={{ background: 'white', padding: '10px 15px', borderRadius: '6px', boxShadow: '0 2px 5px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                           {contacts[msg.phone.split('@')[0]]?.photo ? (
                                             <img src={contacts[msg.phone.split('@')[0]].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -6518,7 +6518,8 @@ Looking forward to connecting!`;
                             key={item.id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, x: -20 }}
+                            exit={{ opacity: 0, x: -800, rotate: -60, y: 400 }}
+                            transition={{ duration: 1, ease: 'linear' }}
                             layout
                             style={{
                               alignSelf: 'center',
