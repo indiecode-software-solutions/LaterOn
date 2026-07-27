@@ -71,6 +71,78 @@ const razorpay = new Razorpay({
 
 const app = express();
 app.use(cors());
+
+// ── Razorpay Webhook (needs raw body for signature verification) ────────────
+app.post('/api/webhooks/razorpay', express.raw({ type: 'application/json' }), async (req, res) => {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const sig = req.headers['x-razorpay-signature'];
+    if (!secret || !sig) return res.status(400).json({ error: 'Missing secret or signature' });
+
+    const body = req.body.toString();
+    const expectedSig = crypto.createHmac('sha256', secret).update(body).digest('hex');
+    if (expectedSig !== sig) return res.status(400).json({ error: 'Invalid signature' });
+
+    const event = JSON.parse(body);
+    const { event: eventName, payload } = event;
+
+    if (eventName === 'subscription.charged') {
+        const subscription = payload.subscription.entity;
+        const payment = payload.payment.entity;
+        const notes = subscription.notes || {};
+        const userId = notes.user_id;
+        const creditsToAdd = parseInt(notes.credits, 10) || 0;
+        const packName = notes.pack_name || '';
+
+        if (!userId || !creditsToAdd) {
+            console.error('[Webhook] Missing user_id or credits in notes', { userId, creditsToAdd, subscriptionId: subscription.id });
+            return res.status(200).json({ status: 'ignored' });
+        }
+
+        try {
+            const { data: existing } = await supabaseAdmin
+                .from('user_credits')
+                .select('purchased_balance')
+                .eq('user_id', userId)
+                .single();
+
+            if (existing) {
+                await supabaseAdmin
+                    .from('user_credits')
+                    .update({ purchased_balance: existing.purchased_balance + creditsToAdd })
+                    .eq('user_id', userId);
+            } else {
+                await supabaseAdmin
+                    .from('user_credits')
+                    .insert({ user_id: userId, purchased_balance: creditsToAdd });
+            }
+
+            await supabaseAdmin.from('credit_transactions').insert({
+                user_id: userId,
+                type: 'subscription_charge',
+                amount: creditsToAdd,
+                description: `Monthly subscription credits — ${packName} (${subscription.id}) — ${payment.id}`
+            });
+
+            console.log(`[Webhook] Credited ${creditsToAdd} to ${userId} for subscription ${subscription.id}`);
+        } catch (err) {
+            console.error('[Webhook] Failed to credit user:', err);
+        }
+    } else if (eventName === 'subscription.cancelled') {
+        const subscription = payload.subscription.entity;
+        const notes = subscription.notes || {};
+        const userId = notes.user_id;
+        if (userId) {
+            await supabaseAdmin
+                .from('user_credits')
+                .update({ subscription_id: null, subscription_pack: null, subscription_credits: null, subscription_status: 'cancelled' })
+                .eq('user_id', userId);
+            console.log(`[Webhook] Subscription cancelled for user ${userId}`);
+        }
+    }
+
+    res.status(200).json({ status: 'ok' });
+});
+
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -1416,6 +1488,11 @@ app.get('/api/credits', verifyToken, async (req, res) => {
             purchased_balance: credits.purchased_balance,
             total_balance: credits.free_balance + credits.purchased_balance,
             next_refill_date: credits.next_refill_date,
+            subscription_id: credits.subscription_id || null,
+            subscription_pack: credits.subscription_pack || null,
+            subscription_credits: credits.subscription_credits || null,
+            subscription_status: credits.subscription_status || null,
+            subscription_period: credits.subscription_period || 'monthly',
             transactions: transactions || []
         });
     } catch (err) {
@@ -3327,6 +3404,169 @@ app.post('/api/credits/verify', async (req, res) => {
     } catch (err) {
         console.error('[Razorpay] verify error:', err);
         res.status(500).json({ error: 'Credit update failed' });
+    }
+});
+
+// ── Plan Cache: avoid creating duplicate Razorpay plans ─────────────────────
+const planCache = new Map();
+
+/**
+ * Get or create a Razorpay plan for a given pack.
+ * Plans are cached in-memory after first creation.
+ */
+async function getOrCreatePlan(packageName, credits, priceInPaise) {
+    const cacheKey = packageName;
+    if (planCache.has(cacheKey)) return planCache.get(cacheKey);
+
+    try {
+        const plan = await razorpay.plans.create({
+            period: 'monthly',
+            interval: 1,
+            item: {
+                name: `${packageName} Monthly`,
+                amount: priceInPaise,
+                currency: 'INR',
+                description: `${credits} credits every month`
+            }
+        });
+        planCache.set(cacheKey, plan.id);
+        console.log(`[Plan] Created monthly plan ${plan.id} for ${packageName} (₹${priceInPaise/100})`);
+        return plan.id;
+    } catch (err) {
+        console.error(`[Plan] Failed to create plan for ${packageName}:`, err.message || err, err.response?.data || '');
+        throw err;
+    }
+}
+
+// ── Razorpay: Create Subscription ───────────────────────────────────────────
+app.post('/api/credits/subscription', verifyToken, async (req, res) => {
+    const { userId } = req;
+    const { packageName, credits, amountPaise } = req.body;
+
+    if (!packageName || !credits || !amountPaise) {
+        return res.status(400).json({ error: 'packageName, credits, and amountPaise required' });
+    }
+
+    try {
+        const planId = await getOrCreatePlan(packageName, credits, amountPaise);
+
+        const subscription = await razorpay.subscriptions.create({
+            plan_id: planId,
+            total_count: 100,
+            expire_by: Math.floor(Date.now() / 1000) + 86400 * 365 * 10,
+            customer_notify: true,
+            notes: {
+                user_id: userId,
+                pack_name: packageName,
+                credits: String(credits),
+                period: 'monthly'
+            }
+        });
+
+        res.json({
+            subscriptionId: subscription.id,
+            key: process.env.Razorpay_live
+        });
+    } catch (err) {
+        console.error('[Razorpay] subscription creation failed:', err.message || err, err.stack?.split('\n')[0]);
+        res.status(500).json({ error: 'Failed to create subscription', detail: err.message || 'Unknown error' });
+    }
+});
+
+// ── Razorpay: Verify Subscription First Payment & Activate ──────────────────
+app.post('/api/credits/subscription/verify', verifyToken, async (req, res) => {
+    const { userId } = req;
+    const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature, credits, packageName } = req.body;
+
+    if (!razorpay_payment_id || !razorpay_subscription_id) {
+        return res.status(400).json({ error: 'Missing payment or subscription ID' });
+    }
+
+    try {
+        // Verify HMAC signature: payment_id|subscription_id
+        const expectedSig = crypto
+            .createHmac('sha256', process.env.Razorpay_secret)
+            .update(`${razorpay_payment_id}|${razorpay_subscription_id}`)
+            .digest('hex');
+
+        if (razorpay_signature && expectedSig !== razorpay_signature) {
+            return res.status(400).json({ error: 'Payment signature verification failed' });
+        }
+
+        const creditsToAdd = parseInt(credits, 10);
+
+        const { data: existing } = await supabaseAdmin
+            .from('user_credits')
+            .select('purchased_balance')
+            .eq('user_id', userId)
+            .single();
+
+        if (existing) {
+            await supabaseAdmin
+                .from('user_credits')
+                .update({
+                    purchased_balance: existing.purchased_balance + creditsToAdd,
+                    subscription_id: razorpay_subscription_id,
+                    subscription_pack: packageName,
+                    subscription_credits: creditsToAdd,
+                    subscription_status: 'active',
+                    subscription_period: 'monthly'
+                })
+                .eq('user_id', userId);
+        } else {
+            await supabaseAdmin
+                .from('user_credits')
+                .insert({
+                    user_id: userId,
+                    purchased_balance: creditsToAdd,
+                    subscription_id: razorpay_subscription_id,
+                    subscription_pack: packageName,
+                    subscription_credits: creditsToAdd,
+                    subscription_status: 'active',
+                    subscription_period: 'monthly'
+                });
+        }
+
+        // Log transaction
+        await supabaseAdmin.from('credit_transactions').insert({
+            user_id: userId,
+            type: 'subscription_purchase',
+            amount: creditsToAdd,
+            description: `Subscribed to ${packageName} (${razorpay_subscription_id}) — ${razorpay_payment_id}`
+        });
+
+        res.json({ success: true, credits_added: creditsToAdd, subscription_id: razorpay_subscription_id });
+    } catch (err) {
+        console.error('[Razorpay] subscription verify error:', err);
+        res.status(500).json({ error: 'Subscription activation failed' });
+    }
+});
+
+// ── Razorpay: Cancel Subscription ───────────────────────────────────────────
+app.post('/api/credits/subscription/cancel', verifyToken, async (req, res) => {
+    const { userId } = req;
+    try {
+        const { data: credits } = await supabaseAdmin
+            .from('user_credits')
+            .select('subscription_id')
+            .eq('user_id', userId)
+            .single();
+
+        if (!credits?.subscription_id) {
+            return res.status(400).json({ error: 'No active subscription' });
+        }
+
+        await razorpay.subscriptions.cancel(credits.subscription_id);
+
+        await supabaseAdmin
+            .from('user_credits')
+            .update({ subscription_id: null, subscription_pack: null, subscription_credits: null, subscription_status: 'cancelled' })
+            .eq('user_id', userId);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[Razorpay] subscription cancel error:', err);
+        res.status(500).json({ error: 'Failed to cancel subscription' });
     }
 });
 

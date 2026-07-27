@@ -482,10 +482,11 @@ function Dashboard() {
   const [showMobileForm, setShowMobileForm] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [activeEmojiPicker, setActiveEmojiPicker] = useState(null);
-  const [credits, setCredits] = useState({ free_balance: 0, purchased_balance: 0, total_balance: 0, next_refill_date: null, transactions: [] });
+  const [credits, setCredits] = useState({ free_balance: 0, purchased_balance: 0, total_balance: 0, next_refill_date: null, transactions: [], subscription_id: null, subscription_pack: null, subscription_credits: null, subscription_status: null, subscription_period: 'monthly' });
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(null);
   const [purchasingPack, setPurchasingPack] = useState(null);
+
   const [isAiUsed, setIsAiUsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [is24Hour, setIs24Hour] = useState(false);
@@ -1939,7 +1940,7 @@ Looking forward to connecting!`;
                     title="View Later Credits Balance"
                   >
                     <Coins size={14} color="var(--primary)" />
-                    {creditsLoading ? <span className="skeleton-text" style={{width:'30px',height:'0.8rem'}} /> : <span>{credits.total_balance}</span>}
+                    {creditsLoading ? <span className="skeleton-text" style={{ width: '30px', height: '0.8rem' }} /> : <span>{credits.total_balance}</span>}
                   </div>
 
                   {/* Profile Photo or Initials */}
@@ -2129,7 +2130,7 @@ Looking forward to connecting!`;
                     <div>
                       <h4 style={{ color: '#1a5c3e' }}>WhatsApp</h4>
                       <p style={{ color: '#4a7c62' }}>
-                        {statusLoading ? <span className="skeleton-text" style={{width:'140px'}} /> : (userInfo ? 'Connected' : 'Connect QR / Pairing Code')}
+                        {statusLoading ? <span className="skeleton-text" style={{ width: '140px' }} /> : (userInfo ? 'Connected' : 'Connect QR / Pairing Code')}
                       </p>
                     </div>
                   </div>
@@ -2178,7 +2179,7 @@ Looking forward to connecting!`;
                     <div>
                       <h4 style={{ color: '#005f9e' }}>Telegram</h4>
                       <p style={{ color: '#0088cc' }}>
-                        {isTelegramStatusLoading ? <span className="skeleton-text" style={{width:'100px'}} /> : (telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
+                        {isTelegramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
                       </p>
                     </div>
                   </div>
@@ -2195,7 +2196,7 @@ Looking forward to connecting!`;
                     <div>
                       <h4 style={{ color: '#a81c4e' }}>Instagram</h4>
                       <p style={{ color: '#e1306c' }}>
-                        {isInstagramStatusLoading ? <span className="skeleton-text" style={{width:'100px'}} /> : (instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
+                        {isInstagramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
                       </p>
                     </div>
                   </div>
@@ -5652,7 +5653,7 @@ Looking forward to connecting!`;
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.85 }}>Total Later Credits</span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '3rem', fontWeight: 800, margin: '8px 0' }}>
-                      {creditsLoading ? <span className="skeleton-text" style={{width:'80px',height:'3rem',borderRadius:'8px'}} /> : credits.total_balance}
+                      {creditsLoading ? <span className="skeleton-text" style={{ width: '80px', height: '3rem', borderRadius: '8px' }} /> : credits.total_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Available to use across all automations</span>
                     {credits.next_refill_date && (
@@ -5675,7 +5676,7 @@ Looking forward to connecting!`;
                   }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Purchased Credits</span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--text)', margin: '8px 0' }}>
-                      {creditsLoading ? <span className="skeleton-text" style={{width:'60px',height:'2.5rem',borderRadius:'8px'}} /> : credits.purchased_balance}
+                      {creditsLoading ? <span className="skeleton-text" style={{ width: '60px', height: '2.5rem', borderRadius: '8px' }} /> : credits.purchased_balance}
                     </span>
                     <span style={{ fontSize: '0.85rem', color: '#2e7d32', fontWeight: 700 }}>
                       ✓ Never expires
@@ -5684,10 +5685,85 @@ Looking forward to connecting!`;
 
                 </div>
 
+                {/* Active Subscription Card */}
+                {credits.subscription_status === 'active' && credits.subscription_pack && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+                    color: 'white',
+                    border: '1px solid var(--border)',
+                    padding: '24px 28px',
+                    borderRadius: '0px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.3rem'
+                      }}>
+                        🔄
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1rem', fontWeight: 800 }}>Active Subscription — {credits.subscription_pack}</div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '2px' }}>
+                          {credits.subscription_credits?.toLocaleString()} credits auto-added every month
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Cancel your monthly subscription? You will not be charged again.')) return;
+                        try {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          const token = session?.access_token || '';
+                          const res = await fetch(`${API_URL}/api/credits/subscription/cancel`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                          });
+                          if (res.ok) {
+                            fetchCredits();
+                            alert('Subscription cancelled successfully.');
+                          } else {
+                            alert('Failed to cancel subscription.');
+                          }
+                        } catch (err) {
+                          alert('Network error. Please try again.');
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        background: 'rgba(255,255,255,0.1)',
+                        color: 'white',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '0px',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.2)'}
+                      onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.1)'}
+                    >
+                      Cancel Subscription
+                    </button>
+                  </div>
+                )}
+
                 {/* Pricing / Recharge Packs Section */}
                 <div style={{ background: 'white', border: '1px solid var(--border)', padding: '30px', borderRadius: '0px' }}>
-                  <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }}>Recharge Later Credits</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 24px 0' }}>Need more automations? Purchase high-speed credit packs that never expire.</p>
+                  <div>
+                    <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>Recharge Later Credits</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '4px 0px 18px' }}>Need more automations? Purchase high-speed credit packs that never expire.</p>
+                  </div>
 
                   <div style={{
                     display: 'grid',
@@ -5695,11 +5771,11 @@ Looking forward to connecting!`;
                     gap: '20px'
                   }}>
                     {[
-                      { name: 'Mini', credits: 250, price: '₹1', desc: 'Perfect for quick testing' },
-                      { name: 'Starter', credits: 750, price: '₹49', desc: 'Casual users setup' },
-                      { name: 'Popular', credits: 1800, price: '₹99', desc: 'Most cost-effective pack', popular: true },
-                      { name: 'Pro', credits: 4000, price: '₹199', desc: 'Growing businesses' },
-                      { name: 'Business', credits: 12000, price: '₹499', desc: 'Power automation suite' },
+                      { name: 'Mini', credits: 250, price: '₹79', desc: 'Perfect for quick testing', subscriptionId: 'sub_TIVP0KoRcCkwj6' },
+                      { name: 'Starter', credits: 600, price: '₹149', desc: 'Casual users setup', subscriptionId: 'sub_TIVRzRGcPJ5wOh' },
+                      { name: 'Popular', credits: 1500, price: '₹299', desc: 'Most cost-effective pack', popular: true, subscriptionId: 'sub_TIVXsqL2KIWBuK' },
+                      { name: 'Pro', credits: 4000, price: '₹699', desc: 'Growing businesses', subscriptionId: 'sub_TIVXSrlnOK0hz0' },
+                      { name: 'Business', credits: 12000, price: '₹1,499', desc: 'Power automation suite', subscriptionId: 'sub_TIVYIKsHm5heEt' },
                       { name: 'Enterprise', credits: '30,000+', price: 'Custom', desc: 'Custom volume options' }
                     ].map(pkg => (
                       <div
@@ -5756,42 +5832,39 @@ Looking forward to connecting!`;
                             }
 
                             setPurchasingPack(pkg.name);
-                            // Parse price to paise (₹1 → 100)
                             const priceStr = pkg.price.replace('₹', '').replace(',', '');
                             const amountPaise = Math.max(100, parseInt(priceStr, 10) * 100);
 
                             try {
-                              // 1. Get auth token from existing supabase session
                               const { data: { session } } = await supabase.auth.getSession();
                               const token = session?.access_token || '';
 
-                              let order;
+                              let subData;
                               try {
-                                const orderRes = await fetch(`${API_URL}/api/credits/order`, {
+                                const subRes = await fetch(`${API_URL}/api/credits/subscription`, {
                                   method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ amount: amountPaise, credits: pkg.credits, packageName: pkg.name })
+                                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                  body: JSON.stringify({ packageName: pkg.name, credits: pkg.credits, amountPaise })
                                 });
-                                order = await orderRes.json();
-                                if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
-                              } catch (orderErr) {
-                                console.error('[Order Error]', orderErr);
-                                alert('Could not initiate payment order. Please check network connection.');
+                                subData = await subRes.json();
+                                if (!subRes.ok) throw new Error(subData.error || 'Subscription creation failed');
+                              } catch (subErr) {
+                                console.error('[Subscription Error]', subErr);
+                                alert('Could not initiate subscription. Please check network connection.');
                                 setPurchasingPack(null);
                                 return;
                               }
 
-                              const verifyPayment = async (response) => {
+                              const periodLabel = 'Monthly';
+
+                              const verifySubscription = async (response) => {
                                 try {
-                                  const verifyRes = await fetch(`${API_URL}/api/credits/verify`, {
+                                  const verifyRes = await fetch(`${API_URL}/api/credits/subscription/verify`, {
                                     method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                      'Authorization': `Bearer ${token}`
-                                    },
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                                     body: JSON.stringify({
-                                      razorpay_order_id: response.razorpay_order_id,
                                       razorpay_payment_id: response.razorpay_payment_id,
+                                      razorpay_subscription_id: response.razorpay_subscription_id,
                                       razorpay_signature: response.razorpay_signature,
                                       credits: pkg.credits,
                                       packageName: pkg.name
@@ -5800,32 +5873,29 @@ Looking forward to connecting!`;
                                   const result = await verifyRes.json();
                                   if (verifyRes.ok) {
                                     triggerSelection();
-                                    setPaymentSuccessModal({ credits: result.credits_added, packageName: pkg.name });
+                                    setPaymentSuccessModal({ credits: result.credits_added, packageName: `${pkg.name} (Monthly)`, subscription: true });
                                     fetchCredits();
                                   } else {
-                                    alert('⚠️ Payment received but credit update failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
+                                    alert('⚠️ Payment received but subscription activation failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
                                   }
                                 } catch (vErr) {
-                                  console.error('[Verify Error]', vErr);
-                                  alert('⚠️ Payment processed but verification connection failed. Your credits will update shortly.');
+                                  console.error('[Subscription Verify Error]', vErr);
+                                  alert('⚠️ Payment processed but verification failed. Your credits will update shortly.');
                                 } finally {
                                   setPurchasingPack(null);
                                 }
                               };
 
                               if (Capacitor.isNativePlatform()) {
-                                // ── ANDROID: use native Razorpay SDK ──────────
                                 try {
                                   const response = await RazorpayNative.openCheckout({
-                                    orderId: order.orderId,
-                                    key: order.key,
-                                    amount: order.amount,
-                                    currency: order.currency,
+                                    subscriptionId: subData.subscriptionId,
+                                    key: subData.key,
                                     name: 'LaterOn',
-                                    description: `${pkg.name} — ${pkg.credits} credits`
+                                    description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
                                   });
                                   if (response && response.razorpay_payment_id) {
-                                    await verifyPayment(response);
+                                    await verifySubscription(response);
                                   } else {
                                     setPurchasingPack(null);
                                   }
@@ -5837,7 +5907,6 @@ Looking forward to connecting!`;
                                   }
                                 }
                               } else {
-                                // ── WEB: load checkout.js and open modal ──────
                                 if (!window.Razorpay) {
                                   await new Promise((resolve, reject) => {
                                     const s = document.createElement('script');
@@ -5848,14 +5917,12 @@ Looking forward to connecting!`;
                                   });
                                 }
                                 const rzp = new window.Razorpay({
-                                  key: order.key,
-                                  amount: order.amount,
-                                  currency: order.currency,
+                                  key: subData.key,
+                                  subscription_id: subData.subscriptionId,
                                   name: 'LaterOn',
-                                  description: `${pkg.name} — ${pkg.credits} credits`,
-                                  order_id: order.orderId,
+                                  description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`,
                                   theme: { color: '#1a73e8' },
-                                  handler: verifyPayment,
+                                  handler: verifySubscription,
                                   modal: { ondismiss: () => setPurchasingPack(null) }
                                 });
                                 rzp.open();
@@ -5867,7 +5934,7 @@ Looking forward to connecting!`;
                           }}
                         >
                           <span className="btn-text">
-                            {purchasingPack === pkg.name ? 'Opening Checkout...' : (pkg.name === 'Enterprise' ? 'Contact Sales' : 'Purchase Pack')}
+                            {purchasingPack === pkg.name ? 'Opening Checkout...' : (pkg.name === 'Enterprise' ? 'Contact Sales' : 'Subscribe Monthly')}
                           </span>
                           <div className="icon-container">
                             {purchasingPack === pkg.name ? (
@@ -6106,7 +6173,7 @@ Looking forward to connecting!`;
                       if (queueTab === 'upcoming') return s.status === 'pending' || s.status === 'scheduled';
                       if (historyFilter !== 'all' && s.status !== historyFilter) return false;
                       return s.status !== 'pending' && s.status !== 'scheduled';
-                    }                    ).length === 0 ? (
+                    }).length === 0 ? (
                       <>
                         {schedulesLoading ? (
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 240px)', width: '100%' }}>
@@ -6152,104 +6219,104 @@ Looking forward to connecting!`;
                           </div>
                         ) : (
                           <>
-                          <motion.div
-                          key="empty-state"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          style={{
-                            textAlign: 'center',
-                            background: 'rgba(255, 255, 255, 0.9)',
-                            padding: '40px',
-                            borderRadius: '6px',
-                            boxShadow: 'var(--shadow)',
-                            margin: '80px auto',
-                            maxWidth: '400px'
-                          }}>
-                          <div style={{
-                            width: '64px',
-                            height: '64px',
-                            background: '#f0f2f5',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            margin: '0 auto 20px'
-                          }}>
-                            <MessageSquare size={32} color="#bac0c4" />
-                          </div>
-                          <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
-                            {searchQuery ? 'No matching messages' : queueTab === 'upcoming' ? 'No Upcoming Messages' : `No ${historyFilter} messages`}
-                          </h3>
-                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                            {searchQuery ? `We couldn't find anything matching "${searchQuery}"` : queueTab === 'upcoming'
-                              ? 'Your scheduled messages will appear here.'
-                              : historyFilter === 'all'
-                                ? 'Once messages are sent, they will move to history.'
-                                : `You don't have any messages with the status "${historyFilter}" yet.`}
-                          </p>
-                        </motion.div>
-
-                        {/* Recent Activity Mini-Section */}
-                        {queueTab === 'upcoming' && !searchQuery && schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
-                          >
-                            <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              {schedules
-                                .filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed')
-                                .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
-                                .slice(0, 3)
-                                .map(msg => (
-                                  <div key={msg.id} style={{ background: 'white', padding: '10px 15px', borderRadius: '0px', boxShadow: '0 2px 5px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--border)' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                      {contacts[msg.phone.split('@')[0]]?.photo ? (
-                                        <img src={contacts[msg.phone.split('@')[0]].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                      ) : (
-                                        msg.phone.includes('@g.us') ? <Users size={14} color="#0057b7" /> : <User size={14} color="var(--text-muted)" />
-                                      )}
-                                    </div>
-                                    <div style={{ overflow: 'hidden', flex: 1, textAlign: 'left' }}>
-                                      <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {groups[msg.phone] || getContactName(msg.phone.split('@')[0])}
-                                      </p>
-                                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.message}</p>
-                                    </div>
-                                    <div style={{ textAlign: 'right', minWidth: '70px', marginLeft: '12px' }}>
-                                      <p style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary)', margin: 0 }}>SENT</p>
-                                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>{format(new Date(msg.scheduled_at || msg.scheduledAt), 'h:mm a')}</p>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                            <button
-                              onClick={() => setQueueTab('history')}
+                            <motion.div
+                              key="empty-state"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
                               style={{
-                                marginTop: '12px',
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--primary-dark)',
-                                fontSize: '0.75rem',
-                                fontWeight: 800,
-                                cursor: 'pointer',
-                                display: 'block',
-                                margin: '12px auto 0',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
-                              }}
-                            >
-                              View Full History &rarr;
-                            </button>
-                          </motion.div>
+                                textAlign: 'center',
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                padding: '40px',
+                                borderRadius: '6px',
+                                boxShadow: 'var(--shadow)',
+                                margin: '80px auto',
+                                maxWidth: '400px'
+                              }}>
+                              <div style={{
+                                width: '64px',
+                                height: '64px',
+                                background: '#f0f2f5',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto 20px'
+                              }}>
+                                <MessageSquare size={32} color="#bac0c4" />
+                              </div>
+                              <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
+                                {searchQuery ? 'No matching messages' : queueTab === 'upcoming' ? 'No Upcoming Messages' : `No ${historyFilter} messages`}
+                              </h3>
+                              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                {searchQuery ? `We couldn't find anything matching "${searchQuery}"` : queueTab === 'upcoming'
+                                  ? 'Your scheduled messages will appear here.'
+                                  : historyFilter === 'all'
+                                    ? 'Once messages are sent, they will move to history.'
+                                    : `You don't have any messages with the status "${historyFilter}" yet.`}
+                              </p>
+                            </motion.div>
+
+                            {/* Recent Activity Mini-Section */}
+                            {queueTab === 'upcoming' && !searchQuery && schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+                              >
+                                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  {schedules
+                                    .filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed')
+                                    .sort((a, b) => new Date(b.scheduled_at || b.scheduledAt) - new Date(a.scheduled_at || a.scheduledAt))
+                                    .slice(0, 3)
+                                    .map(msg => (
+                                      <div key={msg.id} style={{ background: 'white', padding: '10px 15px', borderRadius: '0px', boxShadow: '0 2px 5px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid var(--border)' }}>
+                                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f0f2f5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                          {contacts[msg.phone.split('@')[0]]?.photo ? (
+                                            <img src={contacts[msg.phone.split('@')[0]].photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                          ) : (
+                                            msg.phone.includes('@g.us') ? <Users size={14} color="#0057b7" /> : <User size={14} color="var(--text-muted)" />
+                                          )}
+                                        </div>
+                                        <div style={{ overflow: 'hidden', flex: 1, textAlign: 'left' }}>
+                                          <p style={{ fontSize: '0.8rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {groups[msg.phone] || getContactName(msg.phone.split('@')[0])}
+                                          </p>
+                                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.message}</p>
+                                        </div>
+                                        <div style={{ textAlign: 'right', minWidth: '70px', marginLeft: '12px' }}>
+                                          <p style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--primary)', margin: 0 }}>SENT</p>
+                                          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>{format(new Date(msg.scheduled_at || msg.scheduledAt), 'h:mm a')}</p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
+                                <button
+                                  onClick={() => setQueueTab('history')}
+                                  style={{
+                                    marginTop: '12px',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--primary-dark)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'block',
+                                    margin: '12px auto 0',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px'
+                                  }}
+                                >
+                                  View Full History &rarr;
+                                </button>
+                              </motion.div>
+                            )}
+                          </>
                         )}
-                        </>
-                      )}
-                    </>
-                  ) : (
+                      </>
+                    ) : (
                       schedules
                         .filter(s => {
                           if (!showServiceSelector && s.channel !== channel) return false;
@@ -8608,11 +8675,14 @@ Join Link: [Auto-generated after scheduling]`}
                 </motion.div>
 
                 <h3 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 800, margin: '0 0 8px 0', color: 'var(--text)' }}>
-                  Payment Successful! 🎉
+                  {paymentSuccessModal.subscription ? 'Subscription Active! 🎉' : 'Payment Successful! 🎉'}
                 </h3>
 
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 24px 0', lineHeight: 1.5 }}>
-                  Your payment was verified. <strong>{(paymentSuccessModal.credits || 0).toLocaleString()} credits</strong> have been added to your account.
+                  {paymentSuccessModal.subscription
+                    ? <>You&apos;re now subscribed to <strong>{paymentSuccessModal.packageName}</strong>. <strong>{(paymentSuccessModal.credits || 0).toLocaleString()} credits</strong> added &amp; auto-renewed every month.</>
+                    : <>Your payment was verified. <strong>{(paymentSuccessModal.credits || 0).toLocaleString()} credits</strong> have been added to your account.</>
+                  }
                 </p>
 
                 <div style={{
