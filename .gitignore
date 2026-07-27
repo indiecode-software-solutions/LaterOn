@@ -33,3 +33,7 @@ npm-debug.log*
 
 # Firebase credentials
 server/service-account.json
+
+# APK builds
+*.apk
+*.aab

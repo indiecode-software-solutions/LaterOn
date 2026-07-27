@@ -647,7 +647,7 @@ function Dashboard() {
 
   // Keep ref up to date for back button handler
   backStateRef.current = {
-    showMobileForm, showSocialDropdown, showWhatsAppManage,
+    channel, showMobileForm, showSocialDropdown, showWhatsAppManage,
     showMenu, showFilterMenu, showDisconnectModal, showSignOutModal,
     showClearHistoryModal, paymentSuccessModal, showContactModal,
     showEmailConfig, showTelegramConfig, showAiPrompt, showServiceSelector
@@ -674,7 +674,7 @@ function Dashboard() {
           if (s.showEmailConfig) { setShowEmailConfig(false); return; }
           if (s.showTelegramConfig) { setShowTelegramConfig(false); return; }
           if (s.showAiPrompt) { setShowAiPrompt(false); return; }
-          if (s.showServiceSelector) { setShowServiceSelector(false); return; }
+          if (!s.showServiceSelector && s.channel) { setShowServiceSelector(true); return; }
           App.exitApp();
         });
       } catch (e) {
@@ -2099,188 +2099,102 @@ Looking forward to connecting!`;
             ) : showServiceSelector ? (
               <div style={{ padding: isMobile ? '16px' : '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {isMobile && <div style={{ textAlign: 'center', marginBottom: '12px' }}><h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 800 }}>Select a Service</h2></div>}
-                <div className={isMobile ? 'service-grid' : ''} style={isMobile ? {} : { display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                <div className="service-grid">
                   {/* WhatsApp Card */}
-                  <div style={{
-                    padding: '20px',
-                    border: channel === 'whatsapp' ? '2px solid #25d366' : '2px solid var(--border)',
-                    background: channel === 'whatsapp' ? '#f0fff4' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  <div className={channel === 'whatsapp' ? 'active' : ''} style={{ borderColor: channel === 'whatsapp' ? '#25d366' : 'var(--border)', background: channel === 'whatsapp' ? '#f0fff4' : 'white' }}
                     onClick={() => { triggerMedium(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'whatsapp') e.currentTarget.style.borderColor = '#25d366'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'whatsapp' ? '#25d366' : 'var(--border)'; }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', background: '#25d366', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <WhatsAppIcon size={22} color="white" />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#1a5c3e' }}>WhatsApp</h4>
-                        <p style={{ fontSize: '0.75rem', color: '#4a7c62', margin: 0 }}>
-                          {userInfo ? 'Connected' : 'Connect QR / Pairing Code'}
-                        </p>
-                      </div>
-                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {userInfo ? (
-                          <Check size={20} color="#25d366" />
-                        ) : (
-                          <Plus size={20} color="#94a3b8" />
-                        )}
-                      </div>
+                    <div style={{ background: '#25d366' }}>
+                      <WhatsAppIcon size={24} color="white" />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#1a5c3e' }}>WhatsApp</h4>
+                      <p style={{ color: '#4a7c62' }}>
+                        {userInfo ? 'Connected' : 'Connect QR / Pairing Code'}
+                      </p>
                     </div>
                   </div>
 
                   {/* Email Card */}
-                  <div style={{
-                    padding: '20px',
-                    border: channel === 'email' ? '2px solid #ea4335' : '2px solid var(--border)',
-                    background: channel === 'email' ? '#fdf2f2' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  <div className={channel === 'email' ? 'active' : ''} style={{ borderColor: channel === 'email' ? '#ea4335' : 'var(--border)', background: channel === 'email' ? '#fdf2f2' : 'white' }}
                     onClick={() => { triggerMedium(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'email') e.currentTarget.style.borderColor = '#ea4335'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'email' ? '#ea4335' : 'var(--border)'; }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', background: '#ea4335', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <Mail size={22} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#b91c1c' }}>Email</h4>
-                        <p style={{ fontSize: '0.75rem', color: '#dc2626', margin: 0 }}>
-                          Connected
-                        </p>
-                      </div>
-                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Check size={20} color="#ea4335" />
-                      </div>
+                    <div style={{ background: '#ea4335', color: 'white' }}>
+                      <Mail size={24} />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#b91c1c' }}>Email</h4>
+                      <p style={{ color: '#dc2626' }}>Connected</p>
                     </div>
                   </div>
 
                   {/* Google Calendar Card */}
-                  <div style={{
-                    padding: '20px',
-                    border: channel === 'calendar' ? '2px solid #1a73e8' : '2px solid var(--border)',
-                    background: channel === 'calendar' ? '#e8f0fe' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  <div className={channel === 'calendar' ? 'active' : ''} style={{ borderColor: channel === 'calendar' ? '#1a73e8' : 'var(--border)', background: channel === 'calendar' ? '#e8f0fe' : 'white' }}
                     onClick={() => { triggerMedium(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'calendar') e.currentTarget.style.borderColor = '#1a73e8'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'calendar' ? '#1a73e8' : 'var(--border)'; }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', background: '#1a73e8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <Calendar size={22} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#174ea6' }}>Meetings</h4>
-                        <p style={{ fontSize: '0.75rem', color: '#1a73e8', margin: 0 }}>
-                          {integrations.some(i => i.provider === 'gmail_oauth') ? 'Connected' : 'Configure Google Meet'}
-                        </p>
-                      </div>
-                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {integrations.some(i => i.provider === 'gmail_oauth') ? (
-                          <Check size={20} color="#1a73e8" />
-                        ) : (
-                          <Plus size={20} color="#94a3b8" />
-                        )}
-                      </div>
+                    <div style={{ background: '#1a73e8' }}>
+                      <Calendar size={24} />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#174ea6' }}>Meetings</h4>
+                      <p style={{ color: '#1a73e8' }}>
+                        {integrations.some(i => i.provider === 'gmail_oauth') ? 'Connected' : 'Configure Google Meet'}
+                      </p>
                     </div>
                   </div>
 
                   {/* Telegram Card */}
-                  <div style={{
-                    padding: '20px',
-                    border: channel === 'telegram' ? '2px solid #0088cc' : '2px solid var(--border)',
-                    background: channel === 'telegram' ? '#e6f3ff' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  <div className={channel === 'telegram' ? 'active' : ''} style={{ borderColor: channel === 'telegram' ? '#0088cc' : 'var(--border)', background: channel === 'telegram' ? '#e6f3ff' : 'white' }}
                     onClick={() => { triggerMedium(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'telegram') e.currentTarget.style.borderColor = '#0088cc'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'telegram' ? '#0088cc' : 'var(--border)'; }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', background: '#0088cc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <TelegramIcon size={22} color="white" />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#005f9e' }}>Telegram</h4>
-                        <p style={{ fontSize: '0.75rem', color: '#0088cc', margin: 0 }}>
-                          {telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
-                        </p>
-                      </div>
-                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {telegramStatus.status === 'connected' ? (
-                          <Check size={20} color="#0088cc" />
-                        ) : (
-                          <Plus size={20} color="#94a3b8" />
-                        )}
-                      </div>
+                    <div style={{ background: '#0088cc' }}>
+                      <TelegramIcon size={24} color="white" />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#005f9e' }}>Telegram</h4>
+                      <p style={{ color: '#0088cc' }}>
+                        {telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
+                      </p>
                     </div>
                   </div>
 
                   {/* Instagram Card */}
-                  <div style={{
-                    padding: '20px',
-                    border: channel === 'instagram' ? '2px solid #e1306c' : '2px solid var(--border)',
-                    background: channel === 'instagram' ? '#fff0f5' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  <div className={channel === 'instagram' ? 'active' : ''} style={{ borderColor: channel === 'instagram' ? '#e1306c' : 'var(--border)', background: channel === 'instagram' ? '#fff0f5' : 'white' }}
                     onClick={() => { triggerMedium(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'instagram') e.currentTarget.style.borderColor = '#e1306c'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'instagram' ? '#e1306c' : 'var(--border)'; }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', background: '#e1306c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <InstagramIcon size={22} color="white" />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#a81c4e' }}>Instagram</h4>
-                        <p style={{ fontSize: '0.75rem', color: '#e1306c', margin: 0 }}>
-                          {instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
-                        </p>
-                      </div>
-                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {instagramStatus.status === 'connected' ? (
-                          <Check size={20} color="#e1306c" />
-                        ) : (
-                          <Plus size={20} color="#94a3b8" />
-                        )}
-                      </div>
+                    <div style={{ background: '#e1306c' }}>
+                      <InstagramIcon size={24} color="white" />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#a81c4e' }}>Instagram</h4>
+                      <p style={{ color: '#e1306c' }}>
+                        {instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected'}
+                      </p>
                     </div>
                   </div>
 
                   {/* Personal Reminders Card */}
-                  <div style={{
-                    padding: '20px',
-                    border: channel === 'reminders' ? '2px solid #f59e0b' : '2px solid var(--border)',
-                    background: channel === 'reminders' ? '#fffbeb' : 'white',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  <div className={channel === 'reminders' ? 'active' : ''} style={{ borderColor: channel === 'reminders' ? '#f59e0b' : 'var(--border)', background: channel === 'reminders' ? '#fffbeb' : 'white' }}
                     onClick={() => { triggerMedium(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
                     onMouseOver={e => { if (channel !== 'reminders') e.currentTarget.style.borderColor = '#f59e0b'; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = channel === 'reminders' ? '#f59e0b' : 'var(--border)'; }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '44px', height: '44px', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <Bell size={22} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 2px 0', color: '#b45309' }}>Personal Reminders</h4>
-                        <p style={{ fontSize: '0.75rem', color: '#d97706', margin: 0 }}>
-                          Never Forget
-                        </p>
-                      </div>
-                      <div style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Check size={20} color="#d97706" />
-                      </div>
+                    <div style={{ background: '#f59e0b' }}>
+                      <Bell size={24} />
+                    </div>
+                    <div>
+                      <h4 style={{ color: '#b45309' }}>Personal Reminders</h4>
+                      <p style={{ color: '#d97706' }}>Never Forget</p>
                     </div>
                   </div>
                 </div>
@@ -7376,27 +7290,6 @@ Looking forward to connecting!`;
             </div>
           )}
         </AnimatePresence>
-        {/* Desktop Floating Action Button (FAB) — hidden on mobile, replaced by bottom nav plus */}
-        {!isMobile && !showServiceSelector && !showMobileForm && (channel !== 'whatsapp' || status === 'connected') && (
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            whileTap={{ scale: 0.9 }}
-            className="fab"
-            style={{
-              background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
-              boxShadow: channel === 'email' ? '0 6px 20px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 6px 20px rgba(26, 115, 230, 0.4)' : (channel === 'reminders' ? '0 6px 20px rgba(245, 158, 11, 0.4)' : '0 6px 20px rgba(37, 211, 102, 0.4)'))
-            }}
-            onClick={() => {
-              triggerLight();
-              setFormStep(1);
-              setShowMobileForm(true);
-            }}
-          >
-            <Plus size={32} />
-          </motion.button>
-        )}
-
         {/* Multi-Step Wizard Modal */}
         <AnimatePresence>
           {showMobileForm && (
@@ -7405,6 +7298,7 @@ Looking forward to connecting!`;
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
               onClick={() => setShowMobileForm(false)}
             >
               <motion.div
@@ -7412,7 +7306,7 @@ Looking forward to connecting!`;
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                 onClick={e => e.stopPropagation()}
               >
                 {/* Wizard Header */}
