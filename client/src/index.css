@@ -1575,15 +1575,15 @@ body:has(.landing-container)::before {
   text-align: center;
   cursor: pointer;
   border-radius: 6px;
-  background: white;
+  background: var(--card-bg, white);
   gap: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .service-grid > div:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  background: linear-gradient(135deg, white, color-mix(in srgb, var(--card-accent) 8%, white));
+  background: linear-gradient(135deg, var(--card-bg, white), color-mix(in srgb, var(--card-accent) 12%, var(--card-bg, white)));
 }
 
 .service-grid > div > div {
