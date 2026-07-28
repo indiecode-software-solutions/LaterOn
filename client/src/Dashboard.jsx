@@ -468,6 +468,8 @@ function Dashboard() {
   const manageBtnRef = useRef(null);
   const [showCreditsStrip, setShowCreditsStrip] = useState(false);
   const [creditsHover, setCreditsHover] = useState(false);
+  const [adminClicks, setAdminClicks] = useState(0);
+  const adminMessages = ['', 'You are 4 steps away from admin', 'You are 3 steps away from admin', 'You are 2 steps away from admin', 'You are 1 step away from admin'];
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1861,9 +1863,19 @@ Looking forward to connecting!`;
           </button>
         </div>
       )}
-      <div className="brand-tagline" onDoubleClick={() => window.open('/admin', '_blank')} style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px', cursor: 'default', pointerEvents: 'auto', userSelect: 'none' }}>
+      <div className="brand-tagline" onClick={() => {
+        const next = adminClicks + 1;
+        if (next >= 6) { setAdminClicks(0); window.open('/admin', '_blank'); return; }
+        setAdminClicks(next);
+        setTimeout(() => setAdminClicks(0), 3000);
+      }} style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px', cursor: 'default', pointerEvents: 'auto', userSelect: 'none' }}>
         <span style={{ color: '#ffffff' }}>Later</span>
         <span style={{ fontWeight: 400, color: '#90ee90' }}>On</span>
+        {adminClicks > 0 && adminClicks < 5 && (
+          <span style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '4px', fontSize: '0.6rem', color: '#90ee90', whiteSpace: 'nowrap', opacity: 0.9 }}>
+            {adminMessages[adminClicks]}
+          </span>
+        )}
       </div>
       <div className="app-wrapper">
         {showBooking && (
