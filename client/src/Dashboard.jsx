@@ -2007,7 +2007,7 @@ Looking forward to connecting!`;
                       <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
                       <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
                         strokeDasharray={`${2 * Math.PI * 10}`}
-                        strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / Math.max(credits.purchased_balance, credits.total_balance), 1))}`}
+                        strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / (credits.subscription_credits || 250), 1))}`}
                         strokeLinecap="round" transform="rotate(-90 12 12)"
                         style={{ transition: 'stroke-dashoffset 0.3s ease' }}
                       />
@@ -2074,7 +2074,7 @@ Looking forward to connecting!`;
             {showCreditsStrip && !creditsLoading && (
               <div style={{
                 padding: '12px 16px',
-                background: 'linear-gradient(135deg, var(--primary-dark), #0057b7)',
+                background: 'linear-gradient(135deg, #2d3748, #4a5568)',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
