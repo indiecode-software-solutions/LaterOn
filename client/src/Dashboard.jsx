@@ -1956,7 +1956,9 @@ Looking forward to connecting!`;
                       setSidebarStep(1);
                       setActiveView('scheduler');
                     }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', transition: 'background 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
