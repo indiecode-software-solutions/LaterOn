@@ -1944,7 +1944,7 @@ Looking forward to connecting!`;
                       {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                     </p>
                     <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {credits.subscription_pack || 'Mini'}
+                      {credits.subscription_pack || 'Mini Free'}
                     </p>
                   </div>
                 </div>
@@ -5926,7 +5926,7 @@ Looking forward to connecting!`;
                     gap: '20px'
                   }}>
                     {[
-                      { name: 'Mini', credits: 250, price: 'Free', desc: 'Perfect for getting started', free: true },
+                      { name: 'Mini Free', credits: 250, price: 'Free', desc: 'Perfect for getting started', free: true },
                       { name: 'Starter', credits: 600, price: '₹149', desc: 'Casual users setup', subscriptionId: 'sub_TIVRzRGcPJ5wOh' },
                       { name: 'Popular', credits: 1500, price: '₹299', desc: 'Most cost-effective pack', popular: true, subscriptionId: 'sub_TIVXsqL2KIWBuK' },
                       { name: 'Pro', credits: 4000, price: '₹699', desc: 'Growing businesses', subscriptionId: 'sub_TIVXSrlnOK0hz0' },
