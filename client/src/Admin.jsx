@@ -6,6 +6,23 @@ const API_URL = import.meta.env.VITE_API_URL ||
     ? 'http://localhost:3001'
     : 'https://lateron.indiecode.in');
 
+const TIMEFRAMES = [
+  { label: 'Last hour', value: 60 * 60 * 1000 },
+  { label: 'Last 24 hours', value: 24 * 60 * 60 * 1000 },
+  { label: 'Last 7 days', value: 7 * 24 * 60 * 60 * 1000 },
+  { label: 'Last 30 days', value: 30 * 24 * 60 * 60 * 1000 },
+  { label: 'All time', value: Infinity }
+];
+
+function timeAgo(ts) {
+  if (!ts) return 'Never';
+  const diff = Date.now() - new Date(ts).getTime();
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return `${Math.floor(diff / 86400000)}d ago`;
+}
+
 export default function Admin() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -15,6 +32,7 @@ export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [timeframe, setTimeframe] = useState(24 * 60 * 60 * 1000);
 
   const fetchUsers = async (pw) => {
     setLoading(true);
@@ -118,13 +136,16 @@ export default function Admin() {
     );
   }
 
+  const now = Date.now();
+  const activeUsers = users.filter(u => u.last_active && (now - u.last_active) < timeframe);
+  const onlineUsers = users.filter(u => u.online);
+
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f5', fontFamily: "'Poppins', sans-serif" }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, color: '#1a1a1a' }}>Admin Panel</h1>
-            <p style={{ fontSize: '0.85rem', color: '#666', margin: '4px 0 0 0' }}>{users.length} registered users</p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => fetchUsers(password)} style={{ padding: '8px 16px', fontSize: '0.8rem', fontWeight: 600, background: 'white', color: '#333', border: '1px solid #ddd', borderRadius: '6px', cursor: 'pointer' }}>
@@ -133,6 +154,29 @@ export default function Admin() {
             <button onClick={() => navigate('/dashboard')} style={{ padding: '8px 16px', fontSize: '0.8rem', fontWeight: 600, background: '#1a73e8', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
               Dashboard
             </button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+          <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px' }}>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Users</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '1.6rem', fontWeight: 600, color: '#1a1a1a' }}>{users.length}</p>
+          </div>
+          <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px' }}>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Online Now</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '1.6rem', fontWeight: 600, color: '#2e7d32' }}>{onlineUsers.length}</p>
+          </div>
+          <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px' }}>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '1.6rem', fontWeight: 600, color: '#1a73e8' }}>{activeUsers.length}</p>
+          </div>
+          <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <select value={timeframe} onChange={e => setTimeframe(Number(e.target.value))} style={{ flex: 1, padding: '8px 10px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid #ddd', borderRadius: '6px', outline: 'none' }}>
+              {TIMEFRAMES.map(tf => (
+                <option key={tf.value} value={tf.value}>{tf.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -149,6 +193,7 @@ export default function Admin() {
                 <tr style={{ background: '#fafafa', borderBottom: '1px solid #e0e0e0' }}>
                   <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#555', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>User</th>
                   <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#555', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</th>
+                  <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: '#555', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Last Active</th>
                   <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 600, color: '#555', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Free</th>
                   <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 600, color: '#555', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Purchased</th>
                   <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 600, color: '#555', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total</th>
@@ -159,12 +204,18 @@ export default function Admin() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u, i) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
+                {users.map((u, i) => {
+                  const isActiveInFrame = u.last_active && (now - u.last_active) < timeframe;
+                  return (
+                  <tr key={u.id} style={{ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? 'white' : '#fafafa', opacity: isActiveInFrame ? 1 : 0.5 }}>
                     {editingId === u.id ? (
                       <>
-                        <td style={{ padding: '12px 16px', fontWeight: 500, color: '#1a1a1a' }}>{u.name}</td>
+                        <td style={{ padding: '12px 16px', fontWeight: 500, color: '#1a1a1a' }}>
+                          {u.online && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', marginRight: '6px' }} />}
+                          {u.name}
+                        </td>
                         <td style={{ padding: '12px 16px', color: '#666' }}>{u.email}</td>
+                        <td style={{ padding: '12px 16px', color: '#888', fontSize: '0.75rem' }}>{timeAgo(u.last_sign_in)}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                           <input value={editForm.free_balance} onChange={e => setEditForm({...editForm, free_balance: e.target.value})} style={{ width: '60px', padding: '4px 6px', fontSize: '0.75rem', textAlign: 'center', border: '1px solid #ddd', borderRadius: '4px' }} />
                         </td>
@@ -201,8 +252,12 @@ export default function Admin() {
                       </>
                     ) : (
                       <>
-                        <td style={{ padding: '12px 16px', fontWeight: 500, color: '#1a1a1a' }}>{u.name}</td>
+                        <td style={{ padding: '12px 16px', fontWeight: 500, color: '#1a1a1a' }}>
+                          {u.online && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', marginRight: '6px' }} />}
+                          {u.name}
+                        </td>
                         <td style={{ padding: '12px 16px', color: '#666' }}>{u.email}</td>
+                        <td style={{ padding: '12px 16px', color: '#888', fontSize: '0.75rem' }}>{timeAgo(u.last_sign_in)}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#2e7d32' }}>{u.free_balance}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#1a73e8' }}>{u.purchased_balance}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#1a1a1a' }}>{u.total_balance}</td>
@@ -227,7 +282,8 @@ export default function Admin() {
                       </>
                     )}
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

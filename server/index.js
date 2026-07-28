@@ -3594,14 +3594,18 @@ app.get('/api/admin/users', async (req, res) => {
             credits.forEach(c => { creditsMap[c.user_id] = c; });
         }
 
+        const now = Date.now();
         const result = (users?.users || []).map(u => {
             const c = creditsMap[u.id] || {};
+            const lastSignIn = u.last_sign_in_at ? new Date(u.last_sign_in_at).getTime() : 0;
             return {
                 id: u.id,
                 email: u.email,
                 name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Unknown',
                 created_at: u.created_at,
                 last_sign_in: u.last_sign_in_at,
+                last_active: lastSignIn,
+                online: !!userSockets[u.id],
                 free_balance: c.free_balance || 0,
                 purchased_balance: c.purchased_balance || 0,
                 total_balance: (c.free_balance || 0) + (c.purchased_balance || 0),
