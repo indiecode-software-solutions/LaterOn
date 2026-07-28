@@ -6,6 +6,7 @@ import Dashboard from './Dashboard';
 import Auth from './Auth';
 import PrivacyPolicy from './PrivacyPolicy';
 import Terms from './Terms';
+import Admin from './Admin';
 
 import { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
@@ -100,6 +101,14 @@ function App() {
         <Route 
           path="/terms" 
           element={<Terms />} 
+        />
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute loading={loading} session={session}>
+              <Admin />
+            </ProtectedRoute>
+          } 
         />
       </Routes>
     </Router>

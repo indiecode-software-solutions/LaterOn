@@ -5490,6 +5490,16 @@ Looking forward to connecting!`;
               </>
             )}
           </div>
+
+          {/* Admin link */}
+          <div style={{ padding: '8px 16px', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
+            <span
+              onClick={() => window.open('/admin', '_blank')}
+              style={{ fontSize: '0.65rem', color: '#bbb', cursor: 'pointer', userSelect: 'none' }}
+            >
+              Admin
+            </span>
+          </div>
         </aside>
 
         {/* Main Content Area */}

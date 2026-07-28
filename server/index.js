@@ -3570,6 +3570,46 @@ app.post('/api/credits/subscription/cancel', verifyToken, async (req, res) => {
     }
 });
 
+// ── Admin: List all users with credits ───────────────────────────────────────
+app.get('/api/admin/users', verifyToken, async (req, res) => {
+    try {
+        const { data: users, error: usersErr } = await supabaseAdmin.auth.admin.listUsers();
+        if (usersErr) return res.status(500).json({ error: usersErr.message });
+
+        const { data: credits, error: creditsErr } = await supabaseAdmin
+            .from('user_credits')
+            .select('*');
+        if (creditsErr) return res.status(500).json({ error: creditsErr.message });
+
+        const creditsMap = {};
+        if (credits) {
+            credits.forEach(c => { creditsMap[c.user_id] = c; });
+        }
+
+        const result = (users?.users || []).map(u => {
+            const c = creditsMap[u.id] || {};
+            return {
+                id: u.id,
+                email: u.email,
+                name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Unknown',
+                created_at: u.created_at,
+                last_sign_in: u.last_sign_in_at,
+                free_balance: c.free_balance || 0,
+                purchased_balance: c.purchased_balance || 0,
+                total_balance: (c.free_balance || 0) + (c.purchased_balance || 0),
+                subscription_pack: c.subscription_pack || null,
+                subscription_status: c.subscription_status || null,
+                next_refill_date: c.next_refill_date || null
+            };
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Admin] Error fetching users:', err);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
 // Serve Frontend
 const clientDistPath = path.join(__dirname, '../client/dist');
 if (fs.existsSync(clientDistPath)) {
