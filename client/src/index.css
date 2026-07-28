@@ -1452,6 +1452,12 @@ body:has(.landing-container)::before {
   }
 }
 
+@media (max-width: 1024px) {
+  .brand-tagline {
+    display: none;
+  }
+}
+
 @media (max-width: 850px) {
   .dashboard-container {
     padding: 0;
@@ -1484,10 +1490,6 @@ body:has(.landing-container)::before {
     flex: 1;
     height: auto;
     min-height: 50vh;
-  }
-
-  .brand-tagline {
-    display: none;
   }
 }
 
