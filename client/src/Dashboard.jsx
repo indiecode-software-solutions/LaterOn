@@ -6491,7 +6491,7 @@ Looking forward to connecting!`;
                             </motion.div>
 
                             {/* Recent Activity Mini-Section */}
-                            {queueTab === 'upcoming' && !searchQuery && schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
+                            {!isMobile && queueTab === 'upcoming' && !searchQuery && schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed').length > 0 && (
                               <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
