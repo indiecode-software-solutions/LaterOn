@@ -464,6 +464,10 @@ function Dashboard() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSocialDropdown, setShowSocialDropdown] = useState(false);
   const [showWhatsAppManage, setShowWhatsAppManage] = useState(false);
+  const [manageMenuPos, setManageMenuPos] = useState({ top: 0, right: 0 });
+  const manageBtnRef = useRef(null);
+  const [showCreditsStrip, setShowCreditsStrip] = useState(false);
+  const [creditsHover, setCreditsHover] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1900,81 +1904,10 @@ Looking forward to connecting!`;
         {/* Left Sidebar */}
         <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
           <header className="header">
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {!showServiceSelector && (
-                <button
-                  className="btn-icon"
-                  onClick={() => {
-                    triggerSelection();
-                    setShowServiceSelector(true);
-                    setSidebarStep(1);
-                    setActiveView('scheduler');
-                  }}
-                  title="Switch Service / Channel"
-                >
-                  <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
-                </button>
-              )}
-              {!showServiceSelector && (
-                <button
-                  className={`btn-icon ${activeView === 'credits' ? 'active' : ''}`}
-                  onClick={() => {
-                    triggerSelection();
-                    setActiveView(activeView === 'credits' ? 'scheduler' : 'credits');
-                  }}
-                  style={{
-                    background: activeView === 'credits' ? 'rgba(26, 115, 232, 0.1)' : 'transparent'
-                  }}
-                  title="Later Credits Balance & Pricing"
-                >
-                  <Coins size={18} color="var(--primary)" />
-                </button>
-              )}
-              {!showServiceSelector && channel === 'whatsapp' && (
-                <button
-                  className={`btn-icon ${activeView === 'business' ? 'active' : ''}`}
-                  onClick={() => {
-                    triggerSelection();
-                    setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler');
-                    setCurrentBusinessTool(null);
-                    setSidebarStep(1);
-                  }}
-                  title={activeView === 'scheduler' ? "Switch to Business Tools" : "Switch to LaterOn"}
-                >
-                  {activeView === 'scheduler' ? <WABusinessIcon size={22} /> : <Calendar size={20} color="var(--primary-dark)" />}
-                </button>
-              )}
-
-              {!showServiceSelector && channel === 'whatsapp' && (
-                <button className="btn-icon" onClick={() => { triggerSelection(); fetchStatus(); }} title="Refresh Connection Status">
-                  <RefreshCcw size={18} color={status === 'connected' ? '#25d366' : '#667781'} />
-                </button>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
               {showServiceSelector && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {/* Credit Balance Badge */}
-                  <div
-                    onClick={() => { triggerSelection(); setActiveView('credits'); setShowServiceSelector(false); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: '#f1f5f9',
-                      padding: '6px 12px',
-                      borderRadius: '100px',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border)'
-                    }}
-                    title="View Later Credits Balance"
-                  >
-                    <Coins size={14} color="var(--primary)" />
-                    {creditsLoading ? <span className="skeleton-text" style={{ width: '30px', height: '0.8rem' }} /> : <span>{credits.total_balance}</span>}
-                  </div>
-
-                  {/* Profile Photo or Initials */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                  {/* Profile Photo or Initials with 6px border-radius */}
                   {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
                     <img
                       src={user.user_metadata.avatar_url || user.user_metadata.picture}
@@ -1982,7 +1915,7 @@ Looking forward to connecting!`;
                       style={{
                         width: '32px',
                         height: '32px',
-                        borderRadius: '50%',
+                        borderRadius: '6px',
                         border: '1.5px solid var(--border)',
                         objectFit: 'cover'
                       }}
@@ -1991,7 +1924,7 @@ Looking forward to connecting!`;
                     <div style={{
                       width: '32px',
                       height: '32px',
-                      borderRadius: '50%',
+                      borderRadius: '6px',
                       background: 'var(--primary-light)',
                       color: 'var(--primary-dark)',
                       display: 'flex',
@@ -2004,6 +1937,75 @@ Looking forward to connecting!`;
                       {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
                     </div>
                   )}
+                </div>
+              )}
+              {!showServiceSelector && (
+                <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+                  <button
+                    className="btn-icon"
+                    onClick={() => {
+                      triggerSelection();
+                      setShowServiceSelector(true);
+                      setSidebarStep(1);
+                      setActiveView('scheduler');
+                    }}
+                    title="Switch Service / Channel"
+                  >
+                    <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
+                  </button>
+                  <button
+                    className={`btn-icon ${activeView === 'credits' ? 'active' : ''}`}
+                    onClick={() => {
+                      triggerSelection();
+                      setActiveView(activeView === 'credits' ? 'scheduler' : 'credits');
+                    }}
+                    style={{
+                      background: activeView === 'credits' ? 'rgba(26, 115, 232, 0.1)' : 'transparent'
+                    }}
+                    title="Later Credits Balance & Pricing"
+                  >
+                    <Coins size={18} color="var(--primary)" />
+                  </button>
+                </div>
+              )}
+              {showServiceSelector && (
+                <div
+                  onMouseEnter={() => setCreditsHover(true)}
+                  onMouseLeave={() => setCreditsHover(false)}
+                  onClick={() => { triggerSelection(); setShowCreditsStrip(prev => !prev); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    background: 'rgba(0,0,0,0.04)',
+                    borderRadius: '6px',
+                    padding: '4px 8px'
+                  }}
+                  title="View Later Credits Balance"
+                >
+                  {creditsHover && !creditsLoading && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      {credits.total_balance}
+                    </span>
+                  )}
+                  {creditsLoading ? (
+                    <span className="skeleton-text" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
+                      <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
+                        strokeDasharray={`${2 * Math.PI * 10}`}
+                        strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / Math.max(credits.purchased_balance, credits.total_balance), 1))}`}
+                        strokeLinecap="round" transform="rotate(-90 12 12)"
+                        style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                      />
+                    </svg>
+                  )}
+                  <svg width="10" height="10" viewBox="0 0 10 10" style={{ color: 'var(--text-muted)' }}>
+                    <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </div>
               )}
             </div>
@@ -2026,27 +2028,21 @@ Looking forward to connecting!`;
               {channel === 'whatsapp' && status === 'connected' && (
                 <div style={{ position: 'relative' }}>
                   <button
-                    onClick={() => setShowWhatsAppManage(prev => !prev)}
+                    ref={manageBtnRef}
+                    onClick={() => {
+                      if (!showWhatsAppManage && manageBtnRef.current) {
+                        const rect = manageBtnRef.current.getBoundingClientRect();
+                        setManageMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                      }
+                      setShowWhatsAppManage(prev => !prev);
+                    }}
                     style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 600, borderRadius: '6px' }}
                   >
                     <Settings size={12} />
                     Manage
                   </button>
                   {showWhatsAppManage && (
-                    <>
-                      <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowWhatsAppManage(false)} />
-                      <div style={{ position: 'absolute', bottom: '100%', right: 0, zIndex: 100, background: 'white', border: '1px solid var(--border)', boxShadow: '0 -4px 16px rgba(0,0,0,0.1)', minWidth: '160px', padding: '6px', marginBottom: '4px' }}>
-                        <div onClick={() => { handleSyncContacts(); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: isContactSyncing ? 'wait' : 'pointer', fontSize: '0.75rem', fontWeight: 600, color: isContactSyncing ? 'var(--primary)' : 'var(--text)' }}>
-                          <RefreshCcw size={13} className={isContactSyncing ? 'spin' : ''} />
-                          Sync Contacts
-                        </div>
-                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-                        <div onClick={() => { setShowWhatsAppManage(false); handleDisconnectWhatsApp(); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: '#ef4444' }}>
-                          <WifiOff size={13} />
-                          Disconnect
-                        </div>
-                      </div>
-                    </>
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowWhatsAppManage(false)} />
                   )}
                 </div>
               )}
@@ -2065,6 +2061,43 @@ Looking forward to connecting!`;
             flexDirection: 'column',
             overflowY: 'auto'
           }}>
+            {showCreditsStrip && !creditsLoading && (
+              <div style={{
+                padding: '12px 16px',
+                background: 'linear-gradient(135deg, var(--primary-dark), #0057b7)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexShrink: 0
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Coins size={18} color="white" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.85 }}>Credits Balance</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 600 }}>{credits.total_balance.toLocaleString()}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setActiveView('credits'); setShowCreditsStrip(false); setShowServiceSelector(false); }}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    background: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Recharge / Upgrade
+                </button>
+              </div>
+            )}
             {hoveredSchedule ? (
               <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                 <motion.div
@@ -2614,6 +2647,22 @@ Looking forward to connecting!`;
                             marginTop: '4px'
                           }}>
                             <div
+                              onClick={() => { triggerSelection(); setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler'); setCurrentBusinessTool(null); setSidebarStep(1); setShowWhatsAppManage(false); }}
+                              style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: activeView === 'business' ? 'var(--primary)' : 'var(--text)' }}
+                            >
+                              {activeView === 'business' ? <Calendar size={15} /> : <WABusinessIcon size={15} />}
+                              {activeView === 'business' ? 'Back to Scheduler' : 'Business Tools'}
+                            </div>
+                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                            <div
+                              onClick={() => { fetchStatus(); setShowWhatsAppManage(false); }}
+                              style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)' }}
+                            >
+                              <RefreshCcw size={15} className={status === 'connected' ? '' : 'spin'} />
+                              Refresh Connection
+                            </div>
+                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                            <div
                               onClick={() => { handleSyncContacts(); setShowWhatsAppManage(false); }}
                               style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: isContactSyncing ? 'wait' : 'pointer', fontSize: '0.8rem', fontWeight: 600, color: isContactSyncing ? 'var(--primary)' : 'var(--text)' }}
                             >
@@ -2637,6 +2686,23 @@ Looking forward to connecting!`;
                     <div className="pulse" style={{ width: '8px', height: '8px', background: '#eab308', borderRadius: '50%', position: 'absolute', top: '12px', right: '12px' }} />
                   )}
                 </div>
+
+                {/* Desktop WhatsApp Business Tools toggle */}
+                {!isMobile && !showServiceSelector && channel === 'whatsapp' && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 16px', borderBottom: '1px solid var(--border)', background: '#fafafa' }}>
+                    <span
+                      onClick={() => {
+                        triggerSelection();
+                        setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler');
+                        setCurrentBusinessTool(null);
+                        setSidebarStep(1);
+                      }}
+                      style={{ fontSize: '0.7rem', fontWeight: 600, color: activeView === 'business' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      {activeView === 'business' ? '← Back to Scheduler' : 'Business Tools →'}
+                    </span>
+                  </div>
+                )}
 
                 <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                   {status === 'connected' && contactSyncMessage && (
@@ -6356,7 +6422,7 @@ Looking forward to connecting!`;
                                   <rect fill="url(#pl-grad)" height="128" width="128" y="0" x="0" />
                                 </mask>
                               </defs>
-                              <g fill="var(--primary)">
+                              <g fill="#128C7E">
                                 <g className="pl1__g">
                                   <g transform="translate(20,20) rotate(0,44,44)">
                                     <g className="pl1__rect-g">
@@ -6370,7 +6436,7 @@ Looking forward to connecting!`;
                                   </g>
                                 </g>
                               </g>
-                              <g mask="url(#pl-mask)" fill="#e1306c">
+                              <g mask="url(#pl-mask)" fill="#25D366">
                                 <g className="pl1__g">
                                   <g transform="translate(20,20) rotate(0,44,44)">
                                     <g className="pl1__rect-g">
@@ -8994,6 +9060,31 @@ Join Link: [Auto-generated after scheduling]`}
           </>
         )}
       </div>
+
+      {/* Mobile WhatsApp Manage Dropdown (rendered outside app-wrapper to avoid overflow clipping) */}
+      {isMobile && showWhatsAppManage && channel === 'whatsapp' && status === 'connected' && (
+        <div style={{ position: 'fixed', top: manageMenuPos.top, right: manageMenuPos.right, zIndex: 999, background: 'white', border: '1px solid var(--border)', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: '160px', padding: '6px', borderRadius: '8px' }}>
+          <div onClick={() => { triggerSelection(); setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler'); setCurrentBusinessTool(null); setSidebarStep(1); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: activeView === 'business' ? 'var(--primary)' : 'var(--text)' }}>
+            {activeView === 'business' ? <Calendar size={13} /> : <WABusinessIcon size={13} />}
+            {activeView === 'business' ? 'Back to Scheduler' : 'Business Tools'}
+          </div>
+          <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+          <div onClick={() => { fetchStatus(); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)' }}>
+            <RefreshCcw size={13} className={status === 'connected' ? '' : 'spin'} />
+            Refresh Connection
+          </div>
+          <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+          <div onClick={() => { handleSyncContacts(); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: isContactSyncing ? 'wait' : 'pointer', fontSize: '0.75rem', fontWeight: 600, color: isContactSyncing ? 'var(--primary)' : 'var(--text)' }}>
+            <RefreshCcw size={13} className={isContactSyncing ? 'spin' : ''} />
+            Sync Contacts
+          </div>
+          <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+          <div onClick={() => { setShowWhatsAppManage(false); handleDisconnectWhatsApp(); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: '#ef4444' }}>
+            <WifiOff size={13} />
+            Disconnect
+          </div>
+        </div>
+      )}
     </div>
   );
 }
