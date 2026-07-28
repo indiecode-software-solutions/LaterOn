@@ -2291,19 +2291,7 @@ Looking forward to connecting!`;
                     </div>
                   </div>
                 </div>
-                {isMobile && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '24px 0 0 0',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-muted)',
-                    fontWeight: 600,
-                    borderTop: '1px solid var(--border)',
-                    marginTop: '20px'
-                  }}>
-                    App Version 1.0.0
-                  </div>
-                )}
+
               </div>
             ) : (channel === 'whatsapp' && !userInfo && status !== 'connected') ? (
               <div style={{
