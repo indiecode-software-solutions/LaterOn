@@ -1906,45 +1906,64 @@ Looking forward to connecting!`;
           <header className="header">
             <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
-                  <img
-                    src={user.user_metadata.avatar_url || user.user_metadata.picture}
-                    alt="User Profile"
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '6px',
-                      border: '1.5px solid var(--border)',
-                      objectFit: 'cover',
-                      flexShrink: 0
-                    }}
-                  />
+                {showServiceSelector ? (
+                  <>
+                    {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                      <img
+                        src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                        alt="User Profile"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '6px',
+                          border: '1.5px solid var(--border)',
+                          objectFit: 'cover',
+                          flexShrink: 0
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '6px',
+                        background: 'var(--primary-light)',
+                        color: 'var(--primary-dark)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        border: '1.5px solid var(--border)',
+                        flexShrink: 0
+                      }}>
+                        {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ overflow: 'hidden' }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {credits.subscription_pack || 'Mini Free'}
+                      </p>
+                    </div>
+                  </>
                 ) : (
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '6px',
-                    background: 'var(--primary-light)',
-                    color: 'var(--primary-dark)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
-                    border: '1.5px solid var(--border)',
-                    flexShrink: 0
-                  }}>
-                    {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                  </div>
+                  <button
+                    onClick={() => {
+                      triggerSelection();
+                      setShowServiceSelector(true);
+                      setSidebarStep(1);
+                      setActiveView('scheduler');
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Home
+                  </button>
                 )}
-                <div style={{ overflow: 'hidden' }}>
-                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-                  </p>
-                  <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {credits.subscription_pack || 'Mini Free'}
-                  </p>
-                </div>
               </div>
               <div
                 onMouseEnter={() => setCreditsHover(true)}
