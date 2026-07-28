@@ -3588,6 +3588,18 @@ if (fs.existsSync(clientDistPath)) {
         }
     });
 
+    // TEMPORARY: Reset all users credits to 250 — remove after use
+    app.get('/api/admin/reset-credits', async (req, res) => {
+        if (req.query.secret !== process.env.ADMIN_SECRET) {
+            return res.status(401).send('Unauthorized');
+        }
+        const { data, error } = await supabaseAdmin
+            .from('user_credits')
+            .update({ free_balance: 250, purchased_balance: 0 });
+        if (error) return res.status(500).json({ error: error.message });
+        res.json({ success: true, message: 'All users credits reset to 250' });
+    });
+
     app.get(/.*/, (req, res) => {
         res.sendFile(path.join(clientDistPath, 'index.html'));
     });
