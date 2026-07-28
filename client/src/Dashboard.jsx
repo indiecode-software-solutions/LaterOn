@@ -1906,7 +1906,7 @@ Looking forward to connecting!`;
           <header className="header">
             <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
               {showServiceSelector && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                   {/* Profile Photo or Initials with 6px border-radius */}
                   {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
                     <img
@@ -1917,7 +1917,8 @@ Looking forward to connecting!`;
                         height: '32px',
                         borderRadius: '6px',
                         border: '1.5px solid var(--border)',
-                        objectFit: 'cover'
+                        objectFit: 'cover',
+                        flexShrink: 0
                       }}
                     />
                   ) : (
@@ -1932,11 +1933,20 @@ Looking forward to connecting!`;
                       justifyContent: 'center',
                       fontWeight: 600,
                       fontSize: '0.85rem',
-                      border: '1.5px solid var(--border)'
+                      border: '1.5px solid var(--border)',
+                      flexShrink: 0
                     }}>
                       {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
                     </div>
                   )}
+                  <div style={{ overflow: 'hidden' }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {credits.subscription_pack || 'Mini'}
+                    </p>
+                  </div>
                 </div>
               )}
               {!showServiceSelector && (
@@ -5916,7 +5926,7 @@ Looking forward to connecting!`;
                     gap: '20px'
                   }}>
                     {[
-                      { name: 'Mini', credits: 250, price: '₹79', desc: 'Perfect for quick testing', subscriptionId: 'sub_TIVP0KoRcCkwj6' },
+                      { name: 'Mini', credits: 250, price: 'Free', desc: 'Perfect for getting started', free: true },
                       { name: 'Starter', credits: 600, price: '₹149', desc: 'Casual users setup', subscriptionId: 'sub_TIVRzRGcPJ5wOh' },
                       { name: 'Popular', credits: 1500, price: '₹299', desc: 'Most cost-effective pack', popular: true, subscriptionId: 'sub_TIVXsqL2KIWBuK' },
                       { name: 'Pro', credits: 4000, price: '₹699', desc: 'Growing businesses', subscriptionId: 'sub_TIVXSrlnOK0hz0' },
@@ -5964,148 +5974,160 @@ Looking forward to connecting!`;
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>credits</span>
                         </div>
 
-                        <span style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--primary-dark)' }}>{pkg.price}</span>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 600, color: pkg.free ? '#2e7d32' : 'var(--primary-dark)' }}>{pkg.price}</span>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', flex: 1 }}>{pkg.desc}</span>
 
-                        <button
-                          className={`pay-btn ${pkg.popular ? 'popular-btn' : ''}`}
-                          disabled={purchasingPack === pkg.name}
-                          onClick={async () => {
-                            if (pkg.name === 'Enterprise') {
-                              alert('Please email support at sales@indiecode.in to configure high volume enterprise custom pricing.');
-                              return;
-                            }
-
-                            setPurchasingPack(pkg.name);
-                            const priceStr = pkg.price.replace('₹', '').replace(',', '');
-                            const amountPaise = Math.max(100, parseInt(priceStr, 10) * 100);
-
-                            try {
-                              const { data: { session } } = await supabase.auth.getSession();
-                              const token = session?.access_token || '';
-
-                              let subData;
-                              try {
-                                const subRes = await fetch(`${API_URL}/api/credits/subscription`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                  body: JSON.stringify({ packageName: pkg.name, credits: pkg.credits, amountPaise })
-                                });
-                                subData = await subRes.json();
-                                if (!subRes.ok) throw new Error(subData.error || 'Subscription creation failed');
-                              } catch (subErr) {
-                                console.error('[Subscription Error]', subErr);
-                                alert('Could not initiate subscription. Please check network connection.');
-                                setPurchasingPack(null);
+                        {pkg.free ? (
+                          <button
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              background: '#1a1a1a',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'default'
+                            }}
+                          >
+                            Resets Monthly
+                          </button>
+                        ) : (
+                          <button
+                            className={`pay-btn ${pkg.popular ? 'popular-btn' : ''}`}
+                            disabled={purchasingPack === pkg.name}
+                            onClick={async () => {
+                              if (pkg.name === 'Enterprise') {
+                                alert('Please email support at sales@indiecode.in to configure high volume enterprise custom pricing.');
                                 return;
                               }
-
-                              const periodLabel = 'Monthly';
-
-                              const verifySubscription = async (response) => {
+                              setPurchasingPack(pkg.name);
+                              const priceStr = pkg.price.replace('₹', '').replace(',', '');
+                              const amountPaise = Math.max(100, parseInt(priceStr, 10) * 100);
+                              try {
+                                const { data: { session } } = await supabase.auth.getSession();
+                                const token = session?.access_token || '';
+                                let subData;
                                 try {
-                                  const verifyRes = await fetch(`${API_URL}/api/credits/subscription/verify`, {
+                                  const subRes = await fetch(`${API_URL}/api/credits/subscription`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                    body: JSON.stringify({
-                                      razorpay_payment_id: response.razorpay_payment_id,
-                                      razorpay_subscription_id: response.razorpay_subscription_id,
-                                      razorpay_signature: response.razorpay_signature,
-                                      credits: pkg.credits,
-                                      packageName: pkg.name
-                                    })
+                                    body: JSON.stringify({ packageName: pkg.name, credits: pkg.credits, amountPaise })
                                   });
-                                  const result = await verifyRes.json();
-                                  if (verifyRes.ok) {
-                                    triggerSelection();
-                                    setPaymentSuccessModal({ credits: result.credits_added, packageName: `${pkg.name} (Monthly)`, subscription: true });
-                                    fetchCredits();
-                                  } else {
-                                    alert('⚠️ Payment received but subscription activation failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
-                                  }
-                                } catch (vErr) {
-                                  console.error('[Subscription Verify Error]', vErr);
-                                  alert('⚠️ Payment processed but verification failed. Your credits will update shortly.');
-                                } finally {
+                                  subData = await subRes.json();
+                                  if (!subRes.ok) throw new Error(subData.error || 'Subscription creation failed');
+                                } catch (subErr) {
+                                  console.error('[Subscription Error]', subErr);
+                                  alert('Could not initiate subscription. Please check network connection.');
                                   setPurchasingPack(null);
+                                  return;
                                 }
-                              };
-
-                              if (Capacitor.isNativePlatform()) {
-                                try {
-                                  const response = await RazorpayNative.openCheckout({
-                                    subscriptionId: subData.subscriptionId,
-                                    key: subData.key,
-                                    amount: amountPaise,
-                                    name: 'LaterOn',
-                                    description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
-                                  });
-                                  if (response && response.razorpay_payment_id) {
-                                    await verifySubscription(response);
-                                  } else {
+                                const periodLabel = 'Monthly';
+                                const verifySubscription = async (response) => {
+                                  try {
+                                    const verifyRes = await fetch(`${API_URL}/api/credits/subscription/verify`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                      body: JSON.stringify({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_subscription_id: response.razorpay_subscription_id,
+                                        razorpay_signature: response.razorpay_signature,
+                                        credits: pkg.credits,
+                                        packageName: pkg.name
+                                      })
+                                    });
+                                    const result = await verifyRes.json();
+                                    if (verifyRes.ok) {
+                                      triggerSelection();
+                                      setPaymentSuccessModal({ credits: result.credits_added, packageName: `${pkg.name} (Monthly)`, subscription: true });
+                                      fetchCredits();
+                                    } else {
+                                      alert('⚠️ Payment received but subscription activation failed. Contact support@indiecode.in with payment ID: ' + response.razorpay_payment_id);
+                                    }
+                                  } catch (vErr) {
+                                    console.error('[Subscription Verify Error]', vErr);
+                                    alert('⚠️ Payment processed but verification failed. Your credits will update shortly.');
+                                  } finally {
                                     setPurchasingPack(null);
                                   }
-                                } catch (nativeErr) {
-                                  setPurchasingPack(null);
-                                  const errMsg = (nativeErr?.message || '').toLowerCase();
-                                  if (!errMsg.includes('cancel') && !errMsg.includes('closed') && !errMsg.includes('back')) {
-                                    console.error('[Native Razorpay Error]', nativeErr);
+                                };
+                                if (Capacitor.isNativePlatform()) {
+                                  try {
+                                    const response = await RazorpayNative.openCheckout({
+                                      subscriptionId: subData.subscriptionId,
+                                      key: subData.key,
+                                      amount: amountPaise,
+                                      name: 'LaterOn',
+                                      description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`
+                                    });
+                                    if (response && response.razorpay_payment_id) {
+                                      await verifySubscription(response);
+                                    } else {
+                                      setPurchasingPack(null);
+                                    }
+                                  } catch (nativeErr) {
+                                    setPurchasingPack(null);
+                                    const errMsg = (nativeErr?.message || '').toLowerCase();
+                                    if (!errMsg.includes('cancel') && !errMsg.includes('closed') && !errMsg.includes('back')) {
+                                      console.error('[Native Razorpay Error]', nativeErr);
+                                    }
                                   }
-                                }
-                              } else {
-                                if (!window.Razorpay) {
-                                  await new Promise((resolve, reject) => {
-                                    const s = document.createElement('script');
-                                    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-                                    s.onload = resolve;
-                                    s.onerror = reject;
-                                    document.body.appendChild(s);
+                                } else {
+                                  if (!window.Razorpay) {
+                                    await new Promise((resolve, reject) => {
+                                      const s = document.createElement('script');
+                                      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                                      s.onload = resolve;
+                                      s.onerror = reject;
+                                      document.body.appendChild(s);
+                                    });
+                                  }
+                                  const rzp = new window.Razorpay({
+                                    key: subData.key,
+                                    subscription_id: subData.subscriptionId,
+                                    name: 'LaterOn',
+                                    description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`,
+                                    theme: { color: '#1a73e8' },
+                                    handler: verifySubscription,
+                                    modal: { ondismiss: () => setPurchasingPack(null) }
                                   });
+                                  rzp.open();
                                 }
-                                const rzp = new window.Razorpay({
-                                  key: subData.key,
-                                  subscription_id: subData.subscriptionId,
-                                  name: 'LaterOn',
-                                  description: `${pkg.name} ${periodLabel} — ${pkg.credits} credits`,
-                                  theme: { color: '#1a73e8' },
-                                  handler: verifySubscription,
-                                  modal: { ondismiss: () => setPurchasingPack(null) }
-                                });
-                                rzp.open();
+                              } catch (err) {
+                                console.error('[Purchase Error]', err);
+                                setPurchasingPack(null);
                               }
-                            } catch (err) {
-                              console.error('[Purchase Error]', err);
-                              setPurchasingPack(null);
-                            }
-                          }}
-                        >
-                          <span className="btn-text">
-                            {purchasingPack === pkg.name ? 'Opening Checkout...' : (pkg.name === 'Enterprise' ? 'Contact Sales' : 'Subscribe Monthly')}
-                          </span>
-                          <div className="icon-container">
-                            {purchasingPack === pkg.name ? (
-                              <Loader2 size={18} className="spin" style={{ color: 'white' }} />
-                            ) : (
-                              <>
-                                <svg viewBox="0 0 24 24" className="icon card-icon">
-                                  <path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18C2,19.11 2.89,20 4,20H20C21.11,20 22,19.11 22,18V6C22,4.89 21.11,4 20,4Z" fill="currentColor"></path>
-                                </svg>
-                                <svg viewBox="0 0 24 24" className="icon payment-icon">
-                                  <path d="M2,17H22V21H2V17M6.25,7H9V6H6V3H18V6H15V7H17.75L19,17H5L6.25,7M9,10H15V8H9V10M9,13H15V11H9V13Z" fill="currentColor"></path>
-                                </svg>
-                                <svg viewBox="0 0 24 24" className="icon dollar-icon">
-                                  <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="currentColor"></path>
-                                </svg>
-                                <svg viewBox="0 0 24 24" className="icon wallet-icon default-icon">
-                                  <path d="M21,18V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5V6H12C10.89,6 10,6.9 10,8V16A2,2 0 0,0 12,18M12,16H22V8H12M16,13.5A1.5,1.5 0 0,1 14.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,12A1.5,1.5 0 0,1 16,13.5Z" fill="currentColor"></path>
-                                </svg>
-                                <svg viewBox="0 0 24 24" className="icon check-icon">
-                                  <path d="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z" fill="currentColor"></path>
-                                </svg>
-                              </>
-                            )}
-                          </div>
-                        </button>
+                            }}
+                          >
+                            <span className="btn-text">
+                              {purchasingPack === pkg.name ? 'Opening Checkout...' : (pkg.name === 'Enterprise' ? 'Contact Sales' : 'Subscribe Monthly')}
+                            </span>
+                            <div className="icon-container">
+                              {purchasingPack === pkg.name ? (
+                                <Loader2 size={18} className="spin" style={{ color: 'white' }} />
+                              ) : (
+                                <>
+                                  <svg viewBox="0 0 24 24" className="icon card-icon">
+                                    <path d="M20,8H4V6H20M20,18H4V12H20M20,4H4C2.89,4 2,4.89 2,6V18C2,19.11 2.89,20 4,20H20C21.11,20 22,19.11 22,18V6C22,4.89 21.11,4 20,4Z" fill="currentColor"></path>
+                                  </svg>
+                                  <svg viewBox="0 0 24 24" className="icon payment-icon">
+                                    <path d="M2,17H22V21H2V17M6.25,7H9V6H6V3H18V6H15V7H17.75L19,17H5L6.25,7M9,10H15V8H9V10M9,13H15V11H9V13Z" fill="currentColor"></path>
+                                  </svg>
+                                  <svg viewBox="0 0 24 24" className="icon dollar-icon">
+                                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" fill="currentColor"></path>
+                                  </svg>
+                                  <svg viewBox="0 0 24 24" className="icon wallet-icon default-icon">
+                                    <path d="M21,18V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5V6H12C10.89,6 10,6.9 10,8V16A2,2 0 0,0 12,18M12,16H22V8H12M16,13.5A1.5,1.5 0 0,1 14.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,12A1.5,1.5 0 0,1 16,13.5Z" fill="currentColor"></path>
+                                  </svg>
+                                  <svg viewBox="0 0 24 24" className="icon check-icon">
+                                    <path d="M9,16.17L4.83,12L3.41,13.41L9,19L21,7L19.59,5.59L9,16.17Z" fill="currentColor"></path>
+                                  </svg>
+                                </>
+                              )}
+                            </div>
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
