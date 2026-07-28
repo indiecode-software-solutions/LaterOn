@@ -1903,110 +1903,91 @@ Looking forward to connecting!`;
         )}
         {/* Left Sidebar */}
         <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
-          <header className="header">
-            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                {showServiceSelector ? (
-                  <>
-                    {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
-                      <img
-                        src={user.user_metadata.avatar_url || user.user_metadata.picture}
-                        alt="User Profile"
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '6px',
-                          border: '1.5px solid var(--border)',
-                          objectFit: 'cover',
-                          flexShrink: 0
-                        }}
-                      />
-                    ) : (
-                      <div style={{
+          {showServiceSelector && (
+            <header className="header">
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                    <img
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt="User Profile"
+                      style={{
                         width: '32px',
                         height: '32px',
                         borderRadius: '6px',
-                        background: 'var(--primary-light)',
-                        color: 'var(--primary-dark)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
                         border: '1.5px solid var(--border)',
+                        objectFit: 'cover',
                         flexShrink: 0
-                      }}>
-                        {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                      </div>
-                    )}
-                    <div style={{ overflow: 'hidden' }}>
-                      <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-                      </p>
-                      <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {credits.subscription_pack || 'Mini Free'}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => {
-                      triggerSelection();
-                      setShowServiceSelector(true);
-                      setSidebarStep(1);
-                      setActiveView('scheduler');
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', transition: 'background 0.2s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Home
-                  </button>
-                )}
-              </div>
-              <div
-                onMouseEnter={() => setCreditsHover(true)}
-                onMouseLeave={() => setCreditsHover(false)}
-                onClick={() => { triggerSelection(); setShowCreditsStrip(prev => !prev); }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  background: 'rgba(0,0,0,0.04)',
-                  borderRadius: '6px',
-                  padding: '4px 8px'
-                }}
-                title="View Later Credits Balance"
-              >
-                {creditsHover && !creditsLoading && (
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                    {credits.total_balance}
-                  </span>
-                )}
-                {creditsLoading ? (
-                  <span className="skeleton-text" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
-                ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
-                    <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
-                      strokeDasharray={`${2 * Math.PI * 10}`}
-                      strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / (credits.subscription_credits || 250), 1))}`}
-                      strokeLinecap="round" transform="rotate(-90 12 12)"
-                      style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                      }}
                     />
+                  ) : (
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '6px',
+                      background: 'var(--primary-light)',
+                      color: 'var(--primary-dark)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      border: '1.5px solid var(--border)',
+                      flexShrink: 0
+                    }}>
+                      {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ overflow: 'hidden' }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {credits.subscription_pack || 'Mini Free'}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  onMouseEnter={() => setCreditsHover(true)}
+                  onMouseLeave={() => setCreditsHover(false)}
+                  onClick={() => { triggerSelection(); setShowCreditsStrip(prev => !prev); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    background: 'rgba(0,0,0,0.04)',
+                    borderRadius: '6px',
+                    padding: '4px 8px'
+                  }}
+                  title="View Later Credits Balance"
+                >
+                  {creditsHover && !creditsLoading && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      {credits.total_balance}
+                    </span>
+                  )}
+                  {creditsLoading ? (
+                    <span className="skeleton-text" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
+                      <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
+                        strokeDasharray={`${2 * Math.PI * 10}`}
+                        strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / (credits.subscription_credits || 250), 1))}`}
+                        strokeLinecap="round" transform="rotate(-90 12 12)"
+                        style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                      />
+                    </svg>
+                  )}
+                  <svg width="10" height="10" viewBox="0 0 10 10" style={{ color: 'var(--text-muted)' }}>
+                    <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                )}
-                <svg width="10" height="10" viewBox="0 0 10 10" style={{ color: 'var(--text-muted)' }}>
-                  <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                </div>
               </div>
-            </div>
-          </header>
+            </header>
+          )}
 
           {/* Mobile Profile Strip — visible on mobile when a channel is active */}
           {isMobile && !showServiceSelector && !showMobileForm && channel && (
@@ -8981,12 +8962,12 @@ Join Link: [Auto-generated after scheduling]`}
         {/* Bottom Navigation Bar (Mobile) — hidden when service selector is open */}
         {isMobile && !showServiceSelector && (
           <>
-            {/* Backdrop for social dropdown */}
+            {/* Backdrop for channels dropdown */}
             {showSocialDropdown && (
               <div className="bottom-nav-backdrop" onClick={() => setShowSocialDropdown(false)} />
             )}
 
-            {/* Social Dropdown */}
+            {/* Channels Dropdown */}
             <AnimatePresence>
               {showSocialDropdown && (
                 <motion.div
@@ -9016,28 +8997,42 @@ Join Link: [Auto-generated after scheduling]`}
                     <TelegramIcon size={18} color="#0088cc" />
                     <span>Telegram</span>
                   </button>
+                  <button
+                    className={`social-dropdown-item ${channel === 'email' ? 'active' : ''}`}
+                    onClick={() => { triggerSelection(); setChannel('email'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                  >
+                    <Mail size={18} color="#ea4335" />
+                    <span>Email</span>
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Bottom Nav */}
             <nav className="bottom-nav">
-              {/* Social */}
+              {/* Home */}
               <button
-                className={`bottom-nav-item ${['whatsapp', 'instagram', 'telegram'].includes(channel) ? 'active' : ''}`}
+                className="bottom-nav-item"
+                onClick={() => {
+                  triggerSelection();
+                  setShowServiceSelector(true);
+                  setSidebarStep(1);
+                  setActiveView('scheduler');
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="nav-label">Home</span>
+              </button>
+
+              {/* Channels */}
+              <button
+                className={`bottom-nav-item ${['whatsapp', 'instagram', 'telegram', 'email'].includes(channel) ? 'active' : ''}`}
                 onClick={() => setShowSocialDropdown(prev => !prev)}
               >
                 <MessageSquare size={20} />
-                <span className="nav-label">{channel === 'whatsapp' ? 'WhatsApp' : channel === 'instagram' ? 'Instagram' : channel === 'telegram' ? 'Telegram' : 'Social'}</span>
-              </button>
-
-              {/* Emails */}
-              <button
-                className={`bottom-nav-item ${channel === 'email' ? 'active' : ''}`}
-                onClick={() => { triggerSelection(); setChannel('email'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
-              >
-                <Mail size={20} />
-                <span className="nav-label">Emails</span>
+                <span className="nav-label">{channel === 'whatsapp' ? 'WhatsApp' : channel === 'instagram' ? 'Instagram' : channel === 'telegram' ? 'Telegram' : channel === 'email' ? 'Email' : 'Channels'}</span>
               </button>
 
               {/* Plus Button */}
