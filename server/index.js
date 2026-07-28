@@ -3622,6 +3622,12 @@ app.get('/api/admin/users', async (req, res) => {
     }
 });
 
+app.get('/api/admin/online', async (req, res) => {
+    if (!checkAdminPassword(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const onlineIds = Object.keys(userSockets);
+    res.json(onlineIds);
+});
+
 app.put('/api/admin/users/:id', express.json(), async (req, res) => {
     if (!checkAdminPassword(req)) return res.status(401).json({ error: 'Unauthorized' });
     const { id } = req.params;

@@ -33,11 +33,21 @@ export default function Admin() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [timeframe, setTimeframe] = useState(24 * 60 * 60 * 1000);
+  const [onlineIds, setOnlineIds] = useState([]);
   const pollingRef = useRef(null);
 
   useEffect(() => {
     if (authenticated) {
-      pollingRef.current = setInterval(() => fetchUsers(password, true), 5000);
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/admin/online`, {
+            headers: { 'x-admin-password': password }
+          });
+          if (res.ok) {
+            setOnlineIds(await res.json());
+          }
+        } catch {}
+      }, 5000);
     }
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
   }, [authenticated]);
@@ -146,7 +156,7 @@ export default function Admin() {
 
   const now = Date.now();
   const activeUsers = users.filter(u => u.last_active && (now - u.last_active) < timeframe);
-  const onlineUsers = users.filter(u => u.online);
+  const onlineUsers = users.filter(u => onlineIds.includes(u.id));
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f5', fontFamily: "'Poppins', sans-serif" }}>
@@ -219,7 +229,7 @@ export default function Admin() {
                     {editingId === u.id ? (
                       <>
                         <td style={{ padding: '12px 16px', fontWeight: 500, color: '#1a1a1a' }}>
-                          {u.online && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', marginRight: '6px' }} />}
+                          {onlineIds.includes(u.id) && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', marginRight: '6px' }} />}
                           {u.name}
                         </td>
                         <td style={{ padding: '12px 16px', color: '#666' }}>{u.email}</td>
@@ -261,7 +271,7 @@ export default function Admin() {
                     ) : (
                       <>
                         <td style={{ padding: '12px 16px', fontWeight: 500, color: '#1a1a1a' }}>
-                          {u.online && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', marginRight: '6px' }} />}
+                          {onlineIds.includes(u.id) && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', marginRight: '6px' }} />}
                           {u.name}
                         </td>
                         <td style={{ padding: '12px 16px', color: '#666' }}>{u.email}</td>
