@@ -1861,7 +1861,7 @@ Looking forward to connecting!`;
           </button>
         </div>
       )}
-      <div className="brand-tagline" onDoubleClick={() => window.open('/admin', '_blank')} style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px', cursor: 'default' }}>
+      <div className="brand-tagline" onDoubleClick={() => window.open('/admin', '_blank')} style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px', cursor: 'default', pointerEvents: 'auto' }}>
         <span style={{ color: '#ffffff' }}>Later</span>
         <span style={{ fontWeight: 400, color: '#90ee90' }}>On</span>
       </div>
