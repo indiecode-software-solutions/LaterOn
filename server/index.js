@@ -3571,13 +3571,15 @@ app.post('/api/credits/subscription/cancel', verifyToken, async (req, res) => {
 });
 
 // ── Admin: List all users with credits ───────────────────────────────────────
-app.get('/api/admin/users', async (req, res) => {
+const checkAdminPassword = (req) => {
     const adminPassword = req.headers['x-admin-password'];
     const expected = process.env.ADMIN_PASSWORD;
-    console.log('[Admin] password check:', { received: adminPassword, expected, hasExpected: !!expected, envKeys: Object.keys(process.env).filter(k => k.includes('ADMIN')) });
-    if (!expected || adminPassword !== expected) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    if (!expected || adminPassword !== expected) return false;
+    return true;
+};
+
+app.get('/api/admin/users', async (req, res) => {
+    if (!checkAdminPassword(req)) return res.status(401).json({ error: 'Unauthorized' });
     try {
         const { data: users, error: usersErr } = await supabaseAdmin.auth.admin.listUsers();
         if (usersErr) return res.status(500).json({ error: usersErr.message });
@@ -3613,6 +3615,44 @@ app.get('/api/admin/users', async (req, res) => {
     } catch (err) {
         console.error('[Admin] Error fetching users:', err);
         res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+app.put('/api/admin/users/:id', express.json(), async (req, res) => {
+    if (!checkAdminPassword(req)) return res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const { free_balance, purchased_balance, subscription_pack, subscription_status, subscription_credits } = req.body;
+    try {
+        const updates = {};
+        if (free_balance !== undefined) updates.free_balance = free_balance;
+        if (purchased_balance !== undefined) updates.purchased_balance = purchased_balance;
+        if (subscription_pack !== undefined) updates.subscription_pack = subscription_pack;
+        if (subscription_status !== undefined) updates.subscription_status = subscription_status;
+        if (subscription_credits !== undefined) updates.subscription_credits = subscription_credits;
+
+        const { error } = await supabaseAdmin
+            .from('user_credits')
+            .upsert({ user_id: id, ...updates }, { onConflict: 'user_id' });
+
+        if (error) return res.status(500).json({ error: error.message });
+
+        const { data: updated } = await supabaseAdmin
+            .from('user_credits')
+            .select('*')
+            .eq('user_id', id)
+            .single();
+
+        res.json({
+            id,
+            free_balance: updated?.free_balance || free_balance || 0,
+            purchased_balance: updated?.purchased_balance || purchased_balance || 0,
+            total_balance: (updated?.free_balance || free_balance || 0) + (updated?.purchased_balance || purchased_balance || 0),
+            subscription_pack: updated?.subscription_pack || subscription_pack || null,
+            subscription_status: updated?.subscription_status || subscription_status || null
+        });
+    } catch (err) {
+        console.error('[Admin] Error updating user:', err);
+        res.status(500).json({ error: 'Failed to update user' });
     }
 });
 
