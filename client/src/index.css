@@ -1675,13 +1675,12 @@ body:has(.landing-container)::before {
   border: none;
   background: none;
   cursor: pointer;
-  padding: 6px 2px;
+  padding: 6px 0;
   position: relative;
   color: #94a3b8;
   transition: color 0.2s;
   flex: 1;
   height: 100%;
-  max-width: 80px;
 }
 
 .bottom-nav-item::before {
