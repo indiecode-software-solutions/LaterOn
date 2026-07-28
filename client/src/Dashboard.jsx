@@ -1905,80 +1905,112 @@ Looking forward to connecting!`;
         <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
           <header className="header">
             <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              {showServiceSelector && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                  {/* Back button replaces profile */}
-                  <button
-                    className="btn-icon"
-                    onClick={() => {
-                      setShowServiceSelector(false);
-                      setActiveView('scheduler');
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                  <img
+                    src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                    alt="User Profile"
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '6px',
+                      border: '1.5px solid var(--border)',
+                      objectFit: 'cover',
+                      flexShrink: 0
                     }}
-                    title="Back to Dashboard"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 12H5" />
-                      <path d="M12 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-              {!showServiceSelector && (
-                <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
-                  <button
-                    className="btn-icon"
-                    onClick={() => {
-                      triggerSelection();
-                      setShowServiceSelector(true);
-                      setSidebarStep(1);
-                      setActiveView('scheduler');
-                    }}
-                    title="Switch Service / Channel"
-                  >
-                    <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
-                  </button>
-                </div>
-              )}
-              {showServiceSelector && (
-                <div
-                  onMouseEnter={() => setCreditsHover(true)}
-                  onMouseLeave={() => setCreditsHover(false)}
-                  onClick={() => { triggerSelection(); setShowCreditsStrip(prev => !prev); }}
-                  style={{
+                  />
+                ) : (
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '6px',
+                    background: 'var(--primary-light)',
+                    color: 'var(--primary-dark)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    background: 'rgba(0,0,0,0.04)',
-                    borderRadius: '6px',
-                    padding: '4px 8px'
-                  }}
-                  title="View Later Credits Balance"
-                >
-                  {creditsHover && !creditsLoading && (
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                      {credits.total_balance}
-                    </span>
-                  )}
-                  {creditsLoading ? (
-                    <span className="skeleton-text" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
-                  ) : (
-                    <svg width="24" height="24" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
-                      <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
-                        strokeDasharray={`${2 * Math.PI * 10}`}
-                        strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / (credits.subscription_credits || 250), 1))}`}
-                        strokeLinecap="round" transform="rotate(-90 12 12)"
-                        style={{ transition: 'stroke-dashoffset 0.3s ease' }}
-                      />
-                    </svg>
-                  )}
-                  <svg width="10" height="10" viewBox="0 0 10 10" style={{ color: 'var(--text-muted)' }}>
-                    <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    border: '1.5px solid var(--border)',
+                    flexShrink: 0
+                  }}>
+                    {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                  </div>
+                )}
+                <div style={{ overflow: 'hidden' }}>
+                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {credits.subscription_pack || 'Mini Free'}
+                  </p>
                 </div>
-              )}
+              </div>
+              <button
+                className="btn-icon"
+                onClick={() => {
+                  triggerSelection();
+                  setShowServiceSelector(true);
+                  setSidebarStep(1);
+                  setActiveView('scheduler');
+                }}
+                title="Switch Service / Channel"
+                style={{ marginRight: '4px' }}
+              >
+                <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
+              </button>
+              <button
+                className={`btn-icon ${activeView === 'credits' ? 'active' : ''}`}
+                onClick={() => {
+                  triggerSelection();
+                  setActiveView(activeView === 'credits' ? 'scheduler' : 'credits');
+                }}
+                style={{
+                  background: activeView === 'credits' ? 'rgba(26, 115, 232, 0.1)' : 'transparent',
+                  marginRight: '8px'
+                }}
+                title="Later Credits Balance & Pricing"
+              >
+                <Coins size={18} color="var(--primary)" />
+              </button>
+              <div
+                onMouseEnter={() => setCreditsHover(true)}
+                onMouseLeave={() => setCreditsHover(false)}
+                onClick={() => { triggerSelection(); setShowCreditsStrip(prev => !prev); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  background: 'rgba(0,0,0,0.04)',
+                  borderRadius: '6px',
+                  padding: '4px 8px'
+                }}
+                title="View Later Credits Balance"
+              >
+                {creditsHover && !creditsLoading && (
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                    {credits.total_balance}
+                  </span>
+                )}
+                {creditsLoading ? (
+                  <span className="skeleton-text" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
+                      strokeDasharray={`${2 * Math.PI * 10}`}
+                      strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / (credits.subscription_credits || 250), 1))}`}
+                      strokeLinecap="round" transform="rotate(-90 12 12)"
+                      style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                    />
+                  </svg>
+                )}
+                <svg width="10" height="10" viewBox="0 0 10 10" style={{ color: 'var(--text-muted)' }}>
+                  <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </div>
           </header>
 
