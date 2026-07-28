@@ -1660,9 +1660,9 @@ body:has(.landing-container)::before {
   border-top: none;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-evenly;
   z-index: 1500;
-  padding: 0 4px;
+  padding: 0;
   box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
 }
 
@@ -1671,16 +1671,17 @@ body:has(.landing-container)::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   border: none;
   background: none;
   cursor: pointer;
-  padding: 6px 4px;
+  padding: 6px 2px;
   position: relative;
   color: #94a3b8;
   transition: color 0.2s;
   flex: 1;
   height: 100%;
+  max-width: 80px;
 }
 
 .bottom-nav-item::before {
