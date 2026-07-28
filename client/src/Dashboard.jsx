@@ -1059,14 +1059,6 @@ function Dashboard() {
       const res = await axios.get(`${API_URL}/api/reminders`);
       const data = res.data || [];
       setReminders(data);
-      if (Capacitor.isNativePlatform()) {
-        const now = Date.now();
-        data.forEach(r => {
-          if (r.status === 'pending' && new Date(r.scheduled_at).getTime() > now) {
-            scheduleCapacitorNotification(r);
-          }
-        });
-      }
     } catch (err) {
       console.error('Failed to fetch reminders:', err.message);
     }
@@ -1190,13 +1182,9 @@ function Dashboard() {
         scheduled_at: reminderForm.scheduled_at.toISOString(),
         recurrence: reminderForm.recurrence
       });
-      const newReminder = res.data;
       setReminderForm({ title: '', description: '', scheduled_at: new Date(), recurrence: 'none' });
       fetchReminders();
       triggerSelection();
-      if (newReminder && new Date(newReminder.scheduled_at).getTime() > Date.now()) {
-        scheduleCapacitorNotification(newReminder);
-      }
     } catch (err) {
       triggerSelection();
       alert('Failed to create reminder: ' + (err.response?.data?.error || err.message));

@@ -7,8 +7,8 @@ android {
         applicationId "com.lateron.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 188
-        versionName "2026.07.28-ad2da65"
+        versionCode 189
+        versionName "2026.07.28-e5c793e"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
