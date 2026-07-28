@@ -6498,7 +6498,6 @@ Looking forward to connecting!`;
                                 transition={{ delay: 0.3 }}
                                 style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
                               >
-                                <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', textAlign: 'center' }}>Recent Activity</p>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                   {schedules
                                     .filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'failed')
