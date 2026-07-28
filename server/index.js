@@ -1691,16 +1691,14 @@ app.delete('/api/schedules/history', verifyToken, async (req, res) => {
 app.delete('/api/schedules/:id', verifyToken, async (req, res) => {
     const workspaceUserIds = await getWorkspaceUserIds(req.userId);
     const { id } = req.params;
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
         .from('schedules')
         .delete()
         .eq('id', id)
-        .in('user_id', workspaceUserIds)
-        .select('id');
+        .in('user_id', workspaceUserIds);
 
     if (error) return res.status(500).json({ error: error.message });
-    // If no row was deleted it may still be a success (already deleted or belongs to another user)
-    res.json({ success: true, deleted: !!(data && data.length) });
+    res.json({ success: true });
 });
 
 app.post('/api/bulk/retry-failed', verifyToken, async (req, res) => {
@@ -2528,15 +2526,14 @@ app.put('/api/reminders/:id', verifyToken, async (req, res) => {
 
 app.delete('/api/reminders/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
         .from('reminders')
         .delete()
         .eq('id', id)
-        .eq('user_id', req.userId)
-        .select('id');
+        .eq('user_id', req.userId);
 
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ success: true, deleted: !!(data && data.length) });
+    res.json({ success: true });
 });
 
 // Device Registration API for Push Notifications
@@ -3014,15 +3011,14 @@ app.get('/api/instagram/posts', verifyToken, async (req, res) => {
 // ── 7. Delete a Scheduled Post ────────────────────────────────────────────────
 app.delete('/api/instagram/posts/:id', verifyToken, async (req, res) => {
     try {
-        const { data, error } = await supabaseAdmin
+        const { error } = await supabaseAdmin
             .from('instagram_posts')
             .delete()
             .eq('id', req.params.id)
             .eq('user_id', req.userId)
-            .eq('status', 'scheduled')
-            .select('id');
+            .eq('status', 'scheduled'); // only allow deleting scheduled (not published)
         if (error) return res.status(500).json({ error: error.message });
-        res.json({ success: true, deleted: !!(data && data.length) });
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

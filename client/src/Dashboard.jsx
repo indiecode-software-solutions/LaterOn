@@ -11,17 +11,6 @@ import { App } from '@capacitor/app';
 // Native Razorpay plugin — only available on Android
 const RazorpayNative = registerPlugin('RazorpayPlugin');
 import { motion, AnimatePresence } from 'framer-motion';
-
-let axiosInterceptorSet = false;
-function ensureAxiosInterceptor() {
-  if (axiosInterceptorSet) return;
-  axiosInterceptorSet = true;
-  axios.interceptors.request.use(config => {
-    const t = localStorage.getItem('token');
-    if (t) config.headers.Authorization = `Bearer ${t}`;
-    return config;
-  }, error => Promise.reject(error));
-}
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
@@ -171,7 +160,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
   const [igConnecting, setIgConnecting] = React.useState(false);
   const [igStatusLoading, setIgStatusLoading] = React.useState(true);
 
-  const getAuthToken = () => localStorage.getItem('token');
+  const authToken = token;
 
   const CustomDateInput = React.forwardRef(({ value, onClick }, ref) => (
     <button type="button" className="datepicker-custom-input" onClick={onClick} ref={ref} style={{ border: '1px solid var(--border)', color: 'var(--text-main)' }}>
@@ -182,26 +171,26 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   React.useEffect(() => {
     setIgStatusLoading(true);
-    fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
+    fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } })
       .then(r => r.json()).then(d => { setInstagramStatus(d); setIgStatusLoading(false); })
       .catch(() => setIgStatusLoading(false));
   }, [channel]);
 
   React.useEffect(() => {
     if (instagramStatus?.status !== 'connected') return;
-    fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${getAuthToken()}` } })
+    fetch(`${API_URL}/api/instagram/auto-rules`, { headers: { Authorization: `Bearer ${authToken}` } })
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setIgRules(d); }).catch(() => { });
   }, [instagramStatus]);
 
   const handleIgConnect = async () => {
     setIgConnecting(true);
     try {
-      const r = await fetch(`${API_URL}/api/instagram/auth-url`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
+      const r = await fetch(`${API_URL}/api/instagram/auth-url`, { headers: { Authorization: `Bearer ${authToken}` } });
       const { url, error } = await r.json();
       if (error) { alert(error); setIgConnecting(false); return; }
       window.open(url, '_blank', 'width=600,height=700');
       const poll = setInterval(async () => {
-        const sr = await fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
+        const sr = await fetch(`${API_URL}/api/instagram/status`, { headers: { Authorization: `Bearer ${authToken}` } });
         const sd = await sr.json();
         if (sd.status === 'connected') { setInstagramStatus(sd); clearInterval(poll); setIgConnecting(false); }
       }, 2000);
@@ -211,7 +200,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   const handleIgDisconnect = async () => {
     if (!confirm('Disconnect Instagram?')) return;
-    await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${getAuthToken()}` } });
+    await fetch(`${API_URL}/api/instagram/disconnect`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
     setInstagramStatus({ status: 'disconnected' });
     setIgRules([]);
   };
@@ -228,7 +217,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
     try {
       const r = await fetch(`${API_URL}/api/instagram/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({ caption: igPostForm.caption, image_urls: urls, scheduled_at: utcScheduledAt })
       });
       const d = await r.json();
@@ -247,7 +236,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
     try {
       const r = await fetch(`${API_URL}/api/instagram/auto-rules`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         body: JSON.stringify(igRuleForm)
       });
       const d = await r.json();
@@ -260,7 +249,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
   const toggleRule = async (rule) => {
     await fetch(`${API_URL}/api/instagram/auto-rules/${rule.id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
       body: JSON.stringify({ is_active: !rule.is_active })
     });
     setIgRules(prev => prev.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
@@ -268,7 +257,7 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
   const deleteRule = async (id) => {
     if (!confirm('Delete this rule?')) return;
-    await fetch(`${API_URL}/api/instagram/auto-rules/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${getAuthToken()}` } });
+    await fetch(`${API_URL}/api/instagram/auto-rules/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${authToken}` } });
     setIgRules(prev => prev.filter(r => r.id !== id));
   };
 
@@ -425,8 +414,11 @@ function InstagramSidebar({ token, channel, fetchSchedules, instagramStatus, fet
 
 function Dashboard() {
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  ensureAxiosInterceptor();
+
+  // Set global axios auth header
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
   const [status, setStatus] = useState('connecting');
   const [statusLoading, setStatusLoading] = useState(true);
@@ -1211,9 +1203,10 @@ function Dashboard() {
   };
 
   const handleDeleteReminder = async (id) => {
-    setReminders(prev => prev.filter(r => r.id !== id));
     try {
       await axios.delete(`${API_URL}/api/reminders/${id}`);
+      fetchReminders();
+      // Cancel any local scheduled notification
       if (Capacitor.isNativePlatform()) {
         try {
           const notifId = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -1221,8 +1214,7 @@ function Dashboard() {
         } catch (e) { /* ignore */ }
       }
     } catch (err) {
-      console.error('Failed to delete reminder', err);
-      fetchReminders();
+      alert('Failed to delete reminder');
     }
   };
 
@@ -1658,16 +1650,15 @@ Looking forward to connecting!`;
     const id = isObject ? itemOrId.id : itemOrId;
     const isInstagram = isObject && itemOrId.channel === 'instagram';
 
-    setSchedules(prev => prev.filter(s => s.id !== id));
-
     try {
       if (isInstagram) {
         await axios.delete(`${API_URL}/api/instagram/posts/${id}`);
       } else {
         await axios.delete(`${API_URL}/api/schedules/${id}`);
       }
+      fetchSchedules();
     } catch (err) {
-      console.error('Failed to delete schedule', err);
+      alert('Failed to delete schedule');
     }
   };
 
@@ -1866,7 +1857,10 @@ Looking forward to connecting!`;
           </button>
         </div>
       )}
-      <div className="brand-tagline">Messages, Scheduled.</div>
+      <div className="brand-tagline" style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+        <span style={{ color: 'var(--primary-dark)' }}>Later</span>
+        <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>On</span>
+      </div>
       <div className="app-wrapper">
         {showBooking && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: 'white' }}>
@@ -1906,21 +1900,6 @@ Looking forward to connecting!`;
         {/* Left Sidebar */}
         <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
           <header className="header">
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <h1 style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontSize: '1.5rem',
-                fontWeight: 600,
-                color: 'var(--text)',
-                letterSpacing: '1px',
-                lineHeight: 1,
-                display: 'flex',
-                alignItems: 'baseline'
-              }}>
-                <span style={{ color: channel === 'email' ? '#a52a2a' : (channel === 'calendar' ? '#1a73e8' : 'var(--primary-dark)'), transition: 'color 0.3s' }}>Later</span>
-                <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>On</span>
-              </h1>
-            </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               {!showServiceSelector && (
                 <button
@@ -6527,8 +6506,7 @@ Looking forward to connecting!`;
                             key={item.id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, x: -800, rotate: -60, y: 400 }}
-                            transition={{ duration: 1, ease: 'linear' }}
+                            exit={{ opacity: 0, x: -20 }}
                             layout
                             style={{
                               alignSelf: 'center',
