@@ -1946,33 +1946,6 @@ Looking forward to connecting!`;
                   </p>
                 </div>
               </div>
-              <button
-                className="btn-icon"
-                onClick={() => {
-                  triggerSelection();
-                  setShowServiceSelector(true);
-                  setSidebarStep(1);
-                  setActiveView('scheduler');
-                }}
-                title="Switch Service / Channel"
-                style={{ marginRight: '4px' }}
-              >
-                <Home size={18} color={channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : '#25d366')} />
-              </button>
-              <button
-                className={`btn-icon ${activeView === 'credits' ? 'active' : ''}`}
-                onClick={() => {
-                  triggerSelection();
-                  setActiveView(activeView === 'credits' ? 'scheduler' : 'credits');
-                }}
-                style={{
-                  background: activeView === 'credits' ? 'rgba(26, 115, 232, 0.1)' : 'transparent',
-                  marginRight: '8px'
-                }}
-                title="Later Credits Balance & Pricing"
-              >
-                <Coins size={18} color="var(--primary)" />
-              </button>
               <div
                 onMouseEnter={() => setCreditsHover(true)}
                 onMouseLeave={() => setCreditsHover(false)}
