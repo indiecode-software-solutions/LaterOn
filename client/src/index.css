@@ -141,6 +141,7 @@ body {
   height: 88vh;
   max-width: 1600px;
   border-radius: 6px;
+  border: 1px solid black;
   background: var(--white);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -1475,6 +1476,7 @@ body:has(.landing-container)::before {
     flex-direction: column;
     border-radius: 6px;
     box-shadow: none;
+    border: none;
   }
   
   .sidebar {

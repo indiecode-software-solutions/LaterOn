@@ -1,6 +1,9 @@
 package com.lateron.app;
 
 import android.os.Bundle;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
 import com.razorpay.PaymentResultWithDataListener;
@@ -13,6 +16,27 @@ public class MainActivity extends BridgeActivity implements PaymentResultWithDat
         registerPlugin(NativeVibrationPlugin.class);
         registerPlugin(RazorpayPlugin.class);
         super.onCreate(savedInstanceState);
+        createNotificationChannels();
+    }
+
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                "lateron_reminders",
+                "Reminders",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setSound(
+                android.net.Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.bell_notification),
+                new android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
     }
 
     // ── Razorpay payment callbacks ────────────────────────────────────────────

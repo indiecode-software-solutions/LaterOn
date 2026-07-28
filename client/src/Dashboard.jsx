@@ -1232,7 +1232,8 @@ function Dashboard() {
           body: reminder.title,
           id: notifId,
           schedule: { at: new Date(reminder.scheduled_at) },
-          extra: { reminderId: reminder.id }
+          extra: { reminderId: reminder.id },
+          channelId: 'lateron_reminders'
         }]
       });
     } catch (err) {
