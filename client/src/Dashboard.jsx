@@ -9020,9 +9020,7 @@ Join Link: [Auto-generated after scheduling]`}
                   setActiveView('scheduler');
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-                  <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Home size={20} />
                 <span className="nav-label">Home</span>
               </button>
 
