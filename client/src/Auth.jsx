@@ -32,13 +32,10 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { data, error } = await Promise.race([
-          supabase.auth.signInWithPassword({
-            email,
-            password,
-          }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Sign-in timed out. Check your internet connection.')), 15000))
-        ]);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
         
         triggerSelection();
@@ -73,25 +70,15 @@ const Auth = () => {
     setError('');
     try {
       if (Capacitor.isNativePlatform()) {
-        GoogleAuth.initialize({
-          clientId: '861000551892-emlf5q1qtciqf2o5m1b3g8crd7hop343.apps.googleusercontent.com',
-          scopes: ['profile', 'email'],
-          grantOfflineAccess: true,
-        });
-        const googleUser = await Promise.race([
-          GoogleAuth.signIn(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Google Sign-In timed out. Check your internet and Google account.')), 30000))
-        ]);
+        GoogleAuth.initialize();
+        const googleUser = await GoogleAuth.signIn();
         const idToken = googleUser.authentication.idToken;
         if (!idToken) throw new Error("Google Sign-In failed to return an ID Token.");
         
-        const { data, error } = await Promise.race([
-          supabase.auth.signInWithIdToken({
-            provider: 'google',
-            token: idToken,
-          }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase authentication timed out. Please try again.')), 15000))
-        ]);
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        });
         if (error) throw error;
         
         triggerSelection();
