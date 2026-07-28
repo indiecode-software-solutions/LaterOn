@@ -466,8 +466,8 @@ function Dashboard() {
   const [showWhatsAppManage, setShowWhatsAppManage] = useState(false);
   const [manageMenuPos, setManageMenuPos] = useState({ top: 0, right: 0 });
   const manageBtnRef = useRef(null);
+  const menuBtnRef = useRef(null);
   const [showCreditsStrip, setShowCreditsStrip] = useState(false);
-  const [creditsHover, setCreditsHover] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1903,53 +1903,73 @@ Looking forward to connecting!`;
         )}
         {/* Left Sidebar */}
         <aside className={`sidebar${isMobile && showServiceSelector ? ' sidebar-fullscreen' : ''}`}>
-          {showServiceSelector && (
+          {(!isMobile || showServiceSelector) && (
             <header className="header">
               <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
-                    <img
-                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
-                      alt="User Profile"
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '6px',
-                        border: '1.5px solid var(--border)',
-                        objectFit: 'cover',
-                        flexShrink: 0
-                      }}
-                    />
+                  {showServiceSelector ? (
+                    <>
+                      {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                        <img
+                          src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                          alt="User Profile"
+                          referrerPolicy="no-referrer"
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
+                            border: '1.5px solid var(--border)',
+                            objectFit: 'cover',
+                            flexShrink: 0
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '6px',
+                          background: 'var(--primary-light)',
+                          color: 'var(--primary-dark)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          border: '1.5px solid var(--border)',
+                          flexShrink: 0
+                        }}>
+                          {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                        </div>
+                      )}
+                      <div style={{ overflow: 'hidden' }}>
+                        <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {credits.subscription_pack || 'Mini Free'}
+                        </p>
+                      </div>
+                    </>
                   ) : (
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '6px',
-                      background: 'var(--primary-light)',
-                      color: 'var(--primary-dark)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                      border: '1.5px solid var(--border)',
-                      flexShrink: 0
-                    }}>
-                      {(user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
-                    </div>
+                    <button
+                      onClick={() => {
+                        triggerSelection();
+                        setShowServiceSelector(true);
+                        setSidebarStep(1);
+                        setActiveView('scheduler');
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, color: '#000000', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.04)'}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Home
+                    </button>
                   )}
-                  <div style={{ overflow: 'hidden' }}>
-                    <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
-                    </p>
-                    <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {credits.subscription_pack || 'Mini Free'}
-                    </p>
-                  </div>
                 </div>
                 <div
-                  onMouseEnter={() => setCreditsHover(true)}
-                  onMouseLeave={() => setCreditsHover(false)}
                   onClick={() => { triggerSelection(); setShowCreditsStrip(prev => !prev); }}
                   style={{
                     display: 'flex',
@@ -1963,17 +1983,12 @@ Looking forward to connecting!`;
                   }}
                   title="View Later Credits Balance"
                 >
-                  {creditsHover && !creditsLoading && (
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                      {credits.total_balance}
-                    </span>
-                  )}
                   {creditsLoading ? (
                     <span className="skeleton-text" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
                   ) : (
                     <svg width="24" height="24" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" fill="none" stroke="#e0e0e0" strokeWidth="2.5" />
-                      <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5"
+                      <circle cx="12" cy="12" r="10" fill="none" stroke="#000000" strokeWidth="2.5"
                         strokeDasharray={`${2 * Math.PI * 10}`}
                         strokeDashoffset={`${2 * Math.PI * 10 * (1 - Math.min(credits.total_balance / (credits.subscription_credits || 250), 1))}`}
                         strokeLinecap="round" transform="rotate(-90 12 12)"
@@ -1991,39 +2006,101 @@ Looking forward to connecting!`;
 
           {/* Mobile Profile Strip — visible on mobile when a channel is active */}
           {isMobile && !showServiceSelector && !showMobileForm && channel && (
-            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : (channel === 'telegram' ? '#e6f3ff' : (channel === 'instagram' ? '#fff0f5' : (channel === 'reminders' ? '#fffbeb' : '#f8fafc')))), display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className='connectedProfile' style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: channel === 'email' ? '#fdf2f2' : (channel === 'calendar' ? '#f4f8ff' : (channel === 'telegram' ? '#e6f3ff' : (channel === 'instagram' ? '#fff0f5' : (channel === 'reminders' ? '#fffbeb' : '#f8fafc')))), display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'telegram' ? '#0088cc' : (channel === 'instagram' ? '#e1306c' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')))), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', overflow: 'hidden', flexShrink: 0 }}>
                 {channel === 'email' ? <Mail size={16} /> : channel === 'calendar' ? <Calendar size={16} /> : channel === 'telegram' ? <TelegramIcon size={16} color="white" /> : channel === 'instagram' ? <InstagramIcon size={16} color="white" /> : channel === 'reminders' ? <Bell size={16} /> : userInfo?.photo ? <img src={userInfo.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Check size={16} strokeWidth={3} />}
               </div>
               <div style={{ flex: 1, overflow: 'hidden' }}>
-                <p style={{ fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
-                  {channel === 'email' ? 'Email' : channel === 'calendar' ? 'Meetings' : channel === 'telegram' ? 'Telegram' : channel === 'instagram' ? (instagramStatus.config?.name || 'Instagram') : channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'WhatsApp')}
-                </p>
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0 }}>
-                  {channel === 'email' ? (user?.email || 'Active') : channel === 'calendar' ? 'Event Sync Active' : channel === 'telegram' ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'bot'}` : 'Ready to Connect') : channel === 'instagram' ? (instagramStatus.status === 'connected' ? `@${instagramStatus.config?.username || 'account'}` : 'Ready to Connect') : channel === 'reminders' ? 'Reminders Active' : (status === 'connected' ? (userInfo?.id ? `+${userInfo.id}` : 'Connected') : 'Reconnecting...')}
-                </p>
+                {isSearching ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Search size={16} color="var(--text-muted)" />
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Search by name, phone or message..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        width: '100%',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        padding: '4px 0'
+                      }}
+                    />
+                    <X size={16} color="var(--text-muted)" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => { setIsSearching(false); setSearchQuery(''); }} />
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                      <p style={{ fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+                        {channel === 'email' ? 'Email' : channel === 'calendar' ? 'Meetings' : channel === 'telegram' ? 'Telegram' : channel === 'instagram' ? (instagramStatus.config?.name || 'Instagram') : channel === 'reminders' ? 'Reminders' : (userInfo?.name || 'WhatsApp')}
+                      </p>
+                      <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {channel === 'email' ? (user?.email || 'Active') : channel === 'calendar' ? 'Event Sync Active' : channel === 'telegram' ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'bot'}` : 'Ready to Connect') : channel === 'instagram' ? (instagramStatus.status === 'connected' ? `@${instagramStatus.config?.username || 'account'}` : 'Ready to Connect') : channel === 'reminders' ? 'Reminders Active' : (status === 'connected' ? (userInfo?.id ? `+${userInfo.id}` : 'Connected') : 'Reconnecting...')}
+                      </p>
+                    </div>
+                    {(channel === 'whatsapp' && status === 'connected') && (
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <button
+                          ref={manageBtnRef}
+                          onClick={() => {
+                            if (!showWhatsAppManage && manageBtnRef.current) {
+                              const rect = manageBtnRef.current.getBoundingClientRect();
+                              setManageMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            }
+                            setShowWhatsAppManage(prev => !prev);
+                          }}
+                          style={{ width: '28px', height: '28px', border: 'none', background: 'transparent', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, flexShrink: 0, borderRadius: '4px', marginLeft: '4px' }}
+                        >
+                          <Settings size={17} />
+                        </button>
+                        {showWhatsAppManage && (
+                          <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowWhatsAppManage(false)} />
+                        )}
+                      </div>
+                    )}
+                    {(channel === 'email' && user?.email) && (
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <button
+                          onClick={() => setShowEmailConfig(prev => !prev)}
+                          style={{ width: '28px', height: '28px', border: 'none', background: 'transparent', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, flexShrink: 0, borderRadius: '4px', marginLeft: '4px' }}
+                        >
+                          <Settings size={17} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              {channel === 'whatsapp' && status === 'connected' && (
-                <div style={{ position: 'relative' }}>
-                  <button
-                    ref={manageBtnRef}
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {!isSearching && (
+                  <Search
+                    size={18}
+                    color="#54656f"
+                    style={{ cursor: 'pointer', flexShrink: 0 }}
+                    onClick={() => { triggerSelection(); setIsSearching(true); }}
+                  />
+                )}
+                <div ref={menuBtnRef} style={{ position: 'relative', display: 'inline-flex' }}>
+                  <MoreVertical
+                    size={18}
+                    color="#54656f"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => {
-                      if (!showWhatsAppManage && manageBtnRef.current) {
-                        const rect = manageBtnRef.current.getBoundingClientRect();
+                      if (!showMenu && menuBtnRef.current) {
+                        const rect = menuBtnRef.current.getBoundingClientRect();
                         setManageMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
                       }
-                      setShowWhatsAppManage(prev => !prev);
+                      triggerSelection(); setShowMenu(!showMenu);
                     }}
-                    style={{ height: '28px', padding: '0 8px', border: '1px solid var(--border)', background: 'white', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', cursor: 'pointer', flexShrink: 0, fontSize: '0.65rem', fontWeight: 600, borderRadius: '6px' }}
-                  >
-                    <Settings size={12} />
-                    Manage
-                  </button>
-                  {showWhatsAppManage && (
-                    <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setShowWhatsAppManage(false)} />
-                  )}
+                  />
                 </div>
-              )}
+                {showMenu && (
+                  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} onClick={() => setShowMenu(false)} />
+                )}
+              </div>
             </div>
           )}
 
@@ -2162,7 +2239,7 @@ Looking forward to connecting!`;
                 <div className="service-grid">
                   {/* WhatsApp Card */}
                   <div className={channel === 'whatsapp' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#25d366', '--card-bg': channel === 'whatsapp' && !showServiceSelector ? '#f0fff4' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('whatsapp'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   >
                     <div style={{ background: '#25d366' }}>
                       <WhatsAppIcon size={24} color="white" />
@@ -2177,7 +2254,7 @@ Looking forward to connecting!`;
 
                   {/* Email Card */}
                   <div className={channel === 'email' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#ea4335', '--card-bg': channel === 'email' && !showServiceSelector ? '#fdf2f2' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('email'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   >
                     <div style={{ background: '#ea4335', color: 'white' }}>
                       <Mail size={24} />
@@ -2190,7 +2267,7 @@ Looking forward to connecting!`;
 
                   {/* Google Calendar Card */}
                   <div className={channel === 'calendar' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#1a73e8', '--card-bg': channel === 'calendar' && !showServiceSelector ? '#e8f0fe' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('calendar'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   >
                     <div style={{ background: '#1a73e8' }}>
                       <Calendar size={24} />
@@ -2205,7 +2282,7 @@ Looking forward to connecting!`;
 
                   {/* Telegram Card */}
                   <div className={channel === 'telegram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#0088cc', '--card-bg': channel === 'telegram' && !showServiceSelector ? '#e6f3ff' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   >
                     <div style={{ background: '#0088cc' }}>
                       <TelegramIcon size={24} color="white" />
@@ -2220,7 +2297,7 @@ Looking forward to connecting!`;
 
                   {/* Instagram Card */}
                   <div className={channel === 'instagram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#e1306c', '--card-bg': channel === 'instagram' && !showServiceSelector ? '#fff0f5' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile && instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   >
                     <div style={{ background: '#e1306c' }}>
                       <InstagramIcon size={24} color="white" />
@@ -2235,7 +2312,7 @@ Looking forward to connecting!`;
 
                   {/* Personal Reminders Card */}
                   <div className={channel === 'reminders' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#f59e0b', '--card-bg': channel === 'reminders' && !showServiceSelector ? '#fffbeb' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); if (isMobile) { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('reminders'); setShowServiceSelector(false); setActiveView('scheduler'); }}
                   >
                     <div style={{ background: '#f59e0b' }}>
                       <Bell size={24} />
@@ -2652,23 +2729,6 @@ Looking forward to connecting!`;
                     <div className="pulse" style={{ width: '8px', height: '8px', background: '#eab308', borderRadius: '50%', position: 'absolute', top: '12px', right: '12px' }} />
                   )}
                 </div>
-
-                {/* Desktop WhatsApp Business Tools toggle */}
-                {!isMobile && !showServiceSelector && channel === 'whatsapp' && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 16px', borderBottom: '1px solid var(--border)', background: '#fafafa' }}>
-                    <span
-                      onClick={() => {
-                        triggerSelection();
-                        setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler');
-                        setCurrentBusinessTool(null);
-                        setSidebarStep(1);
-                      }}
-                      style={{ fontSize: '0.7rem', fontWeight: 600, color: activeView === 'business' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}
-                    >
-                      {activeView === 'business' ? '← Back to Scheduler' : 'Business Tools →'}
-                    </span>
-                  </div>
-                )}
 
                 <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
                   {status === 'connected' && contactSyncMessage && (
@@ -5052,7 +5112,7 @@ Looking forward to connecting!`;
                                     width: '14px',
                                     height: '14px',
                                     background: 'white',
-                                    borderRadius: '50%',
+                                    borderRadius: '12px',
                                     position: 'absolute',
                                     top: '3px',
                                     left: autoReplies.find(r => r.keyword === '*') ? '23px' : '3px',
@@ -5451,35 +5511,44 @@ Looking forward to connecting!`;
 
         {/* Main Content Area */}
         <main className="main-content" style={{ display: (isMobile && ((channel === 'whatsapp' ? status !== 'connected' : false) || showServiceSelector)) ? 'none' : undefined }}>
+          {isMobile && activeView === 'scheduler' && (
+            <div style={{
+              position: 'absolute',
+              top: '8px',
+              right: '12px',
+              zIndex: 10
+            }}>
+              <select
+                value={queueTab}
+                onChange={(e) => { triggerSelection(); setQueueTab(e.target.value); }}
+                style={{
+                  border: '1px solid var(--border)',
+                  background: 'white',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: 'var(--primary-dark)',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  padding: '6px 10px',
+                  borderRadius: '6px'
+                }}
+              >
+                <option value="upcoming">Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled')).length})</option>
+                <option value="history">{showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled').length})</option>
+              </select>
+            </div>
+          )}
           <header className="header" style={{
             padding: '0px 24px',
             height: '60px',
-            display: 'flex',
+            display: isMobile ? 'none' : 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: isSearching ? '#f0f2f5' : 'white',
+            background: isSearching ? '#f0f2f5' : 'transparent',
+            borderBottom: 'none',
             gap: '16px'
           }}>
-            {isSearching ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-                <Search size={18} color="var(--primary-dark)" />
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Search by name, phone or message..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    width: '100%',
-                    fontSize: '0.95rem',
-                    outline: 'none',
-                    padding: '8px 0'
-                  }}
-                />
-              </div>
-            ) : (
+            {!(isMobile && isSearching) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '32px', height: '100%', flex: 1 }}>
                 {activeView === 'scheduler' ? (
                   isMobile ? (
@@ -5557,170 +5626,176 @@ Looking forward to connecting!`;
             )}
 
 
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              {isSearching ? (
-                <X
-                  size={20}
-                  style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
-                  onClick={() => {
-                    setIsSearching(false);
-                    setSearchQuery('');
-                  }}
-                />
-              ) : (
-                <Search
-                  size={20}
-                  color="#54656f"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => { triggerSelection(); setIsSearching(true); }}
-                />
-              )}
-              <div style={{ position: 'relative' }}>
-                <MoreVertical
-                  size={20}
-                  color="#54656f"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => { triggerSelection(); setShowMenu(!showMenu); }}
-                />
-
-                <AnimatePresence>
-                  {showMenu && (
-                    <>
-                      <div
-                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
-                        onClick={() => setShowMenu(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        style={{
-                          position: 'absolute',
-                          top: '100%',
-                          right: 0,
-                          marginTop: '8px',
-                          background: 'white',
-                          borderRadius: '0px',
-                          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                          padding: '8px 0',
-                          zIndex: 1000,
-                          width: '180px',
-                          border: '1px solid var(--border)',
-                          transformOrigin: 'top right'
-                        }}
-                      >
-                        {activeView === 'scheduler' && (
-                          <>
-                            {queueTab === 'calendar' ? (
-                              <div
-                                onClick={() => { triggerSelection(); setQueueTab('upcoming'); setShowMenu(false); }}
-                                style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
-                              >
-                                <LayoutList size={14} /> Switch to List View
-                              </div>
-                            ) : (
-                              <div
-                                onClick={() => { triggerSelection(); setQueueTab('calendar'); setShowMenu(false); }}
-                                style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
-                              >
-                                <Calendar size={14} /> Switch to Calendar View
-                              </div>
-                            )}
-                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-                          </>
-                        )}
-                        <div
-                          onClick={() => { triggerSelection(); handleRetryFailed(); setShowMenu(false); }}
-                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
-                        >
-                          <RefreshCcw size={14} /> Retry All Failed
-                        </div>
-                        <div
-                          onClick={() => { triggerSelection(); handleExportCSV(); setShowMenu(false); }}
-                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
-                        >
-                          <Download size={14} /> Export CSV
-                        </div>
-                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-                        <div
-                          onClick={() => { triggerSelection(); handleClearHistory(); setShowMenu(false); }}
-                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
-                        >
-                          <Trash2 size={14} /> Clear History
-                        </div>
-                        <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-                        <div
-                          onClick={() => { triggerSelection(); handleSignOut(); setShowMenu(false); }}
-                          style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
-                        >
-                          <LogOut size={14} /> Sign Out
-                        </div>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {activeView === 'scheduler' && queueTab === 'history' && (
-                <div style={{ position: 'relative' }}>
-                  <ListFilter
+            {!(isMobile && isSearching) && (
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                {isSearching ? (
+                  <X
                     size={20}
-                    color="#54656f"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => { triggerSelection(); triggerSelection(); setShowFilterMenu(!showFilterMenu); }}
+                    style={{ cursor: 'pointer', color: 'var(--text-muted)' }}
+                    onClick={() => {
+                      setIsSearching(false);
+                      setSearchQuery('');
+                    }}
                   />
+                ) : (
+                  !isMobile && (
+                    <Search
+                      size={20}
+                      color="#54656f"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => { triggerSelection(); setIsSearching(true); }}
+                    />
+                  )
+                )}
+                {!isMobile && (
+                  <div style={{ position: 'relative' }}>
+                    <MoreVertical
+                      size={20}
+                      color="#54656f"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => { triggerSelection(); setShowMenu(!showMenu); }}
+                    />
 
-                  <AnimatePresence>
-                    {showFilterMenu && (
-                      <>
-                        <div
-                          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
-                          onClick={() => setShowFilterMenu(false)}
-                        />
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                          style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: '8px',
-                            background: 'white',
-                            borderRadius: '0px',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                            padding: '8px 0',
-                            zIndex: 1000,
-                            width: '150px',
-                            border: '1px solid var(--border)',
-                            transformOrigin: 'top right'
-                          }}
-                        >
-                          {['all', 'sent', 'delivered', 'read'].map(f => (
+                    <AnimatePresence>
+                      {showMenu && (
+                        <>
+                          <div
+                            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                            onClick={() => setShowMenu(false)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              right: 0,
+                              marginTop: '8px',
+                              background: 'white',
+                              borderRadius: '0px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                              padding: '8px 0',
+                              zIndex: 1000,
+                              width: '180px',
+                              border: '1px solid var(--border)',
+                              transformOrigin: 'top right'
+                            }}
+                          >
+                            {activeView === 'scheduler' && (
+                              <>
+                                {queueTab === 'calendar' ? (
+                                  <div
+                                    onClick={() => { triggerSelection(); setQueueTab('upcoming'); setShowMenu(false); }}
+                                    style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                                  >
+                                    <LayoutList size={14} /> Switch to List View
+                                  </div>
+                                ) : (
+                                  <div
+                                    onClick={() => { triggerSelection(); setQueueTab('calendar'); setShowMenu(false); }}
+                                    style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                                  >
+                                    <Calendar size={14} /> Switch to Calendar View
+                                  </div>
+                                )}
+                                <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                              </>
+                            )}
                             <div
-                              key={f}
-                              onClick={() => { triggerSelection(); setHistoryFilter(f); setShowFilterMenu(false); }}
-                              style={{
-                                padding: '10px 16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                background: historyFilter === f ? '#f0f2f5' : 'transparent',
-                                fontWeight: historyFilter === f ? 600 : 'normal'
-                              }}
+                              onClick={() => { triggerSelection(); handleRetryFailed(); setShowMenu(false); }}
+                              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
                             >
-                              {f === 'all' ? 'All Status' : f.charAt(0).toUpperCase() + f.slice(1)}
+                              <RefreshCcw size={14} /> Retry All Failed
                             </div>
-                          ))}
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )}
-            </div>
+                            <div
+                              onClick={() => { triggerSelection(); handleExportCSV(); setShowMenu(false); }}
+                              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                            >
+                              <Download size={14} /> Export CSV
+                            </div>
+                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                            <div
+                              onClick={() => { triggerSelection(); handleClearHistory(); setShowMenu(false); }}
+                              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+                            >
+                              <Trash2 size={14} /> Clear History
+                            </div>
+                            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                            <div
+                              onClick={() => { triggerSelection(); handleSignOut(); setShowMenu(false); }}
+                              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+                            >
+                              <LogOut size={14} /> Sign Out
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {activeView === 'scheduler' && queueTab === 'history' && (
+                  <div style={{ position: 'relative' }}>
+                    <ListFilter
+                      size={20}
+                      color="#54656f"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => { triggerSelection(); triggerSelection(); setShowFilterMenu(!showFilterMenu); }}
+                    />
+
+                    <AnimatePresence>
+                      {showFilterMenu && (
+                        <>
+                          <div
+                            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                            onClick={() => setShowFilterMenu(false)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                            style={{
+                              position: 'fixed',
+                              top: manageMenuPos.top,
+                              right: manageMenuPos.right,
+                              marginTop: '0px',
+                              background: 'white',
+                              borderRadius: '0px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                              padding: '8px 0',
+                              zIndex: 1000,
+                              width: '150px',
+                              border: '1px solid var(--border)',
+                              transformOrigin: 'top right'
+                            }}
+                          >
+                            {['all', 'sent', 'delivered', 'read'].map(f => (
+                              <div
+                                key={f}
+                                onClick={() => { triggerSelection(); setHistoryFilter(f); setShowFilterMenu(false); }}
+                                style={{
+                                  padding: '10px 16px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85rem',
+                                  background: historyFilter === f ? '#f0f2f5' : 'transparent',
+                                  fontWeight: historyFilter === f ? 600 : 'normal'
+                                }}
+                              >
+                                {f === 'all' ? 'All Status' : f.charAt(0).toUpperCase() + f.slice(1)}
+                              </div>
+                            ))}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            )}
           </header>
 
 
@@ -6537,7 +6612,7 @@ Looking forward to connecting!`;
                                     fontWeight: 600,
                                     cursor: 'pointer',
                                     display: 'block',
-                                    margin: '12px auto 0',
+                                    margin: '12px 4px 0px auto',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.5px'
                                   }}
@@ -8978,28 +9053,28 @@ Join Link: [Auto-generated after scheduling]`}
                 >
                   <button
                     className={`social-dropdown-item ${channel === 'whatsapp' ? 'active' : ''}`}
-                    onClick={() => { triggerSelection(); setChannel('whatsapp'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('whatsapp'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
                   >
                     <WhatsAppIcon size={18} color="#25D366" />
                     <span>WhatsApp</span>
                   </button>
                   <button
                     className={`social-dropdown-item ${channel === 'instagram' ? 'active' : ''}`}
-                    onClick={() => { triggerSelection(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (instagramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
                   >
                     <InstagramIcon size={18} color="#e1306c" />
                     <span>Instagram</span>
                   </button>
                   <button
                     className={`social-dropdown-item ${channel === 'telegram' ? 'active' : ''}`}
-                    onClick={() => { triggerSelection(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); if (telegramStatus.status === 'connected') { setFormStep(1); setShowMobileForm(true); } }}
+                    onClick={() => { triggerSelection(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
                   >
                     <TelegramIcon size={18} color="#0088cc" />
                     <span>Telegram</span>
                   </button>
                   <button
                     className={`social-dropdown-item ${channel === 'email' ? 'active' : ''}`}
-                    onClick={() => { triggerSelection(); setChannel('email'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                    onClick={() => { triggerSelection(); setChannel('email'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
                   >
                     <Mail size={18} color="#ea4335" />
                     <span>Email</span>
@@ -9029,30 +9104,38 @@ Join Link: [Auto-generated after scheduling]`}
                 className={`bottom-nav-item ${['whatsapp', 'instagram', 'telegram', 'email'].includes(channel) ? 'active' : ''}`}
                 onClick={() => setShowSocialDropdown(prev => !prev)}
               >
-                <MessageSquare size={20} />
+                {channel === 'whatsapp' ? <WhatsAppIcon size={20} color="#25D366" /> : channel === 'instagram' ? <InstagramIcon size={20} color="#e1306c" /> : channel === 'telegram' ? <TelegramIcon size={20} color="#0088cc" /> : channel === 'email' ? <Mail size={20} color="#ea4335" /> : <MessageSquare size={20} />}
                 <span className="nav-label">{channel === 'whatsapp' ? 'WhatsApp' : channel === 'instagram' ? 'Instagram' : channel === 'telegram' ? 'Telegram' : channel === 'email' ? 'Email' : 'Channels'}</span>
               </button>
 
               {/* Plus Button */}
               <button
                 className="bottom-nav-plus"
-                style={{
-                  background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
-                  boxShadow: channel === 'email' ? '0 4px 16px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 4px 16px rgba(26, 115, 230, 0.4)' : (channel === 'reminders' ? '0 4px 16px rgba(245, 158, 11, 0.4)' : '0 4px 16px rgba(37, 211, 102, 0.4)'))
-                }}
                 onClick={() => {
                   triggerSelection();
                   setFormStep(1);
                   setShowMobileForm(true);
                 }}
               >
-                <Plus size={28} />
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '50%',
+                  color: 'white',
+                  background: channel === 'email' ? '#ea4335' : (channel === 'calendar' ? '#1a73e8' : (channel === 'reminders' ? '#f59e0b' : 'var(--primary)')),
+                  boxShadow: channel === 'email' ? '0 4px 16px rgba(234, 67, 53, 0.4)' : (channel === 'calendar' ? '0 4px 16px rgba(26, 115, 230, 0.4)' : (channel === 'reminders' ? '0 4px 16px rgba(245, 158, 11, 0.4)' : '0 4px 16px rgba(37, 211, 102, 0.4)'))
+                }}>
+                  <Plus size={28} />
+                </span>
               </button>
 
               {/* Meetings */}
               <button
                 className={`bottom-nav-item ${channel === 'calendar' ? 'active' : ''}`}
-                onClick={() => { triggerSelection(); setChannel('calendar'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                onClick={() => { triggerSelection(); setChannel('calendar'); setActiveView('scheduler'); setShowServiceSelector(false); }}
               >
                 <Calendar size={20} />
                 <span className="nav-label">Meetings</span>
@@ -9061,7 +9144,7 @@ Join Link: [Auto-generated after scheduling]`}
               {/* Personal Reminders */}
               <button
                 className={`bottom-nav-item ${channel === 'reminders' ? 'active' : ''}`}
-                onClick={() => { triggerSelection(); setChannel('reminders'); setActiveView('scheduler'); setShowServiceSelector(false); setFormStep(1); setShowMobileForm(true); }}
+                onClick={() => { triggerSelection(); setChannel('reminders'); setActiveView('scheduler'); setShowServiceSelector(false); }}
               >
                 <Bell size={20} />
                 <span className="nav-label">Reminders</span>
@@ -9094,6 +9177,75 @@ Join Link: [Auto-generated after scheduling]`}
             Disconnect
           </div>
         </div>
+      )}
+      {isMobile && showMenu && (
+        <>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            style={{
+              position: 'fixed',
+              top: manageMenuPos.top,
+              right: manageMenuPos.right,
+              background: 'white',
+              borderRadius: '0px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              padding: '8px 0',
+              zIndex: 1000,
+              width: '180px',
+              border: '1px solid var(--border)',
+              transformOrigin: 'top right'
+            }}
+          >
+            {activeView === 'scheduler' && (
+              <>
+                {queueTab === 'calendar' ? (
+                  <div
+                    onClick={() => { triggerSelection(); setQueueTab('upcoming'); setShowMenu(false); }}
+                    style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                  >
+                    <LayoutList size={14} /> Switch to List View
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => { triggerSelection(); setQueueTab('calendar'); setShowMenu(false); }}
+                    style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+                  >
+                    <Calendar size={14} /> Switch to Calendar View
+                  </div>
+                )}
+                <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+              </>
+            )}
+            <div
+              onClick={() => { triggerSelection(); handleRetryFailed(); setShowMenu(false); }}
+              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              <RefreshCcw size={14} /> Retry All Failed
+            </div>
+            <div
+              onClick={() => { triggerSelection(); handleExportCSV(); setShowMenu(false); }}
+              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              <Download size={14} /> Export CSV
+            </div>
+            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+            <div
+              onClick={() => { triggerSelection(); handleClearHistory(); setShowMenu(false); }}
+              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+            >
+              <Trash2 size={14} /> Clear History
+            </div>
+            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+            <div
+              onClick={() => { triggerSelection(); handleSignOut(); setShowMenu(false); }}
+              style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: '#ef4444' }}
+            >
+              <LogOut size={14} /> Sign Out
+            </div>
+          </motion.div>
+        </>
       )}
     </div>
   );

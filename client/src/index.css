@@ -166,6 +166,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 .header {
@@ -1498,10 +1499,6 @@ body:has(.landing-container)::before {
     max-height: 65vh;
   }
   
-  .app-wrapper {
-    padding-bottom: 64px;
-  }
-  
   .header h1 {
     font-size: 1.2rem !important;
   }
@@ -1563,6 +1560,7 @@ body:has(.landing-container)::before {
 @media (max-width: 768px) {
   .service-grid {
     align-content: center;
+    padding: 0 16px;
   }
 }
 
@@ -1725,34 +1723,29 @@ body:has(.landing-container)::before {
 
 /* Center Plus Button */
 .bottom-nav-plus {
-  width: 54px;
   height: 54px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-  margin-top: -20px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
-  flex-shrink: 0;
+  flex: 1;
   position: relative;
+  background: none;
 }
 
-.bottom-nav-plus::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
+.bottom-nav-plus svg {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.3);
+  padding: 8px;
+  box-sizing: content-box;
 }
 
 .bottom-nav-plus:active {
-  transform: scale(0.88) rotate(90deg);
+  opacity: 0.7;
 }
 
 /* Social Dropdown */
