@@ -3573,6 +3573,15 @@ app.post('/api/credits/subscription/cancel', verifyToken, async (req, res) => {
 // ── Admin: List all users with credits ───────────────────────────────────────
 app.get('/api/admin/users', verifyToken, async (req, res) => {
     try {
+        if (!process.env.ADMIN_EMAIL) {
+            return res.status(403).json({ error: 'Admin access not configured' });
+        }
+        const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(req.headers['authorization']?.split(' ')[1]);
+        if (userErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+        if (user.email !== process.env.ADMIN_EMAIL) {
+            return res.status(403).json({ error: 'Admin access denied' });
+        }
+
         const { data: users, error: usersErr } = await supabaseAdmin.auth.admin.listUsers();
         if (usersErr) return res.status(500).json({ error: usersErr.message });
 

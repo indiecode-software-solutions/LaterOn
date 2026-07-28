@@ -12,6 +12,7 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [adminAuthed, setAdminAuthed] = useState(true);
 
   useEffect(() => {
     fetchUsers();
@@ -27,6 +28,11 @@ export default function Admin() {
       const res = await fetch(`${API_URL}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 403) {
+        setAdminAuthed(false);
+        setLoading(false);
+        return;
+      }
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'Failed to fetch users');
@@ -70,7 +76,15 @@ export default function Admin() {
           </div>
         )}
 
-        {!loading && !error && (
+        {!adminAuthed && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔒</div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 600, margin: '0 0 8px 0', color: '#1a1a1a' }}>Access Denied</h2>
+            <p style={{ fontSize: '0.85rem', color: '#888', margin: 0 }}>You do not have admin privileges.</p>
+          </div>
+        )}
+
+        {!loading && !error && adminAuthed && (
           <div style={{ background: 'white', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>

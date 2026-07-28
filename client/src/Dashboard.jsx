@@ -1861,7 +1861,7 @@ Looking forward to connecting!`;
           </button>
         </div>
       )}
-      <div className="brand-tagline" style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px' }}>
+      <div className="brand-tagline" onDoubleClick={() => window.open('/admin', '_blank')} style={{ fontFamily: "'Poppins', sans-serif", fontSize: '1.5rem', fontWeight: 600, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '2px', cursor: 'default' }}>
         <span style={{ color: '#ffffff' }}>Later</span>
         <span style={{ fontWeight: 400, color: '#90ee90' }}>On</span>
       </div>
@@ -5491,15 +5491,6 @@ Looking forward to connecting!`;
             )}
           </div>
 
-          {/* Admin link */}
-          <div style={{ padding: '8px 16px', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
-            <span
-              onClick={() => window.open('/admin', '_blank')}
-              style={{ fontSize: '0.65rem', color: '#bbb', cursor: 'pointer', userSelect: 'none' }}
-            >
-              Admin
-            </span>
-          </div>
         </aside>
 
         {/* Main Content Area */}
