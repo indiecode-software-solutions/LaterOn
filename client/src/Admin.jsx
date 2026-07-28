@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL ||
@@ -33,9 +33,17 @@ export default function Admin() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [timeframe, setTimeframe] = useState(24 * 60 * 60 * 1000);
+  const pollingRef = useRef(null);
 
-  const fetchUsers = async (pw) => {
-    setLoading(true);
+  useEffect(() => {
+    if (authenticated) {
+      pollingRef.current = setInterval(() => fetchUsers(password, true), 5000);
+    }
+    return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
+  }, [authenticated]);
+
+  const fetchUsers = async (pw, silent) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const res = await fetch(`${API_URL}/api/admin/users`, {
@@ -49,10 +57,10 @@ export default function Admin() {
       setUsers(data);
       return true;
     } catch (err) {
-      setError(err.message);
+      if (!silent) setError(err.message);
       return false;
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
