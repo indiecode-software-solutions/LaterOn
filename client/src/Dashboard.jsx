@@ -5501,38 +5501,58 @@ Looking forward to connecting!`;
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '32px', height: '100%', flex: 1 }}>
                 {activeView === 'scheduler' ? (
-                  <>
-                    <div
-                      onClick={() => { triggerSelection(); setQueueTab('upcoming'); }}
+                  isMobile ? (
+                    <select
+                      value={queueTab}
+                      onChange={(e) => { triggerSelection(); setQueueTab(e.target.value); }}
                       style={{
                         height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        borderBottom: queueTab === 'upcoming' ? '3px solid var(--primary-dark)' : '3px solid transparent',
-                        color: queueTab === 'upcoming' ? 'var(--primary-dark)' : 'var(--text-muted)',
+                        border: 'none',
+                        background: 'transparent',
                         fontWeight: 600,
-                        fontSize: '0.9rem'
+                        fontSize: '0.9rem',
+                        color: 'var(--primary-dark)',
+                        outline: 'none',
+                        cursor: 'pointer'
                       }}
                     >
-                      Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled')).length})
-                    </div>
-                    <div
-                      onClick={() => { triggerSelection(); setQueueTab('history'); }}
-                      style={{
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        borderBottom: queueTab === 'history' ? '3px solid var(--primary-dark)' : '3px solid transparent',
-                        color: queueTab === 'history' ? 'var(--primary-dark)' : 'var(--text-muted)',
-                        fontWeight: 600,
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled').length})
-                    </div>
-                  </>
+                      <option value="upcoming">Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled')).length})</option>
+                      <option value="history">{showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled').length})</option>
+                    </select>
+                  ) : (
+                    <>
+                      <div
+                        onClick={() => { triggerSelection(); setQueueTab('upcoming'); }}
+                        style={{
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          borderBottom: queueTab === 'upcoming' ? '3px solid var(--primary-dark)' : '3px solid transparent',
+                          color: queueTab === 'upcoming' ? 'var(--primary-dark)' : 'var(--text-muted)',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        Upcoming ({channel === 'reminders' ? reminders.filter(r => r.status === 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && (s.status === 'pending' || s.status === 'scheduled')).length})
+                      </div>
+                      <div
+                        onClick={() => { triggerSelection(); setQueueTab('history'); }}
+                        style={{
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          borderBottom: queueTab === 'history' ? '3px solid var(--primary-dark)' : '3px solid transparent',
+                          color: queueTab === 'history' ? 'var(--primary-dark)' : 'var(--text-muted)',
+                          fontWeight: 600,
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        {showServiceSelector ? 'All History' : 'History'} ({channel === 'reminders' ? reminders.filter(r => r.status !== 'pending').length : schedules.filter(s => (showServiceSelector || s.channel === channel) && s.status !== 'pending' && s.status !== 'scheduled').length})
+                      </div>
+                    </>
+                  )
                 ) : (
                   <div style={{
                     height: '100%',
