@@ -3574,6 +3574,7 @@ app.post('/api/credits/subscription/cancel', verifyToken, async (req, res) => {
 app.get('/api/admin/users', async (req, res) => {
     const adminPassword = req.headers['x-admin-password'];
     const expected = process.env.ADMIN_PASSWORD;
+    console.log('[Admin] password check:', { received: adminPassword, expected, hasExpected: !!expected, envKeys: Object.keys(process.env).filter(k => k.includes('ADMIN')) });
     if (!expected || adminPassword !== expected) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
