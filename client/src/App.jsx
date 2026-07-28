@@ -104,11 +104,7 @@ function App() {
         />
         <Route 
           path="/admin" 
-          element={
-            <ProtectedRoute loading={loading} session={session}>
-              <Admin />
-            </ProtectedRoute>
-          } 
+          element={<Admin />} 
         />
       </Routes>
     </Router>
