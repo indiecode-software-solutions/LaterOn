@@ -834,7 +834,6 @@ function Dashboard() {
         if (scheduledAt <= now) {
           triggered.add(r.id);
           showBrowserNotification(r);
-          scheduleCapacitorNotification(r);
           axios.put(`${API_URL}/api/reminders/${r.id}`, { status: 'triggered' }).catch(() => { });
           setReminders(prev => prev.map(p => p.id === r.id ? { ...p, status: 'triggered' } : p));
         }

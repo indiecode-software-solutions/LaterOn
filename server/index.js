@@ -2404,17 +2404,10 @@ async function checkAndSendReminders() {
 
                         const response = await fcmMessaging.sendEachForMulticast({
                             tokens: tokens,
-                            notification: {
+                            data: {
+                                type: 'reminder',
                                 title: '🔔 LaterOn Reminder',
                                 body: notifBody,
-                            },
-                            android: {
-                                notification: {
-                                    channelId: 'lateron_reminders',
-                                    sound: 'bell_notification.wav',
-                                }
-                            },
-                            data: {
                                 reminderId: reminder.id,
                                 description: reminder.description || ''
                             }
