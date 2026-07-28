@@ -38,6 +38,7 @@ body {
   z-index: 50;
   pointer-events: none;
   text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  display: flex;
 }
 
 .dashboard-container {
@@ -1454,7 +1455,7 @@ body:has(.landing-container)::before {
 
 @media (max-width: 1024px) {
   .brand-tagline {
-    display: none;
+    display: none !important;
   }
 }
 
