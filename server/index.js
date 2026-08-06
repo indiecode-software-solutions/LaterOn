@@ -1053,7 +1053,7 @@ async function generateAiReply(userMessage, context) {
 
     try {
         const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-            model: "google/gemini-2.0-flash-001",
+            model: "google/gemini-2.5-flash",
             messages: [
                 {
                     role: "system",
@@ -1064,6 +1064,7 @@ async function generateAiReply(userMessage, context) {
                     content: userMessage
                 }
             ],
+            max_tokens: 1000,
         }, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
@@ -1113,8 +1114,9 @@ app.post('/api/ai/generate', async (req, res) => {
         }
 
         const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-            model: "google/gemini-2.0-flash-001",
+            model: "google/gemini-2.5-flash",
             messages: messages,
+            max_tokens: 1000,
         }, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
