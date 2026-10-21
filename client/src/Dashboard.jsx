@@ -703,10 +703,35 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (user.id) {
+    if (user?.id) {
       socket.emit('join', user.id);
     }
-  }, [user.id]);
+
+    const onSocketConnect = () => {
+      if (user?.id) {
+        socket.emit('join', user.id);
+        fetchStatus();
+      }
+    };
+
+    socket.on('connect', onSocketConnect);
+    return () => {
+      socket.off('connect', onSocketConnect);
+    };
+  }, [user?.id]);
+
+  // Active status poller while in connecting or syncing states
+  useEffect(() => {
+    if (status === 'connecting' || status === 'syncing') {
+      const pollTimer = setInterval(async () => {
+        const next = await fetchStatus();
+        if (next === 'connected' || next === 'qr') {
+          clearInterval(pollTimer);
+        }
+      }, 2500);
+      return () => clearInterval(pollTimer);
+    }
+  }, [status]);
 
   useEffect(() => {
     fetchStatus();
@@ -913,13 +938,19 @@ function Dashboard() {
       const res = await axios.get(`${API_URL}/api/status`);
       const nextStatus = res.data.status || 'disconnected';
       const currentStatus = statusRef.current;
-      if (shouldIgnoreOlderConnectionStatus(currentStatus, nextStatus)) return;
+      if (shouldIgnoreOlderConnectionStatus(currentStatus, nextStatus)) return nextStatus;
 
       applyConnectionStatus(nextStatus);
       setQrCode(res.data.qr || null);
-      setUserInfo(res.data.userInfo || null);
+      if (res.data.userInfo) {
+        setUserInfo(res.data.userInfo);
+      } else if (nextStatus === 'disconnected' && !res.data.qr) {
+        setUserInfo(null);
+      }
+      return nextStatus;
     } catch (err) {
       applyConnectionStatus('disconnected');
+      return 'disconnected';
     } finally {
       setStatusLoading(false);
     }
@@ -935,11 +966,19 @@ function Dashboard() {
         socket.emit('join', user.id);
       }
       await axios.post(`${API_URL}/api/reconnect`);
-      await fetchStatus();
+      
+      let attempts = 0;
+      const retryPoll = setInterval(async () => {
+        attempts++;
+        const s = await fetchStatus();
+        if (s === 'connected' || s === 'qr' || attempts >= 8) {
+          clearInterval(retryPoll);
+          setRetryLoading(false);
+        }
+      }, 1500);
     } catch (err) {
       console.error('Retry connection failed:', err);
       await fetchStatus();
-    } finally {
       setRetryLoading(false);
     }
   };
@@ -2048,7 +2087,7 @@ Looking forward to connecting!`;
                         {channel === 'email' ? (user?.email || 'Active') : channel === 'calendar' ? 'Event Sync Active' : channel === 'telegram' ? (telegramStatus.status === 'connected' ? `@${telegramStatus.config?.bot_username || 'bot'}` : 'Ready to Connect') : channel === 'instagram' ? (instagramStatus.status === 'connected' ? `@${instagramStatus.config?.username || 'account'}` : 'Ready to Connect') : channel === 'reminders' ? 'Reminders Active' : (status === 'connected' ? (userInfo?.id ? `+${userInfo.id}` : 'Connected') : 'Reconnecting...')}
                       </p>
                     </div>
-                    {(channel === 'whatsapp' && status === 'connected') && (
+                    {(channel === 'whatsapp' && (status === 'connected' || status === 'connecting' || userInfo)) && (
                       <div style={{ position: 'relative', flexShrink: 0 }}>
                         <button
                           ref={manageBtnRef}
@@ -2717,8 +2756,33 @@ Looking forward to connecting!`;
                       <Mail size={14} />
                       Settings
                     </button>
-                  ) : status === 'connected' && channel === 'whatsapp' && (
-                    <div style={{ position: 'relative' }}>
+                  ) : (channel === 'whatsapp' && (status === 'connected' || status === 'connecting' || userInfo)) && (
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {status !== 'connected' && (
+                        <button
+                          onClick={handleDisconnectWhatsApp}
+                          title="Disconnect WhatsApp"
+                          style={{
+                            height: '32px',
+                            padding: '0 8px',
+                            border: '1px solid #fecaca',
+                            background: '#fff1f2',
+                            color: '#e11d48',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            borderRadius: '6px'
+                          }}
+                        >
+                          <WifiOff size={13} />
+                          Disconnect
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowWhatsAppManage(prev => !prev)}
                         style={{
@@ -2768,7 +2832,7 @@ Looking forward to connecting!`;
                             </div>
                             <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                             <div
-                              onClick={() => { fetchStatus(); setShowWhatsAppManage(false); }}
+                              onClick={() => { handleRetryConnection(); setShowWhatsAppManage(false); }}
                               style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text)' }}
                             >
                               <RefreshCcw size={15} className={status === 'connected' ? '' : 'spin'} />
@@ -9225,14 +9289,14 @@ Join Link: [Auto-generated after scheduling]`}
       </div>
 
       {/* Mobile WhatsApp Manage Dropdown (rendered outside app-wrapper to avoid overflow clipping) */}
-      {isMobile && showWhatsAppManage && channel === 'whatsapp' && status === 'connected' && (
+      {isMobile && showWhatsAppManage && channel === 'whatsapp' && (status === 'connected' || status === 'connecting' || userInfo) && (
         <div style={{ position: 'fixed', top: manageMenuPos.top, right: manageMenuPos.right, zIndex: 999, background: 'white', border: '1px solid var(--border)', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', minWidth: '160px', padding: '6px', borderRadius: '8px' }}>
           <div onClick={() => { triggerSelection(); setActiveView(activeView === 'scheduler' ? 'business' : 'scheduler'); setCurrentBusinessTool(null); setSidebarStep(1); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: activeView === 'business' ? 'var(--primary)' : 'var(--text)' }}>
             {activeView === 'business' ? <Calendar size={13} /> : <WABusinessIcon size={13} />}
             {activeView === 'business' ? 'Back to Scheduler' : 'Business Tools'}
           </div>
           <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-          <div onClick={() => { fetchStatus(); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)' }}>
+          <div onClick={() => { handleRetryConnection(); setShowWhatsAppManage(false); }} style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)' }}>
             <RefreshCcw size={13} className={status === 'connected' ? '' : 'spin'} />
             Refresh Connection
           </div>
