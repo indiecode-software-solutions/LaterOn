@@ -720,12 +720,12 @@ function Dashboard() {
     };
   }, [user?.id]);
 
-  // Active status poller while in connecting or syncing states
+  // Active status poller while in syncing state
   useEffect(() => {
-    if (status === 'connecting' || status === 'syncing') {
+    if (status === 'syncing') {
       const pollTimer = setInterval(async () => {
         const next = await fetchStatus();
-        if (next === 'connected' || next === 'qr') {
+        if (next === 'connected') {
           clearInterval(pollTimer);
         }
       }, 2500);
@@ -761,7 +761,7 @@ function Dashboard() {
         setPairingLoading(false);
         clearPairingCodeTimeout();
       }
-      if (appliedStatus === 'disconnected') setUserInfo(null);
+      if (appliedStatus !== 'connected') setUserInfo(null);
     });
 
     socket.on('qr', (qr) => {
@@ -942,9 +942,9 @@ function Dashboard() {
 
       applyConnectionStatus(nextStatus);
       setQrCode(res.data.qr || null);
-      if (res.data.userInfo) {
+      if (nextStatus === 'connected' && res.data.userInfo) {
         setUserInfo(res.data.userInfo);
-      } else if (nextStatus === 'disconnected' && !res.data.qr) {
+      } else if (nextStatus !== 'connected') {
         setUserInfo(null);
       }
       return nextStatus;
@@ -1639,7 +1639,6 @@ Looking forward to connecting!`;
       setPairingLoading(false);
       applyConnectionStatus('disconnected');
       setUsePairingCode(isMobile);
-      socket.emit('join', user.id);
     } catch (err) {
       console.error('Disconnect failed:', err);
     }
@@ -2395,9 +2394,8 @@ Looking forward to connecting!`;
                     </div>
                   </div>
                 </div>
-
               </div>
-            ) : (channel === 'whatsapp' && !userInfo && status !== 'connected') ? (
+            ) : (channel === 'whatsapp' && status !== 'connected') ? (
               <div style={{
                 flex: 1,
                 display: 'flex',
@@ -2407,7 +2405,71 @@ Looking forward to connecting!`;
                 padding: '40px 20px',
                 textAlign: 'center'
               }}>
-                {((status === 'qr' && qrCode) || (['connecting', 'disconnected', 'qr'].includes(status) && (usePairingCode || pairingLoading || pairingCode))) ? (
+                {(status === 'qr-scanned' || status === 'syncing') ? (
+                  <motion.div
+                    key="qr-scanned"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="wa-linking-panel"
+                  >
+                    <div className="wa-connection-stage" aria-hidden="true">
+                      <div className="wa-device-node">
+                        <Phone size={24} strokeWidth={2.2} />
+                      </div>
+
+                      <div className="wa-signal-track">
+                        <span className="wa-signal-line" />
+                        <span className="wa-signal-packet packet-one" />
+                        <span className="wa-signal-packet packet-two" />
+                      </div>
+
+                      <div className="wa-whatsapp-node">
+                        <div className="wa-node-glow" />
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 2C6.477 2 2 6.477 2 12c0 1.825.484 3.537 1.332 5.011L2 22l5.126-1.332A9.956 9.956 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="white" opacity="0.3" />
+                          <path d="M17 14.5c-.3-.15-1.76-.87-2.03-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.07a8.18 8.18 0 01-2.4-1.48 9.02 9.02 0 01-1.66-2.07c-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.64-.93-2.25-.24-.59-.49-.51-.68-.52l-.57-.01c-.2 0-.52.07-.79.37-.28.3-1.05 1.02-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.54.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.34z" fill="white" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="wa-linking-copy">
+                      <h3>
+                        {status === 'syncing' ? 'Syncing WhatsApp...' : 'Connecting to WhatsApp...'}
+                      </h3>
+                      <p>
+                        {status === 'syncing'
+                          ? 'Finalising secure WhatsApp session.'
+                          : 'QR scanned. Securing the session.'}
+                      </p>
+                    </div>
+
+                    <div className="wa-linking-steps">
+                      <div className="wa-linking-step is-complete">
+                        <Check size={12} strokeWidth={3} />
+                        <span>Scanned</span>
+                      </div>
+                      <div className={`wa-linking-step ${status === 'syncing' ? 'is-complete' : 'is-active'}`}>
+                        {status === 'syncing' ? <Check size={12} strokeWidth={3} /> : <span className="wa-step-spinner" />}
+                        <span>Authorising</span>
+                      </div>
+                      <div className={`wa-linking-step ${status === 'syncing' ? 'is-active' : ''}`}>
+                        <span className={status === 'syncing' ? 'wa-step-spinner' : 'wa-step-dot'} />
+                        <span>Syncing</span>
+                      </div>
+                    </div>
+
+                    <div className="wa-secure-chip">
+                      <span className="wa-secure-orbit" aria-hidden="true" />
+                      <span>{status === 'syncing' ? 'Syncing encrypted data' : 'Establishing secure link'}</span>
+                      <span className="wa-secure-bars" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    </div>
+                  </motion.div>
+                ) : (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -2422,10 +2484,21 @@ Looking forward to connecting!`;
                           borderRadius: '6px',
                           boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
                           marginBottom: '24px',
-                          display: 'inline-block',
-                          border: '1px solid var(--border)'
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid var(--border)',
+                          minWidth: '220px',
+                          minHeight: '220px'
                         }}>
-                          <img src={qrCode} alt="QR" style={{ width: '220px', height: '220px', display: 'block' }} />
+                          {qrCode ? (
+                            <img src={qrCode} alt="QR" style={{ width: '220px', height: '220px', display: 'block' }} />
+                          ) : (
+                            <div style={{ width: '220px', height: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+                              <div className="loader"></div>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Generating secure QR Code...</span>
+                            </div>
+                          )}
                         </div>
                         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '20px' }}>
                           Open WhatsApp on your phone,<br />
@@ -2531,147 +2604,6 @@ Looking forward to connecting!`;
                       {usePairingCode ? 'Switch to QR Code' : 'Link with Phone Number'}
                     </button>
                   </motion.div>
-
-                ) : (status === 'qr-scanned' || status === 'syncing') ? (
-                  <motion.div
-                    key="qr-scanned"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="wa-linking-panel"
-                  >
-                    <div className="wa-connection-stage" aria-hidden="true">
-                      <div className="wa-device-node">
-                        <Phone size={24} strokeWidth={2.2} />
-                      </div>
-
-                      <div className="wa-signal-track">
-                        <span className="wa-signal-line" />
-                        <span className="wa-signal-packet packet-one" />
-                        <span className="wa-signal-packet packet-two" />
-                      </div>
-
-                      <div className="wa-whatsapp-node">
-                        <div className="wa-node-glow" />
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                          <path d="M12 2C6.477 2 2 6.477 2 12c0 1.825.484 3.537 1.332 5.011L2 22l5.126-1.332A9.956 9.956 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="white" opacity="0.3" />
-                          <path d="M17 14.5c-.3-.15-1.76-.87-2.03-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.65.07a8.18 8.18 0 01-2.4-1.48 9.02 9.02 0 01-1.66-2.07c-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.64-.93-2.25-.24-.59-.49-.51-.68-.52l-.57-.01c-.2 0-.52.07-.79.37-.28.3-1.05 1.02-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.12 3.24 5.14 4.54.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.34z" fill="white" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div className="wa-linking-copy">
-                      <h3>
-                        {status === 'syncing' ? 'Syncing WhatsApp...' : 'Connecting to WhatsApp...'}
-                      </h3>
-                      <p>
-                        {status === 'syncing'
-                          ? 'Finalising secure WhatsApp session.'
-                          : 'QR scanned. Securing the session.'}
-                      </p>
-                    </div>
-
-                    <div className="wa-linking-steps">
-                      <div className="wa-linking-step is-complete">
-                        <Check size={12} strokeWidth={3} />
-                        <span>Scanned</span>
-                      </div>
-                      <div className={`wa-linking-step ${status === 'syncing' ? 'is-complete' : 'is-active'}`}>
-                        {status === 'syncing' ? <Check size={12} strokeWidth={3} /> : <span className="wa-step-spinner" />}
-                        <span>Authorising</span>
-                      </div>
-                      <div className={`wa-linking-step ${status === 'syncing' ? 'is-active' : ''}`}>
-                        <span className={status === 'syncing' ? 'wa-step-spinner' : 'wa-step-dot'} />
-                        <span>Syncing</span>
-                      </div>
-                    </div>
-
-                    <div className="wa-secure-chip">
-                      <span className="wa-secure-orbit" aria-hidden="true" />
-                      <span>{status === 'syncing' ? 'Syncing encrypted data' : 'Establishing secure link'}</span>
-                      <span className="wa-secure-bars" aria-hidden="true">
-                        <i />
-                        <i />
-                        <i />
-                      </span>
-                    </div>
-                  </motion.div>
-
-                ) : (status === 'connecting' || (status === 'qr' && !qrCode)) ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '20px', textAlign: 'center' }}>
-                    <div className="loader"></div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Starting encrypted session...</p>
-                    <button
-                      onClick={handleDisconnectWhatsApp}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Taking too long? Reset session
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ padding: '24px 20px', textAlign: 'center', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
-                    <WifiOff size={40} color="#ef4444" style={{ marginBottom: '12px' }} />
-                    <h4 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '6px' }}>Connection Lost</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: '1.4' }}>
-                      Unable to reach WhatsApp. Reconnect, or reset the session to link again.
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <button 
-                        onClick={handleRetryConnection} 
-                        disabled={retryLoading}
-                        className="btn-primary" 
-                        style={{ width: '100%', padding: '10px 20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                      >
-                        {retryLoading ? <RefreshCcw size={16} className="spin" /> : <RefreshCcw size={16} />}
-                        {retryLoading ? 'Reconnecting...' : 'Retry Now'}
-                      </button>
-
-                      <button 
-                        onClick={handleDisconnectWhatsApp} 
-                        style={{
-                          width: '100%',
-                          padding: '10px 16px',
-                          borderRadius: '6px',
-                          border: '1px solid #fecaca',
-                          background: '#fff1f2',
-                          color: '#e11d48',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        <LogOut size={15} />
-                        Disconnect & Relink
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setUsePairingCode(true);
-                          applyConnectionStatus('disconnected');
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--primary-dark)',
-                          fontSize: '0.82rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          marginTop: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        <Phone size={14} />
-                        Link with Phone Number instead
-                      </button>
-                    </div>
-                  </div>
                 )}
               </div>
             ) : (

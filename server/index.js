@@ -165,33 +165,54 @@ const PORT = process.env.PORT || 3001;
 const GOOGLE_MEET_PENDING_TEXT = 'Google Meet link will be generated after saving';
 
 io.on('connection', (socket) => {
-    socket.on('join', (userId) => {
+    socket.on('join', async (userId) => {
         socket.join(userId);
         console.log(`User ${userId} joined their socket room`);
         
-        // Only connect if not already connected
-        if (!userSockets[userId] || (userSockets[userId].ws && userSockets[userId].ws.readyState === WebSocket.CLOSED)) {
-            connectToWhatsApp(userId);
-        } else {
-            // Already active, send current status immediately to prevent UI flicker
-            const sock = userSockets[userId];
-            if (sock.user) {
-                const phone = jidNormalizedUser(sock.user.id).split('@')[0];
-                saveWhatsAppWorkspacePhone(userId, phone);
-                socket.emit('status', 'connected');
-                socket.emit('user-info', { 
-                    id: phone, 
-                    name: sock.user.name 
-                });
+        const sock = userSockets[userId];
+        if (sock && sock.user) {
+            const phone = jidNormalizedUser(sock.user.id).split('@')[0];
+            saveWhatsAppWorkspacePhone(userId, phone);
+            socket.emit('status', 'connected');
+            socket.emit('user-info', { 
+                id: phone, 
+                name: sock.user.name 
+            });
+            return;
+        }
+
+        const connectionState = userConnectionStates[userId];
+        if (connectionState?.status === 'connected') {
+            socket.emit('status', 'connected');
+            return;
+        }
+
+        if (connectionState?.qr) {
+            socket.emit('qr', connectionState.qr);
+            socket.emit('status', 'qr');
+            return;
+        }
+
+        // Only auto-reconnect if session exists in DB or if no connection is underway
+        try {
+            const { data: sessionRows } = await supabaseAdmin
+                .from('whatsapp_sessions')
+                .select('session_id')
+                .eq('user_id', userId)
+                .limit(1);
+
+            const hasSavedSession = sessionRows && sessionRows.length > 0;
+            if (hasSavedSession) {
+                if (!sock || (sock.ws && sock.ws.readyState === WebSocket.CLOSED)) {
+                    connectToWhatsApp(userId);
+                }
             } else {
-                const connectionState = userConnectionStates[userId];
-                if (connectionState?.status) {
-                    if (connectionState.qr) socket.emit('qr', connectionState.qr);
-                    socket.emit('status', connectionState.status);
-                } else {
-                    socket.emit('status', 'connecting');
+                if (!connectingUsers.has(userId) && (!sock || (sock.ws && sock.ws.readyState === WebSocket.CLOSED))) {
+                    connectToWhatsApp(userId);
                 }
             }
+        } catch (e) {
+            console.error(`[WA] Error checking sessions on join for ${userId}:`, e.message);
         }
     });
 
