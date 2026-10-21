@@ -758,21 +758,26 @@ function Dashboard() {
 
   const handlePrefillData = (data) => {
     if (!data) return;
-    const targetChannel = data.channel || 'whatsapp';
+    const targetChannel = data.channel || (data.email && !data.phone ? 'email' : 'whatsapp');
     const rawPhone = data.phone || data.phoneNumber || '';
     const cleanPhone = cleanPhoneInput(rawPhone);
+    const targetEmail = (data.email || data.emailTo || '').trim();
+    const targetSubject = data.subject || data.emailSubject || '';
     const prefillMsg = data.message || (data.name ? `Hi ${data.name}, ` : '');
 
     setChannel(targetChannel);
     setShowServiceSelector(false);
     setActiveView('scheduler');
 
+    if (targetEmail) setEmailTo(targetEmail);
+    if (targetSubject) setEmailSubject(targetSubject);
+
     setFormData(prev => ({
       ...prev,
       phone: cleanPhone || prev.phone,
       message: prefillMsg || prev.message,
-      emailTo: data.email || prev.emailTo,
-      emailSubject: data.subject || prev.emailSubject
+      emailTo: targetEmail || prev.emailTo,
+      emailSubject: targetSubject || prev.emailSubject
     }));
 
     if (data.scheduledAt) {
@@ -797,15 +802,17 @@ function Dashboard() {
     const message = params.get('message');
     const name = params.get('name');
     const ch = params.get('channel');
-    const email = params.get('email');
+    const email = params.get('email') || params.get('emailTo');
+    const subject = params.get('subject') || params.get('emailSubject');
     const scheduledAt = params.get('scheduledAt') || params.get('date');
-    if (phone || message || name || email) {
+    if (phone || message || name || email || subject) {
       handlePrefillData({
         phone,
         message,
         name,
-        channel: ch || 'whatsapp',
+        channel: ch || (email && !phone ? 'email' : 'whatsapp'),
         email,
+        subject,
         scheduledAt
       });
     }
