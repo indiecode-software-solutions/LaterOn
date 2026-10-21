@@ -29,12 +29,22 @@ const Auth = () => {
   useEffect(() => {
     if (oauthStart === 'google') {
       setPopupStatus('Connecting to Google...');
-      supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth?oauth_callback=1${ticket ? `&ticket=${ticket}` : ''}`
-        }
-      });
+      const initiateGoogle = async () => {
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {}
+
+        supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth?oauth_callback=1${ticket ? `&ticket=${ticket}` : ''}`,
+            queryParams: {
+              prompt: 'select_account'
+            }
+          }
+        });
+      };
+      initiateGoogle();
     }
   }, [oauthStart, ticket]);
 
@@ -241,7 +251,10 @@ const Auth = () => {
         } else {
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin + '/dashboard' }
+            options: {
+              redirectTo: window.location.origin + '/dashboard',
+              queryParams: { prompt: 'select_account' }
+            }
           });
           if (error) throw error;
         }
