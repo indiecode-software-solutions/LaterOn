@@ -743,6 +743,85 @@ function Dashboard() {
     }
   }, [status]);
 
+  const cleanPhoneInput = (input) => {
+    if (!input) return '';
+    const str = String(input).replace(/[^\d+]/g, '');
+    const digits = str.replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) {
+      return digits.slice(2);
+    }
+    if (digits.length > 10) {
+      return digits.slice(-10);
+    }
+    return digits;
+  };
+
+  const handlePrefillData = (data) => {
+    if (!data) return;
+    const targetChannel = data.channel || 'whatsapp';
+    const rawPhone = data.phone || data.phoneNumber || '';
+    const cleanPhone = cleanPhoneInput(rawPhone);
+    const prefillMsg = data.message || (data.name ? `Hi ${data.name}, ` : '');
+
+    setChannel(targetChannel);
+    setShowServiceSelector(false);
+    setActiveView('scheduler');
+
+    setFormData(prev => ({
+      ...prev,
+      phone: cleanPhone || prev.phone,
+      message: prefillMsg || prev.message,
+      emailTo: data.email || prev.emailTo,
+      emailSubject: data.subject || prev.emailSubject
+    }));
+
+    if (data.scheduledAt) {
+      try {
+        const d = new Date(data.scheduledAt);
+        if (!isNaN(d.getTime())) setScheduledDate(d);
+      } catch (e) {}
+    }
+
+    if (window.innerWidth <= 768) {
+      setShowMobileForm(true);
+      setFormStep(1);
+    } else {
+      setSidebarStep(1);
+    }
+  };
+
+  // 1. Check URL parameters for CRM prefill data on initial load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const phone = params.get('phone');
+    const message = params.get('message');
+    const name = params.get('name');
+    const ch = params.get('channel');
+    const email = params.get('email');
+    const scheduledAt = params.get('scheduledAt') || params.get('date');
+    if (phone || message || name || email) {
+      handlePrefillData({
+        phone,
+        message,
+        name,
+        channel: ch || 'whatsapp',
+        email,
+        scheduledAt
+      });
+    }
+  }, []);
+
+  // 2. Listen for postMessage from parent CRM window
+  useEffect(() => {
+    const onMessage = (event) => {
+      if (event.data?.type === 'LATERON_PREFILL' || event.data?.type === 'PREFILL_SCHEDULE') {
+        handlePrefillData(event.data);
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+
   useEffect(() => {
     fetchStatus();
     fetchSchedules();
