@@ -616,7 +616,17 @@ function Dashboard() {
   };
 
   // Drip Campaign States
+  const isCrmMode = (window.self !== window.top) || 
+                    window.location.search.includes('embed=crm') || 
+                    window.location.search.includes('hide_extras=true');
+
   const [channel, setChannel] = useState('');
+
+  useEffect(() => {
+    if (isCrmMode && (channel === 'telegram' || channel === 'instagram')) {
+      setChannel('whatsapp');
+    }
+  }, [isCrmMode, channel]);
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [integrations, setIntegrations] = useState([]);
@@ -1880,22 +1890,26 @@ Looking forward to connecting!`;
             <span className="strip-label">Meetings</span>
             <span className="strip-icon"><Calendar size={18} /></span>
           </button>
-          <button
-            className={`channel-strip ${channel === 'telegram' ? 'active' : ''}`}
-            style={{ '--strip-accent': '#0088cc' }}
-            onClick={() => { setChannel('telegram'); setActiveView('scheduler'); }}
-          >
-            <span className="strip-label">Telegram</span>
-            <span className="strip-icon"><TelegramIcon size={18} /></span>
-          </button>
-          <button
-            className={`channel-strip ${channel === 'instagram' ? 'active' : ''}`}
-            style={{ '--strip-accent': '#e1306c' }}
-            onClick={() => { setChannel('instagram'); setActiveView('scheduler'); }}
-          >
-            <span className="strip-label">Instagram</span>
-            <span className="strip-icon"><InstagramIcon size={18} /></span>
-          </button>
+          {!isCrmMode && (
+            <button
+              className={`channel-strip ${channel === 'telegram' ? 'active' : ''}`}
+              style={{ '--strip-accent': '#0088cc' }}
+              onClick={() => { setChannel('telegram'); setActiveView('scheduler'); }}
+            >
+              <span className="strip-label">Telegram</span>
+              <span className="strip-icon"><TelegramIcon size={18} /></span>
+            </button>
+          )}
+          {!isCrmMode && (
+            <button
+              className={`channel-strip ${channel === 'instagram' ? 'active' : ''}`}
+              style={{ '--strip-accent': '#e1306c' }}
+              onClick={() => { setChannel('instagram'); setActiveView('scheduler'); }}
+            >
+              <span className="strip-label">Instagram</span>
+              <span className="strip-icon"><InstagramIcon size={18} /></span>
+            </button>
+          )}
           <button
             className={`channel-strip ${channel === 'reminders' ? 'active' : ''}`}
             style={{ '--strip-accent': '#f59e0b' }}
@@ -2326,34 +2340,38 @@ Looking forward to connecting!`;
                   </div>
 
                   {/* Telegram Card */}
-                  <div className={channel === 'telegram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#0088cc', '--card-bg': channel === 'telegram' && !showServiceSelector ? '#e6f3ff' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
-                  >
-                    <div style={{ background: '#0088cc' }}>
-                      <TelegramIcon size={24} color="white" />
+                  {!isCrmMode && (
+                    <div className={channel === 'telegram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#0088cc', '--card-bg': channel === 'telegram' && !showServiceSelector ? '#e6f3ff' : 'white' }}
+                      onClick={() => { triggerSelection(); setChannel('telegram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    >
+                      <div style={{ background: '#0088cc' }}>
+                        <TelegramIcon size={24} color="white" />
+                      </div>
+                      <div>
+                        <h4>Telegram</h4>
+                        <p>
+                          {isTelegramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4>Telegram</h4>
-                      <p>
-                        {isTelegramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (telegramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Instagram Card */}
-                  <div className={channel === 'instagram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#e1306c', '--card-bg': channel === 'instagram' && !showServiceSelector ? '#fff0f5' : 'white' }}
-                    onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
-                  >
-                    <div style={{ background: '#e1306c' }}>
-                      <InstagramIcon size={24} color="white" />
+                  {!isCrmMode && (
+                    <div className={channel === 'instagram' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#e1306c', '--card-bg': channel === 'instagram' && !showServiceSelector ? '#fff0f5' : 'white' }}
+                      onClick={() => { triggerSelection(); setChannel('instagram'); setShowServiceSelector(false); setActiveView('scheduler'); }}
+                    >
+                      <div style={{ background: '#e1306c' }}>
+                        <InstagramIcon size={24} color="white" />
+                      </div>
+                      <div>
+                        <h4>Instagram</h4>
+                        <p>
+                          {isInstagramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4>Instagram</h4>
-                      <p>
-                        {isInstagramStatusLoading ? <span className="skeleton-text" style={{ width: '100px' }} /> : (instagramStatus.status === 'connected' ? 'Connected' : 'Not Connected')}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Personal Reminders Card */}
                   <div className={channel === 'reminders' && !showServiceSelector ? 'active' : ''} style={{ '--card-accent': '#f59e0b', '--card-bg': channel === 'reminders' && !showServiceSelector ? '#fffbeb' : 'white' }}
@@ -2370,30 +2388,32 @@ Looking forward to connecting!`;
                 </div>
 
                 {/* Free Consultation */}
-                <div
-                  onClick={() => { setShowServiceSelector(false); setShowBooking(true); setBookingLoaded(false); setBookingKey(k => k + 1); }}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #333',
-                    borderRadius: '6px',
-                    padding: '12px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    gridColumn: '1 / -1',
-                    marginTop: '16px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '1.1rem' }}><Calendar size={24} /></span>
-                    <div>
-                      <div style={{ color: '#333333', fontWeight: 600, fontSize: '0.85rem' }}>Book a Free Support Call</div>
-                      <div style={{ color: '#333333', marginTop: '4px', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
+                {!isCrmMode && (
+                  <div
+                    onClick={() => { setShowServiceSelector(false); setShowBooking(true); setBookingLoaded(false); setBookingKey(k => k + 1); }}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #333',
+                      borderRadius: '6px',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      gridColumn: '1 / -1',
+                      marginTop: '16px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '1.1rem' }}><Calendar size={24} /></span>
+                      <div>
+                        <div style={{ color: '#333333', fontWeight: 600, fontSize: '0.85rem' }}>Book a Free Support Call</div>
+                        <div style={{ color: '#333333', marginTop: '4px', fontSize: '0.72rem' }}>15 min — Get help with LaterOn</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (channel === 'whatsapp' && status !== 'connected') ? (
               <div style={{
@@ -9124,20 +9144,24 @@ Join Link: [Auto-generated after scheduling]`}
                     <WhatsAppIcon size={18} color="#25D366" />
                     <span>WhatsApp</span>
                   </button>
-                  <button
-                    className={`social-dropdown-item ${channel === 'instagram' ? 'active' : ''}`}
-                    onClick={() => { triggerSelection(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
-                  >
-                    <InstagramIcon size={18} color="#e1306c" />
-                    <span>Instagram</span>
-                  </button>
-                  <button
-                    className={`social-dropdown-item ${channel === 'telegram' ? 'active' : ''}`}
-                    onClick={() => { triggerSelection(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
-                  >
-                    <TelegramIcon size={18} color="#0088cc" />
-                    <span>Telegram</span>
-                  </button>
+                  {!isCrmMode && (
+                    <button
+                      className={`social-dropdown-item ${channel === 'instagram' ? 'active' : ''}`}
+                      onClick={() => { triggerSelection(); setChannel('instagram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
+                    >
+                      <InstagramIcon size={18} color="#e1306c" />
+                      <span>Instagram</span>
+                    </button>
+                  )}
+                  {!isCrmMode && (
+                    <button
+                      className={`social-dropdown-item ${channel === 'telegram' ? 'active' : ''}`}
+                      onClick={() => { triggerSelection(); setChannel('telegram'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
+                    >
+                      <TelegramIcon size={18} color="#0088cc" />
+                      <span>Telegram</span>
+                    </button>
+                  )}
                   <button
                     className={`social-dropdown-item ${channel === 'email' ? 'active' : ''}`}
                     onClick={() => { triggerSelection(); setChannel('email'); setActiveView('scheduler'); setShowSocialDropdown(false); setShowServiceSelector(false); }}
