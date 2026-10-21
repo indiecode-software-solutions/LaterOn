@@ -99,7 +99,7 @@ const TelegramIcon = ({ size = 18, color = 'currentColor' }) => (
 const API_URL = import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !navigator.userAgent.includes('Android') && !navigator.userAgent.includes('iPhone')
     ? 'http://localhost:3001'
-    : 'https://lateron.indiecode.in');
+    : 'https://lateron.capoasis.com');
 const socket = io(API_URL);
 const GOOGLE_MEET_PENDING_TEXT = 'Google Meet link will be generated after saving';
 
@@ -922,6 +922,25 @@ function Dashboard() {
       applyConnectionStatus('disconnected');
     } finally {
       setStatusLoading(false);
+    }
+  };
+
+  const [retryLoading, setRetryLoading] = useState(false);
+
+  const handleRetryConnection = async () => {
+    try {
+      setRetryLoading(true);
+      applyConnectionStatus('connecting');
+      if (user?.id) {
+        socket.emit('join', user.id);
+      }
+      await axios.post(`${API_URL}/api/reconnect`);
+      await fetchStatus();
+    } catch (err) {
+      console.error('Retry connection failed:', err);
+      await fetchStatus();
+    } finally {
+      setRetryLoading(false);
     }
   };
 
@@ -2540,16 +2559,79 @@ Looking forward to connecting!`;
                   </motion.div>
 
                 ) : (status === 'connecting' || (status === 'qr' && !qrCode)) ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '20px', textAlign: 'center' }}>
                     <div className="loader"></div>
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Starting encrypted session...</p>
+                    <button
+                      onClick={handleDisconnectWhatsApp}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Taking too long? Reset session
+                    </button>
                   </div>
                 ) : (
-                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                  <div style={{ padding: '24px 20px', textAlign: 'center', width: '100%', maxWidth: '300px', margin: '0 auto' }}>
                     <WifiOff size={40} color="#ef4444" style={{ marginBottom: '12px' }} />
-                    <h4 style={{ fontWeight: 600 }}>Connection Lost</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Reconnecting to WhatsApp server...</p>
-                    <button onClick={fetchStatus} className="btn-primary" style={{ padding: '8px 20px', borderRadius: '6px' }}>Retry Now</button>
+                    <h4 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '6px' }}>Connection Lost</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: '1.4' }}>
+                      Unable to reach WhatsApp. Reconnect, or reset the session to link again.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <button 
+                        onClick={handleRetryConnection} 
+                        disabled={retryLoading}
+                        className="btn-primary" 
+                        style={{ width: '100%', padding: '10px 20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      >
+                        {retryLoading ? <RefreshCcw size={16} className="spin" /> : <RefreshCcw size={16} />}
+                        {retryLoading ? 'Reconnecting...' : 'Retry Now'}
+                      </button>
+
+                      <button 
+                        onClick={handleDisconnectWhatsApp} 
+                        style={{
+                          width: '100%',
+                          padding: '10px 16px',
+                          borderRadius: '6px',
+                          border: '1px solid #fecaca',
+                          background: '#fff1f2',
+                          color: '#e11d48',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <LogOut size={15} />
+                        Disconnect & Relink
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUsePairingCode(true);
+                          applyConnectionStatus('disconnected');
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--primary-dark)',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          marginTop: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Phone size={14} />
+                        Link with Phone Number instead
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.hostname === 'localhost' && !navigator.userAgent.includes('Android') && !navigator.userAgent.includes('iPhone')
     ? 'http://localhost:3001'
-    : 'https://lateron.indiecode.in');
+    : 'https://lateron.capoasis.com');
 
 const TIMEFRAMES = [
   { label: 'Last hour', value: 60 * 60 * 1000 },

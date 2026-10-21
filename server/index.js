@@ -1068,7 +1068,7 @@ async function generateAiReply(userMessage, context) {
         }, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
-                'HTTP-Referer': 'https://lateron.indiecode.in',
+                'HTTP-Referer': 'https://lateron.capoasis.com',
                 'X-Title': 'LaterOn AI Assistant'
             }
         });
@@ -1120,7 +1120,7 @@ app.post('/api/ai/generate', async (req, res) => {
         }, {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
-                'HTTP-Referer': 'https://lateron.indiecode.in',
+                'HTTP-Referer': 'https://lateron.capoasis.com',
                 'X-Title': 'LaterOn WhatsApp Automation',
                 'Content-Type': 'application/json'
             }
@@ -1150,6 +1150,15 @@ app.post('/api/logout', verifyToken, async (req, res) => {
     setUserConnectionState(userId, 'disconnected', { qr: null });
     await supabaseAdmin.from('whatsapp_sessions').delete().eq('user_id', userId);
     res.json({ success: true });
+});
+
+app.post('/api/reconnect', verifyToken, async (req, res) => {
+    const { userId } = req;
+    console.log(`[WA] Explicit reconnect requested for ${userId}`);
+    connectingUsers.delete(userId);
+    setUserConnectionState(userId, 'connecting', { qr: null });
+    connectToWhatsApp(userId, null, true);
+    res.json({ success: true, message: 'Reconnection initiated' });
 });
 
 app.get('/api/contacts', verifyToken, async (req, res) => {
@@ -1880,7 +1889,7 @@ app.get('/api/status', verifyToken, async (req, res) => {
 
     if (!sock && connectingUsers.has(req.userId)) {
         status = 'connecting';
-    } else if (!sock && await hasSavedWhatsAppSession(req.userId)) {
+    } else if (!sock) {
         status = 'connecting';
         connectToWhatsApp(req.userId);
     }
