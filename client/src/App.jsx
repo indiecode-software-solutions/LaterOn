@@ -14,13 +14,16 @@ import { supabase } from './supabaseClient';
 const ProtectedRoute = ({ children, loading, session }) => {
   // If the URL has an access token hash, wait for Supabase to parse it
   const hasAuthToken = window.location.hash && window.location.hash.includes('access_token=');
+
+  // If the URL has a PKCE auth code, wait for Supabase to exchange it
+  const hasAuthCode = window.location.search && (window.location.search.includes('code=') || window.location.search.includes('oauth_'));
   
   // If the URL has an error param, redirect back to login
   const hasError = window.location.href.includes('error=');
 
   if (hasError) return <Navigate to="/auth" replace />;
 
-  if (loading || hasAuthToken) return (
+  if (loading || hasAuthToken || hasAuthCode) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
       <div className="loader"></div>
     </div>

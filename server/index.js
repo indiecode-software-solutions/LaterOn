@@ -1171,6 +1171,50 @@ app.post('/api/reconnect', verifyToken, async (req, res) => {
     res.json({ success: true, message: 'Reconnection initiated' });
 });
 
+// Ephemeral ticket exchange for iframe popup OAuth flows
+const authExchangeTickets = new Map();
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [ticket, entry] of authExchangeTickets.entries()) {
+        if (now > entry.expiresAt) {
+            authExchangeTickets.delete(ticket);
+        }
+    }
+}, 60000);
+
+app.post('/api/auth-exchange', (req, res) => {
+    const { ticket, session } = req.body;
+    if (!ticket || !session) {
+        return res.status(400).json({ error: 'Missing ticket or session' });
+    }
+    authExchangeTickets.set(ticket, {
+        session,
+        expiresAt: Date.now() + 3 * 60 * 1000
+    });
+    console.log(`[AUTH-EXCHANGE] Stored session for ticket: ${ticket.substring(0, 8)}...`);
+    res.json({ success: true });
+});
+
+app.get('/api/auth-exchange', (req, res) => {
+    const { ticket } = req.query;
+    if (!ticket) {
+        return res.status(400).json({ error: 'Missing ticket' });
+    }
+    const entry = authExchangeTickets.get(ticket);
+    if (!entry) {
+        return res.json({ session: null });
+    }
+    if (Date.now() > entry.expiresAt) {
+        authExchangeTickets.delete(ticket);
+        return res.json({ session: null });
+    }
+    authExchangeTickets.delete(ticket);
+    console.log(`[AUTH-EXCHANGE] Delivered session for ticket: ${ticket.substring(0, 8)}...`);
+    res.json({ session: entry.session });
+});
+
+
 app.get('/api/contacts', verifyToken, async (req, res) => {
     const { userId } = req;
     try {
