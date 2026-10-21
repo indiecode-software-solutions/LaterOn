@@ -86,11 +86,63 @@ const Auth = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/dashboard');
       } else {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin + '/dashboard' }
-        });
-        if (error) throw error;
+        const isInIframe = window.self !== window.top;
+        if (isInIframe) {
+          // Inside iframe: Google blocks rendering in frames (X-Frame-Options: DENY).
+          // Open Google OAuth in a popup window.
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: window.location.origin + '/dashboard',
+              skipBrowserRedirect: true
+            }
+          });
+          if (error) throw error;
+          if (data?.url) {
+            const popup = window.open(
+              data.url,
+              'lateron_google_oauth',
+              'width=500,height=650,left=200,top=100'
+            );
+
+            // Listen for postMessage from popup
+            const messageListener = (e) => {
+              if (e.data?.type === 'LATERON_AUTH_SUCCESS' && e.data?.session) {
+                window.removeEventListener('message', messageListener);
+                if (popup && !popup.closed) popup.close();
+                triggerSelection();
+                localStorage.setItem('token', e.data.session.access_token);
+                localStorage.setItem('user', JSON.stringify(e.data.session.user));
+                navigate('/dashboard');
+              }
+            };
+            window.addEventListener('message', messageListener);
+
+            // Also poll session in case BroadcastChannel/cookies resolve first
+            const pollInterval = setInterval(async () => {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session) {
+                clearInterval(pollInterval);
+                window.removeEventListener('message', messageListener);
+                if (popup && !popup.closed) popup.close();
+                triggerSelection();
+                localStorage.setItem('token', session.access_token);
+                localStorage.setItem('user', JSON.stringify(session.user));
+                navigate('/dashboard');
+              } else if (popup && popup.closed) {
+                clearInterval(pollInterval);
+                window.removeEventListener('message', messageListener);
+                setLoading(false);
+              }
+            }, 800);
+          }
+        } else {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin + '/dashboard' }
+          });
+          if (error) throw error;
+        }
       }
     } catch (err) {
       triggerSelection();

@@ -34,6 +34,18 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If this window was opened as an OAuth popup from an iframe, notify opener and close
+    if (window.opener && window.name === 'lateron_google_oauth') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          try {
+            window.opener.postMessage({ type: 'LATERON_AUTH_SUCCESS', session }, '*');
+          } catch (e) {}
+          setTimeout(() => window.close(), 300);
+        }
+      });
+    }
+
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -49,6 +61,12 @@ function App() {
       if (session) {
         localStorage.setItem('token', session.access_token);
         localStorage.setItem('user', JSON.stringify(session.user));
+        if (window.opener && window.name === 'lateron_google_oauth') {
+          try {
+            window.opener.postMessage({ type: 'LATERON_AUTH_SUCCESS', session }, '*');
+          } catch (e) {}
+          setTimeout(() => window.close(), 300);
+        }
       } else {
         localStorage.removeItem('token');
         localStorage.removeItem('user');

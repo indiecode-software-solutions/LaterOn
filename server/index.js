@@ -72,6 +72,16 @@ const razorpay = new Razorpay({
 const app = express();
 app.use(cors());
 
+// Allow iframe embedding from SimpleCRM and local dev environments
+app.use((req, res, next) => {
+    res.removeHeader('X-Frame-Options');
+    res.setHeader(
+        'Content-Security-Policy',
+        "frame-ancestors 'self' https://simplecrm.capoasis.com https://*.capoasis.com http://localhost:5173 http://localhost:3000 http://localhost:5174 http://localhost:5175 https://localhost:5173;"
+    );
+    next();
+});
+
 // ── Razorpay Webhook (needs raw body for signature verification) ────────────
 app.post('/api/webhooks/razorpay', express.raw({ type: 'application/json' }), async (req, res) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
